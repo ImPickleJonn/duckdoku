@@ -10,3 +10,6 @@ brand/.env
 .env.local
 npm-debug.log*
 .DS_Store
+brand/appicon/
+assets/store/_shots.png
+assets/store/*-raw.png

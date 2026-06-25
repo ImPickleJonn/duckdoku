@@ -16,28 +16,23 @@ const URL = process.env.DD_URL || 'http://localhost:4055/game.html';
   await page.goto(URL, { waitUntil: 'networkidle' });
 
   const probe = () => page.evaluate(() => {
-    const duck = document.querySelector('.ddh-duck');
-    const face = document.querySelector('.ddh-face');
-    const fb = document.querySelector('.ddh-fallback');
-    let alphaPx = 0;
-    try { const c = face.getContext('2d'); const d = c.getImageData(0,0,face.width,face.height).data; for (let i=3;i<d.length;i+=4){ if (d[i]>10) alphaPx++; } } catch(e) { alphaPx = 'err:'+e.message; }
-    return {
-      stamped: document.querySelectorAll('.ddh-x.ddh-stamp').length,
-      duckOpacity: duck ? getComputedStyle(duck).opacity : 'n/a',
-      duckClass: duck ? duck.className : 'n/a',
-      faceOpacity: face ? getComputedStyle(face).opacity : 'n/a',
-      fbOpacity: fb ? getComputedStyle(fb).opacity : 'n/a',
-      faceAlphaPx: alphaPx,
-    };
+    const grid = document.getElementById('ddhGrid');
+    const cells = Array.prototype.slice.call(grid.children);
+    const N = 5;
+    let sig = '';
+    for (let r = 0; r < N; r++) { for (let c = 0; c < N; c++) { const el = cells[r*N+c]; const x = el.querySelector('.ddh-x'); const host = el.classList.contains('ddh-host'); sig += host ? 'D' : (x && x.classList.contains('ddh-stamp')) ? 'X' : '.'; } sig += '/'; }
+    return { stamped: document.querySelectorAll('.ddh-x.ddh-stamp').length, sig };
   });
 
-  // capture the home across one loop: elimination -> placement -> celebrate
-  const marks = [900, 1500, 2100, 2700, 3000, 3500];
-  let prev = 0;
-  for (const t of marks) {
-    await page.waitForTimeout(t - prev); prev = t;
-    await page.screenshot({ path: path.join(OUT, 'home-' + t + 'ms.png') });
-    console.log(t + 'ms', JSON.stringify(await probe()));
+  // dense sweep over ~8s; the sig (5 rows of D/X/.) identifies which rule is showing
+  let frame = 0;
+  for (let t = 800; t <= 8200; t += 550) {
+    await page.waitForTimeout(550);
+    const p = await probe();
+    const name = 'f' + String(frame).padStart(2,'0') + '-' + t + 'ms';
+    await page.screenshot({ path: path.join(OUT, name + '.png') });
+    console.log(name, p.stamped, p.sig);
+    frame++;
   }
 
   const state = await page.evaluate(() => ({

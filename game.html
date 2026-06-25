@@ -703,7 +703,7 @@ function bind(){
 /* ---------- boot ---------- */
 function boot(){applyI18n();$('tagline').textContent=t('tagline');bind();bindPaint();fillHow();refreshHome();initFaces();mxBoot();
   loadSkus();pollPurchases();cloudLoad();
-  if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})}).catch(()=>{});}catch(e){}}
+  if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,lang:LANG,levelsDone:(save&&save.levelsDone)||0,tz:-(new Date().getTimezoneOffset()/60)})}).catch(()=>{});}catch(e){}}
 }
 boot();
 </script>

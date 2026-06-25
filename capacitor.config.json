@@ -1,0 +1,11 @@
+{
+  "appId": "com.duckdoku.game",
+  "appName": "Duckdoku",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#F3ECEC"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

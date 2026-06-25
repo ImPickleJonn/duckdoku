@@ -2,12 +2,14 @@
   "name": "duckdoku",
   "version": "0.1.0",
   "private": true,
-  "description": "Duckdoku — a cute block-sudoku puzzle for Telegram. No ads. Stars-only boosters.",
+  "description": "Duckdoku, a cozy duck logic puzzle for Telegram. No ads. Stars-only boosters.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "ducks": "node brand/gen-ducks.js",
-    "ducks:pro": "node brand/gen-ducks.js --pro"
+    "ducks:pro": "node brand/gen-ducks.js --pro",
+    "mobile:build": "node scripts/build-mobile.js",
+    "mobile:sync": "node scripts/build-mobile.js && npx cap sync android"
   },
   "engines": {
     "node": ">=18"
@@ -15,5 +17,10 @@
   "dependencies": {
     "express": "^4.19.2",
     "pg": "^8.11.5"
+  },
+  "optionalDependencies": {
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^6.1.2"
   }
 }

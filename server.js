@@ -275,9 +275,19 @@ app.post('/api/sync/save', async (req, res) => {
 
 // Lightweight heartbeat for retention telemetry.
 app.post('/api/heartbeat', (req, res) => {
-  const user = validateInitData((req.body || {}).initData);
+  const body = req.body || {};
+  const user = validateInitData(body.initData);
   if (!user) return res.status(401).json({ error: 'invalid initData' });
   reportEvent('app_init', { userId: user.id, username: user.username });
+  // Learn enough to schedule re-engagement DMs (chat id == user id for private chats).
+  noteUser(user.id, {
+    chatId: user.id,
+    lang: (body.lang || user.language_code || 'en').slice(0, 2) === 'ru' ? 'ru' : 'en',
+    lastActive: Date.now(),
+    levelsDone: Number(body.levelsDone) || 0,
+    tz: (typeof body.tz === 'number') ? body.tz : (users.get(user.id) || {}).tz,
+    first: user.first_name,
+  });
   res.json({ ok: true });
 });
 
@@ -310,26 +320,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
           notifyPurchase({ sku: payload.sku, stars: sp.total_amount || sku.price || 0, userId: payload.uid, username: update.message.from && update.message.from.username });
         }
       } catch (e) { /* malformed payload */ }
-    } else if (update.message && typeof update.message.text === 'string' && update.message.text.startsWith('/start')) {
-      const m = update.message;
-      const playUrl = process.env.GAME_URL || getPublicUrl(req) || 'https://duckdoku.onrender.com';
-      const first = (m.from && (m.from.first_name || m.from.username)) || 'there';
-      const text =
-        'Hi ' + first + '! Welcome to Duckdoku.\n\n' +
-        'A cozy block puzzle starring one very cute duck.\n\n' +
-        'How it works\n' +
-        'Drag the duck blocks onto the 9x9 board. Fill a full row, a full column, or a 3x3 square and it clears with a happy quack. Keep the board open as long as you can.\n\n' +
-        'No ads. Just you, the board, and the duck.\n\n' +
-        'Tap PLAY to start.';
-      try {
-        await fetch(`${TELEGRAM_API}/sendMessage`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: m.chat.id, text,
-            reply_markup: { inline_keyboard: [[{ text: 'PLAY DUCKDOKU', web_app: { url: playUrl } }]] },
-          }),
-        });
-      } catch (e) {}
+    } else if (update.message && typeof update.message.text === 'string') {
+      try { await handleCommand(update.message); } catch (e) {}
     }
   } catch (e) { /* never crash on a webhook */ }
   res.json({ ok: true });
@@ -373,8 +365,157 @@ app.post('/api/setup-bot', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String((e && e.message) || e) }); }
 });
 
+// ============ Telegram bot: notifications, commands, /preview ============
+function tg(method, body) {
+  if (!TELEGRAM_API) return Promise.resolve({ ok: false });
+  return fetch(`${TELEGRAM_API}/${method}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(r => r.json()).catch(e => ({ ok: false, error: String((e && e.message) || e) }));
+}
+const GAME = () => process.env.GAME_URL || 'https://duckdoku.com/game';
+const ASSET_BASE = () => (process.env.ASSET_BASE || 'https://duckdoku.com').replace(/\/+$/, '');
+function playKb(lang) { return { inline_keyboard: [[{ text: lang === 'ru' ? 'Играть' : 'Play Duckdoku', web_app: { url: GAME() } }]] }; }
+
+// In-memory player state for re-engagement DMs (populated by /start + /api/heartbeat).
+// Lost on restart; add a Postgres mirror later for durable cross-restart notifications.
+const users = new Map();
+function noteUser(uid, patch) { if (!uid) return null; const s = users.get(uid) || { chatId: uid, lang: 'en', optOut: false }; Object.assign(s, patch); users.set(uid, s); return s; }
+
+// ---- notification content (EN + RU, no emoji, no dashes) ----
+const NOTIF_CTA = { en: 'Play now', ru: 'Играть' };
+const NOTIF = {
+  comeback:  { media: 'comeback',  en: 'Your ducks miss you. A fresh puzzle is waiting whenever you are ready.', ru: 'Утята скучают по тебе. Новая головоломка ждёт, когда захочешь.' },
+  daily:     { media: 'daily',     en: 'A new day, a new duck puzzle. Come find every hidden duck.', ru: 'Новый день, новая утиная головоломка. Найди всех спрятанных уток.' },
+  newlevels: { media: 'celebrate', en: 'New levels are open. Think you can find every hidden duck?', ru: 'Открылись новые уровни. Думаешь, найдёшь всех спрятанных уток?' },
+  gift:      { media: 'gift',      en: 'A little gift is waiting. A free booster for your next puzzle.', ru: 'Тебя ждёт подарок. Бесплатный бустер для следующей головоломки.' },
+  nudge:     { media: 'comeback',  en: 'One quick puzzle? The duck is ready when you are.', ru: 'Одна быстрая головоломка? Утка готова, когда и ты.' },
+};
+// media key -> filename served from /assets/notif (set once art/gifs are generated). Empty -> text only.
+const NOTIF_MEDIA = {};
+function notifMediaUrl(key) { const f = NOTIF_MEDIA[key]; return f ? (ASSET_BASE() + '/assets/notif/' + f) : ''; }
+async function sendNotif(s, key) {
+  const def = NOTIF[key]; if (!def) return { ok: false };
+  const lang = s.lang === 'ru' ? 'ru' : 'en';
+  const caption = def[lang] || def.en;
+  const reply_markup = { inline_keyboard: [[{ text: NOTIF_CTA[lang] || NOTIF_CTA.en, web_app: { url: GAME() } }]] };
+  const url = notifMediaUrl(def.media);
+  if (url && /\.(mp4|gif)(\?|$)/i.test(url)) return tg('sendAnimation', { chat_id: s.chatId, animation: url, caption, reply_markup });
+  if (url) return tg('sendPhoto', { chat_id: s.chatId, photo: url, caption, reply_markup });
+  return tg('sendMessage', { chat_id: s.chatId, text: caption, reply_markup });
+}
+
+// ---- loop: cooldowns + daily cap + quiet hours + NOTIFY_OFF kill switch ----
+const NOTIF_LOOP_MS = 10 * 60 * 1000;
+function nowYMD() { return new Date().toISOString().slice(0, 10); }
+function inQuiet(s) { const off = Number(s.tz) || 0; const h = (((new Date().getUTCHours()) + off) % 24 + 24) % 24; return h < 9 || h >= 22; }
+function canNotify(s) {
+  if (s.optOut) return false;
+  if (Date.now() - (s.lastNotifTs || 0) < 22 * 3600 * 1000) return false;
+  if (s.notifYMD === nowYMD() && (s.notifN || 0) >= 1) return false;
+  if (inQuiet(s)) return false;
+  return true;
+}
+function pickTrigger(s) { const h = (Date.now() - (s.lastActive || 0)) / 3600000; if (h >= 48) return 'comeback'; if (h >= 20) return 'daily'; return null; }
+async function notifyLoop() {
+  if (process.env.NOTIFY_OFF === '1' || !BOT_TOKEN) return;
+  for (const [, s] of users) {
+    try {
+      if (!canNotify(s)) continue;
+      const k = pickTrigger(s); if (!k) continue;
+      const r = await sendNotif(s, k);
+      if (r && r.ok) { const ymd = nowYMD(); s.notifN = (s.notifYMD === ymd ? (s.notifN || 0) : 0) + 1; s.notifYMD = ymd; s.lastNotifTs = Date.now(); }
+      else if (r && (r.error_code === 403)) { s.optOut = true; }
+      await new Promise(res => setTimeout(res, 150));
+    } catch (e) {}
+  }
+}
+
+// ---- bot copy (EN + RU, no emoji, no dashes) ----
+const BOTMSG = {
+  help: { en: 'How to play Duckdoku\n\nA duck is hiding in one cell of every colored area. Find them all.\n\nRules\nOne duck per colored area.\nOne duck per row and per column.\nNo two ducks may touch, not even diagonally.\n\nControls\nSingle tap marks an X note where a duck cannot be.\nSwipe across cells to mark a whole row or column quickly.\nDouble tap to place a duck. A wrong guess leaves a red X and costs a heart.\n\nBoosters\nHint, Undo, and Place a Duck. No ads, ever.',
+        ru: 'Как играть в Duckdoku\n\nВ каждой цветной зоне в одной клетке прячется утка. Найди их всех.\n\nПравила\nПо одной утке в каждой цветной зоне.\nПо одной утке в каждом ряду и столбце.\nУтки не должны соприкасаться, даже по диагонали.\n\nУправление\nОдно нажатие ставит метку X, где утки быть не может.\nПроведи пальцем по клеткам, чтобы быстро отметить ряд.\nДвойное нажатие ставит утку. Неверная догадка оставляет красный X и стоит сердце.\n\nБустеры\nПодсказка, Назад и Утка. Без рекламы.' },
+  faq: { en: 'Duckdoku FAQ\n\nAre there ads? No. Never.\nHow do boosters work? Hint shows where to look, Undo takes back your notes, Place a Duck reveals one. Buy more with Telegram Stars.\nLost progress? Your progress is saved on this device, and in your Telegram account when you play in the app.\nStuck on a level? Use a Hint, or mark X notes to narrow it down.',
+        ru: 'Частые вопросы\n\nЕсть реклама? Нет. Никогда.\nКак работают бустеры? Подсказка показывает, где искать, Назад отменяет заметки, Утка открывает одну. Больше можно купить за Telegram Stars.\nПропал прогресс? Прогресс хранится на устройстве и в твоём аккаунте Telegram при игре в приложении.\nЗастрял на уровне? Используй Подсказку или отмечай X, чтобы сузить варианты.' },
+  about: { en: 'Duckdoku is a cozy logic puzzle. Find the duck hiding in every colored area without breaking the rules. Made with love and a lot of ducks.', ru: 'Duckdoku это уютная логическая головоломка. Найди утку, спрятанную в каждой цветной зоне, не нарушая правил. Сделано с любовью и множеством уток.' },
+  support: { en: 'Need help or found a bug? Message the team at @ImPickleJonn and we will take a look.', ru: 'Нужна помощь или нашёл ошибку? Напиши команде @ImPickleJonn, и мы посмотрим.' },
+  privacy: { en: 'Privacy\n\nDuckdoku stores your game progress on your device and, in the Telegram app, in your account so it follows you across devices. We use anonymous analytics to improve the game. We never sell your data. No ads.', ru: 'Конфиденциальность\n\nDuckdoku хранит прогресс на устройстве и, в приложении Telegram, в аккаунте, чтобы он был с тобой на всех устройствах. Мы используем анонимную аналитику, чтобы улучшать игру. Мы не продаём данные. Без рекламы.' },
+  terms: { en: 'Terms\n\nDuckdoku is provided as is for your enjoyment. Booster purchases are made with Telegram Stars and are final. Play fair and have fun.', ru: 'Условия\n\nDuckdoku предоставляется как есть для твоего удовольствия. Покупки бустеров совершаются за Telegram Stars и возврату не подлежат. Играй честно и получай удовольствие.' },
+  muted: { en: 'You will not get reminder messages anymore. Send /start any time to come back.', ru: 'Ты больше не будешь получать напоминания. Отправь /start, когда захочешь вернуться.' },
+};
+function welcomeText(first) {
+  return 'Hi ' + (first || 'there') + '. Welcome to Duckdoku.\n\n' +
+    'A cozy logic puzzle. A duck is hiding in one cell of every colored area. Find them all without two ducks sharing a row, a column, or touching.\n\n' +
+    'No ads. Just you, the board, and the ducks.\n\nTap Play to start.';
+}
+async function previewAll(chatId, lang) {
+  await tg('sendMessage', { chat_id: chatId, text: 'Preview of every push notification (' + Object.keys(NOTIF).length + '):' });
+  for (const k of Object.keys(NOTIF)) {
+    await tg('sendMessage', { chat_id: chatId, text: 'trigger: ' + k });
+    await sendNotif({ chatId, lang }, k);
+    await new Promise(r => setTimeout(r, 350));
+  }
+  await tg('sendMessage', { chat_id: chatId, text: 'End of preview.' });
+}
+function statsText() {
+  let total = users.size, active = 0, opted = 0; const now = Date.now();
+  for (const [, s] of users) { if (now - (s.lastActive || 0) < 86400000) active++; if (s.optOut) opted++; }
+  return 'Duckdoku stats (in memory since last restart)\nKnown users: ' + total + '\nActive last 24h: ' + active + '\nOpted out: ' + opted;
+}
+async function handleCommand(m) {
+  const txt = String(m.text || '').trim(); const uid = m.from && m.from.id; const chat = m.chat.id;
+  const lang = ((m.from && m.from.language_code) || 'en').slice(0, 2) === 'ru' ? 'ru' : 'en';
+  noteUser(uid, { chatId: chat, lang, lastActive: Date.now(), first: m.from && m.from.first_name });
+  const cmd = (txt.match(/^\/([a-z]+)/) || [, ''])[1];
+  if (cmd === 'start') return tg('sendMessage', { chat_id: chat, text: welcomeText(m.from && (m.from.first_name || m.from.username)), reply_markup: playKb(lang) });
+  if (cmd === 'help' || cmd === 'howto' || cmd === 'how') return tg('sendMessage', { chat_id: chat, text: BOTMSG.help[lang], reply_markup: playKb(lang) });
+  if (cmd === 'faq') return tg('sendMessage', { chat_id: chat, text: BOTMSG.faq[lang], reply_markup: playKb(lang) });
+  if (cmd === 'about') return tg('sendMessage', { chat_id: chat, text: BOTMSG.about[lang], reply_markup: playKb(lang) });
+  if (cmd === 'support') return tg('sendMessage', { chat_id: chat, text: BOTMSG.support[lang] });
+  if (cmd === 'privacy') return tg('sendMessage', { chat_id: chat, text: BOTMSG.privacy[lang] });
+  if (cmd === 'terms') return tg('sendMessage', { chat_id: chat, text: BOTMSG.terms[lang] });
+  if (cmd === 'stop' || cmd === 'mute') { noteUser(uid, { optOut: true }); return tg('sendMessage', { chat_id: chat, text: BOTMSG.muted[lang] }); }
+  if (cmd === 'stats') { if (isAdmin(uid)) return tg('sendMessage', { chat_id: chat, text: statsText() }); return; }
+  if (cmd === 'preview') { if (isAdmin(uid)) return previewAll(chat, lang); return; }
+  // any other message: gentle nudge to play
+  return tg('sendMessage', { chat_id: chat, text: welcomeText(m.from && (m.from.first_name || m.from.username)), reply_markup: playKb(lang) });
+}
+
+// Register the bot profile: command list (EN + RU), description, menu button.
+const BOT_CMDS = [
+  { command: 'start', description: 'Play Duckdoku' },
+  { command: 'help', description: 'How to play' },
+  { command: 'faq', description: 'Frequently asked questions' },
+  { command: 'about', description: 'About Duckdoku' },
+  { command: 'support', description: 'Get help' },
+  { command: 'privacy', description: 'Privacy' },
+  { command: 'terms', description: 'Terms' },
+];
+async function configureBotProfile() {
+  if (!BOT_TOKEN) return;
+  await tg('setChatMenuButton', { menu_button: { type: 'web_app', text: 'Play', web_app: { url: GAME() } } });
+  await tg('setMyCommands', { commands: BOT_CMDS });
+  await tg('setMyCommands', { commands: BOT_CMDS, language_code: 'ru' });
+  await tg('setMyShortDescription', { short_description: 'A cozy duck logic puzzle. Find the hidden duck in every area. No ads.' });
+  await tg('setMyDescription', { description: 'Duckdoku is a cozy logic puzzle. A duck hides in one cell of every colored area. Find them all without two ducks sharing a row, a column, or touching. No ads.' });
+}
+
+// Secret-guarded endpoint so the local ship-notify script can DM the owner
+// without ever holding the bot token (token stays on the server).
+app.post('/api/ship-notify', async (req, res) => {
+  const secret = process.env.SHIP_SECRET || '';
+  if (!secret || req.headers['x-ship-key'] !== secret) return res.status(403).json({ error: 'forbidden' });
+  const text = String((req.body && req.body.text) || '').slice(0, 3800);
+  if (!text) return res.status(400).json({ error: 'no text' });
+  const ids = parseAdminIds(); let sent = 0;
+  for (const id of ids) { const r = await tg('sendMessage', { chat_id: id, text }); if (r && r.ok) sent++; }
+  res.json({ ok: true, sent });
+});
+
 app.get('/healthz', (req, res) => res.json({ ok: true, dbReady }));
 
 initSchema().finally(() => {
   app.listen(PORT, () => console.log(`Duckdoku server on :${PORT} (iap ${BOT_TOKEN ? 'on' : 'off'})`));
+  if (BOT_TOKEN) {
+    setTimeout(() => { configureBotProfile().catch(() => {}); }, 1500);
+    if (process.env.NOTIFY_OFF !== '1') setInterval(() => { notifyLoop().catch(() => {}); }, NOTIF_LOOP_MS);
+  }
 });

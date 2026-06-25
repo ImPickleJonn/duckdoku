@@ -1,6 +1,10 @@
 node_modules/
 dist/
 ref/
+www/
+android/
+ios/
+.gradle/
 brand/.env
 .env
 .env.local

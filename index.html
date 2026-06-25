@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FBF6E9">
+<title>Duckdoku</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#FBF6E9; --bg2:#F3E9CE; --ink:#5B4636; --ink-soft:#9C8B74;
+  --board-frame:#E8D6A8; --line-soft:rgba(91,70,54,.13); --line-hard:rgba(91,70,54,.55);
+  --accent:#FFC53D; --accent-deep:#F4A92B; --pond:#74C0E8; --pond-deep:#4FA3D6;
+  --good:#7FCF6B; --bad:#F0788A; --card:#FFFDF6; --shadow:rgba(120,90,40,.18);
+  --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; touch-action:manipulation;}
+html,body{margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Nunito",sans-serif; font-weight:800;}
+#app{position:fixed; inset:0;}
+.screen{position:absolute; inset:0; display:none; flex-direction:column; align-items:center;
+  padding:calc(var(--safe-top) + 8px) 12px calc(var(--safe-bot) + 12px);}
+.screen.on{display:flex;}
+.fill{flex:1;}
+button{font-family:inherit; font-weight:900; border:none; cursor:pointer; color:var(--ink);}
+.hidden{display:none !important;}
+
+/* ---------- HOME ---------- */
+#home{justify-content:flex-start; text-align:center;}
+.logo{font-size:13vw; letter-spacing:.5px; margin:3vh 0 0; line-height:1; text-shadow:0 3px 0 #fff, 0 5px 0 var(--accent-deep);}
+.logo b{color:var(--accent-deep);}
+.tag{color:var(--ink-soft); font-size:4.2vw; margin:8px 0 0;}
+.hero-wrap{width:min(60vw,290px); aspect-ratio:1; margin:2.5vh auto 1vh; position:relative;}
+.hero-wrap video,.hero-wrap img{width:100%; height:100%; object-fit:contain; border-radius:28px; background:transparent;}
+.menu{width:min(86vw,420px); display:flex; flex-direction:column; gap:11px; margin-top:1vh;}
+.btn{padding:17px; border-radius:20px; font-size:5vw; box-shadow:0 5px 0 var(--shadow); transition:transform .06s;}
+.btn:active{transform:translateY(3px); box-shadow:0 2px 0 var(--shadow);}
+.btn.play{background:var(--accent); color:#7a5a18;}
+.btn.zen{background:var(--pond); color:#1c4a63;}
+.btn.row{display:flex; gap:11px;}
+.btn.ghost{background:var(--card); color:var(--ink); font-size:4.2vw; flex:1; box-shadow:0 4px 0 var(--shadow);}
+.coins-line{display:flex; align-items:center; justify-content:center; gap:6px; color:var(--ink-soft); font-size:3.6vw; margin-top:10px; min-height:18px;}
+
+/* ---------- TOP BAR ---------- */
+.topbar{width:100%; max-width:480px; display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+.iconbtn{width:42px; height:42px; border-radius:14px; background:var(--card); box-shadow:0 3px 0 var(--shadow);
+  display:flex; align-items:center; justify-content:center; flex:none;}
+.iconbtn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--shadow);}
+.iconbtn svg{width:22px; height:22px;}
+.statusbox{flex:1; background:var(--card); border-radius:16px; box-shadow:0 3px 0 var(--shadow);
+  padding:7px 14px; display:flex; align-items:center; justify-content:space-between;}
+.statusbox .lvl{font-size:4.6vw;}
+.statusbox .lvl small{font-size:2.8vw; color:var(--ink-soft); letter-spacing:1px; display:block;}
+.hearts{display:flex; gap:3px;}
+.hearts svg{width:24px; height:24px;}
+
+/* ---------- OBJECTIVE BAR ---------- */
+.objbar{width:100%; max-width:480px; background:var(--card); border-radius:16px; box-shadow:0 3px 0 var(--shadow);
+  padding:8px 14px; margin-bottom:10px; display:flex; align-items:center; gap:10px;}
+.objbar .otext{flex:1; font-size:3.6vw; color:var(--ink);}
+.objbar .oprog{font-size:3.8vw; color:var(--accent-deep); white-space:nowrap;}
+
+/* ---------- QUEENS BOARD ---------- */
+.boardwrap{width:100%; max-width:min(94vw,460px); aspect-ratio:1; position:relative; margin:0 auto;}
+.qboard{position:absolute; inset:0; background:var(--board-frame); border-radius:18px; padding:7px;
+  box-shadow:0 6px 0 var(--shadow), inset 0 0 0 3px #fff7e0;}
+.qgrid{width:100%; height:100%; display:grid; border-radius:11px; overflow:hidden; background:var(--line-hard);}
+.qcell{position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+.qcell .duckicon{width:80%; height:80%; animation:duckpop .18s cubic-bezier(.34,1.56,.64,1);}
+.qcell .xmark{width:40%; height:40%; opacity:.5; pointer-events:none;}
+@keyframes duckpop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.qcell.bad{animation:cellbad .45s;}
+@keyframes cellbad{0%,100%{box-shadow:inset 0 0 0 0 var(--bad)} 30%,70%{box-shadow:inset 0 0 0 4px var(--bad)}}
+.qcell.hintp{animation:hintp 1.1s 2;}
+@keyframes hintp{0%,100%{box-shadow:inset 0 0 0 0 rgba(127,207,107,0)} 50%{box-shadow:inset 0 0 0 5px rgba(127,207,107,.95)}}
+.qcell.wrongduck{box-shadow:inset 0 0 0 3px var(--bad);}
+
+/* ---------- BOOSTERS ---------- */
+.boosters{width:100%; max-width:480px; display:flex; gap:10px; margin-top:12px;}
+.booster{flex:1; background:var(--card); border-radius:18px; box-shadow:0 4px 0 var(--shadow);
+  padding:9px 4px 7px; display:flex; flex-direction:column; align-items:center; gap:2px; position:relative;}
+.booster:active{transform:translateY(2px); box-shadow:0 2px 0 var(--shadow);}
+.booster.active{outline:3px solid var(--accent); background:#FFF6DA;}
+.booster svg{width:30px; height:30px;}
+.booster .bname{font-size:3vw; color:var(--ink-soft);}
+.booster .bcount{position:absolute; top:-7px; right:-5px; min-width:22px; height:22px; padding:0 5px;
+  background:var(--accent-deep); color:#fff; border-radius:11px; font-size:3.2vw; display:flex;
+  align-items:center; justify-content:center; box-shadow:0 2px 0 var(--shadow);}
+.booster .bcount.zero{background:var(--good);}
+
+/* ---------- MODALS ---------- */
+.scrim{position:fixed; inset:0; background:rgba(60,45,25,.45); display:none; align-items:center;
+  justify-content:center; z-index:80; padding:18px;}
+.scrim.on{display:flex;}
+.modal{width:min(92vw,420px); background:var(--bg); border-radius:26px; padding:22px 20px 20px;
+  box-shadow:0 12px 0 var(--shadow); text-align:center; max-height:92vh; overflow-y:auto;}
+.modal h2{font-size:7vw; margin:6px 0 2px;}
+.modal p{font-weight:700; color:var(--ink-soft); font-size:4vw; margin:6px 0 14px; line-height:1.4;}
+.modal .duckslot{width:min(46vw,200px); aspect-ratio:1; margin:0 auto 4px;}
+.modal .duckslot video,.modal .duckslot img{width:100%; height:100%; object-fit:contain; border-radius:22px;}
+.modal .btn{width:100%; margin-top:8px;}
+.winstars{display:flex; justify-content:center; gap:8px; margin:6px 0 4px;}
+.winstars svg{width:38px; height:38px;}
+.closex{position:absolute; top:14px; right:16px; width:38px; height:38px; border-radius:50%;
+  background:var(--card); box-shadow:0 3px 0 var(--shadow); z-index:2;}
+.modal-rel{position:relative;}
+.sku{display:flex; align-items:center; gap:12px; background:var(--card); border-radius:18px; padding:12px;
+  margin:8px 0; box-shadow:0 3px 0 var(--shadow); text-align:left;}
+.sku .sicon{width:46px; height:46px; flex:none; border-radius:14px; background:var(--bg2); display:flex; align-items:center; justify-content:center;}
+.sku .sicon svg{width:28px; height:28px;}
+.sku .smeta{flex:1;}
+.sku .stitle{font-size:4.2vw;} .sku .sdesc{font-size:3.2vw; color:var(--ink-soft); font-weight:700; margin-top:2px;}
+.sku .sbuy{background:var(--accent); color:#7a5a18; border-radius:14px; padding:10px 12px; font-size:3.8vw;
+  display:flex; align-items:center; gap:4px; box-shadow:0 3px 0 var(--shadow); white-space:nowrap;}
+.sku .sbuy:active{transform:translateY(2px); box-shadow:0 1px 0 var(--shadow);}
+.star{width:16px; height:16px; display:inline-block;}
+
+/* tutorial coach */
+.coach{position:fixed; left:0; right:0; bottom:calc(var(--safe-bot) + 14px); z-index:90; display:none; justify-content:center; padding:0 16px; pointer-events:none;}
+.coach.on{display:flex;}
+.coach .bubble{background:var(--ink); color:#fff; border-radius:18px; padding:12px 16px; font-size:4vw; max-width:440px; box-shadow:0 6px 0 rgba(0,0,0,.2); text-align:center; pointer-events:auto;}
+
+/* fx + toast */
+.fx{position:fixed; inset:0; pointer-events:none; z-index:70;}
+.confetti{position:absolute; width:9px; height:14px; border-radius:2px;}
+.toast{position:fixed; left:50%; transform:translateX(-50%); bottom:calc(var(--safe-bot) + 92px);
+  background:var(--ink); color:#fff; padding:11px 18px; border-radius:14px; font-size:3.8vw; z-index:95;
+  opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; max-width:88vw; text-align:center;}
+.toast.on{opacity:1; transform:translateX(-50%) translateY(-6px);}
+.shake{animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-5px,2px)}75%{transform:translate(5px,-2px)}}
+
+/* levels map */
+.lvlgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; padding:6px 2px 20px;}
+.lvlnode{aspect-ratio:1; border-radius:18px; background:var(--card); box-shadow:0 4px 0 var(--shadow);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:6vw; position:relative;}
+.lvlnode.locked{background:var(--bg2); color:var(--ink-soft);}
+.lvlnode.done{background:var(--accent); color:#7a5a18;}
+.lvlnode.cur{outline:3px solid var(--accent-deep);}
+.lvlnode .stars{display:flex; gap:1px; margin-top:2px;}
+.lvlnode .stars svg{width:11px; height:11px;}
+.lvlnode .sz{position:absolute; bottom:5px; font-size:2.6vw; color:var(--ink-soft); font-weight:800;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ HOME ============ -->
+  <section id="home" class="screen on">
+    <div class="logo">Duck<b>doku</b></div>
+    <div class="tag" id="tagline">A cozy duck logic puzzle</div>
+    <div class="hero-wrap">
+      <video id="heroVid" autoplay loop muted playsinline poster="assets/ducks/hero-frame.png">
+        <source src="assets/ducks/hero.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="menu">
+      <button class="btn play" id="btnPlay" data-i="play">Adventure</button>
+      <button class="btn zen" id="btnZen" data-i="zen">Zen</button>
+      <div class="btn row">
+        <button class="btn ghost" id="btnDaily" data-i="daily">Daily</button>
+        <button class="btn ghost" id="btnShop" data-i="shop">Shop</button>
+        <button class="btn ghost" id="btnHowHome" data-i="howto">How to play</button>
+      </div>
+    </div>
+    <div class="coins-line"><span id="streakLine"></span></div>
+    <div class="fill"></div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="game" class="screen">
+    <div class="topbar">
+      <button class="iconbtn" id="btnBack" aria-label="back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="statusbox">
+        <div class="lvl"><small id="lvlLabel">LEVEL</small><span id="levelVal">1</span></div>
+        <div class="hearts" id="hearts"></div>
+      </div>
+      <button class="iconbtn" id="btnRestart" aria-label="restart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
+      </button>
+      <button class="iconbtn" id="btnSound" aria-label="sound">
+        <svg id="soundIcon" viewBox="0 0 24 24" fill="#5B4636"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16 8c1.5 1 1.5 7 0 8" stroke="#5B4636" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="objbar" id="objbar">
+      <div class="otext" id="objText">One duck per area. None touching.</div>
+      <div class="oprog" id="objProg">0/5</div>
+    </div>
+
+    <div class="boardwrap"><div class="qboard"><div class="qgrid" id="grid"></div></div></div>
+
+    <div class="boosters" id="boosters">
+      <button class="booster" id="bsUndo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>
+        <span class="bname" data-i="undo">Undo</span><span class="bcount" id="cntUndo">0</span>
+      </button>
+      <button class="booster" id="bsHint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+        <span class="bname" data-i="hint">Hint</span><span class="bcount" id="cntHint">0</span>
+      </button>
+      <button class="booster" id="bsDuck">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="2.1" stroke-linejoin="round"><path d="M14 8.5a3 3 0 1 0-3.6 2.94C9.5 14 7 15 5 15c2.5 3 6 4 9 3 3.5-1.2 5-4 5-7 0-1-.3-2-1-2.8L21 7l-3 .2A3 3 0 0 0 14 8.5z" fill="#FFD23F" stroke="#5B4636"/><circle cx="13" cy="8" r=".9" fill="#5B4636" stroke="none"/></svg>
+        <span class="bname" data-i="placeduck">Place</span><span class="bcount" id="cntDuck">0</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ LEVELS MAP ============ -->
+  <section id="levels" class="screen">
+    <div class="topbar">
+      <button class="iconbtn" id="btnLvlBack" aria-label="back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="statusbox"><div class="lvl" style="flex:1;text-align:center" data-i="adventure">Adventure</div></div>
+      <div style="width:42px"></div>
+    </div>
+    <div style="width:100%;max-width:480px;overflow-y:auto;flex:1"><div class="lvlgrid" id="lvlgrid"></div></div>
+  </section>
+
+</div>
+
+<!-- ============ SCRIMS ============ -->
+<div class="scrim" id="scrimWin"><div class="modal modal-rel">
+  <div class="duckslot"><video id="winVid" autoplay loop playsinline poster="assets/ducks/victory-frame.png"><source src="assets/ducks/victory.mp4" type="video/mp4"></video></div>
+  <h2 id="winTitle">Solved!</h2>
+  <div class="winstars" id="winStars"></div>
+  <p id="winSub">The duck plays a victory fanfare for you.</p>
+  <button class="btn play" id="btnNext" data-i="next">Next level</button>
+  <button class="btn ghost" id="btnWinHome" data-i="home">Home</button>
+</div></div>
+
+<div class="scrim" id="scrimLose"><div class="modal modal-rel">
+  <div class="duckslot"><video id="loseVid" autoplay loop playsinline poster="assets/ducks/defeat-frame.png"><source src="assets/ducks/defeat.mp4" type="video/mp4"></video></div>
+  <h2 id="loseTitle">Out of hearts</h2>
+  <p id="loseSub">No worries. Try the puzzle again?</p>
+  <button class="btn play" id="btnRetry" data-i="retry">Try again</button>
+  <button class="btn ghost" id="btnLoseHome" data-i="home">Home</button>
+</div></div>
+
+<div class="scrim" id="scrimLevelUp"><div class="modal modal-rel">
+  <div class="duckslot"><video id="luVid" autoplay loop muted playsinline poster="assets/ducks/levelup-frame.png"><source src="assets/ducks/levelup.mp4" type="video/mp4"></video></div>
+  <h2 data-i="levelup">Level up!</h2>
+  <p id="luSub">The duck is proud of you.</p>
+  <button class="btn play" id="btnLuOk" data-i="keepgoing">Keep going</button>
+</div></div>
+
+<div class="scrim" id="scrimShop"><div class="modal modal-rel">
+  <button class="closex" id="shopClose"><svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h2 data-i="shop">Shop</h2>
+  <p data-i="shopsub">Boosters to help you. No ads, ever.</p>
+  <div id="skuList"></div>
+</div></div>
+
+<div class="scrim" id="scrimHow"><div class="modal modal-rel">
+  <button class="closex" id="howClose"><svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h2 data-i="howto">How to play</h2>
+  <div style="text-align:left;font-weight:700;color:var(--ink-soft);font-size:3.9vw;line-height:1.5" id="howBody"></div>
+  <button class="btn play" id="howOk" data-i="gotit">Got it</button>
+</div></div>
+
+<div class="fx" id="fx"></div>
+<div class="coach" id="coach"><div class="bubble" id="coachBubble"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* =================================================================
+   DUCKDOKU - cute-duck Queens / Star-Battle logic puzzle.
+   Place one duck per colored region; no two ducks share a row,
+   column, or touch (even diagonally). Tap cycles empty / X / duck.
+   No ads. 3 boosters via Telegram Stars.
+   ================================================================= */
+const TG = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+try{ if(TG){ TG.ready(); TG.expand(); TG.setHeaderColor&&TG.setHeaderColor('#FBF6E9'); TG.disableVerticalSwipes&&TG.disableVerticalSwipes(); } }catch(e){}
+const initData = TG && TG.initData ? TG.initData : '';
+// API lives on Render; the game is served from Cloudflare Pages. Point the
+// client at the Render API unless we are local or already on Render itself.
+const API_BASE = (function(){ const h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h.endsWith('.onrender.com')) return ''; return 'https://duckdoku.onrender.com'; })();
+function haptic(k){ try{ if(!TG||!TG.HapticFeedback)return; const H=TG.HapticFeedback;
+  if(k==='light')H.impactOccurred('light'); else if(k==='med')H.impactOccurred('medium'); else if(k==='heavy')H.impactOccurred('heavy');
+  else if(k==='ok')H.notificationOccurred('success'); else if(k==='err')H.notificationOccurred('error'); else if(k==='warn')H.notificationOccurred('warning'); }catch(e){} }
+
+/* ---------- i18n ---------- */
+const I18N={
+  en:{ play:"Adventure", zen:"Zen", daily:"Daily", shop:"Shop", howto:"How to play",
+    undo:"Undo", hint:"Hint", placeduck:"Place", next:"Next level", home:"Home", retry:"Try again",
+    levelup:"Level up!", keepgoing:"Keep going", gotit:"Got it", adventure:"Adventure",
+    shopsub:"Boosters to help you. No ads, ever.", tagline:"A cozy duck logic puzzle" },
+  ru:{ play:"Кампания", zen:"Дзен", daily:"Ежедневный", shop:"Магазин", howto:"Как играть",
+    undo:"Назад", hint:"Подсказка", placeduck:"Утка", next:"Дальше", home:"Домой", retry:"Заново",
+    levelup:"Новый уровень!", keepgoing:"Играть", gotit:"Понятно", adventure:"Кампания",
+    shopsub:"Бустеры в помощь. Без рекламы.", tagline:"Уютный пазл с уткой" },
+};
+let LANG=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.language_code||navigator.language||'en').slice(0,2);
+if(!I18N[LANG]) LANG='en';
+function t(k){ return (I18N[LANG]&&I18N[LANG][k])||I18N.en[k]||k; }
+function L(en,ru){ return LANG==='ru'?ru:en; }
+function applyI18n(){ document.querySelectorAll('[data-i]').forEach(el=>{ const k=el.getAttribute('data-i'); el.textContent=t(k); }); }
+
+/* ---------- save ---------- */
+const SAVE_KEY='duckdoku.save.v1';
+const DEFAULT_SAVE={ levelsDone:0, stars:{}, boosters:{undo:3,hint:3,placeduck:2}, zenBest:0,
+  tutorialDone:false, sound:true, streak:0, lastPlayYMD:null, lastDailyYMD:null };
+let save=loadSave();
+function loadSave(){ try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(s) return Object.assign({},DEFAULT_SAVE,s,{boosters:Object.assign({},DEFAULT_SAVE.boosters,s.boosters)}); }catch(e){} return JSON.parse(JSON.stringify(DEFAULT_SAVE)); }
+let saveTimer=null;
+function persist(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(save)); }catch(e){} clearTimeout(saveTimer); saveTimer=setTimeout(cloudSave,1500); }
+function cloudSave(){ if(!initData)return; try{ fetch(API_BASE+'/api/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,save,lang:LANG})}).catch(()=>{}); }catch(e){} }
+async function cloudLoad(){ if(!initData)return; try{ const r=await fetch(API_BASE+'/api/sync/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})}); const j=await r.json(); if(j&&j.save&&(j.save.levelsDone||0)>=(save.levelsDone||0)&&(j.save.levelsDone||j.save.zenBest)){ save=Object.assign({},DEFAULT_SAVE,j.save,{boosters:Object.assign({},DEFAULT_SAVE.boosters,j.save.boosters)}); refreshHome(); } }catch(e){} }
+
+/* ---------- seeded RNG (deterministic puzzles) ---------- */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function shuffle(arr,rng){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+/* ---------- puzzle generation ---------- */
+// solution: cols[r] = column of the duck in row r. Permutation with
+// |cols[r]-cols[r-1]|>=2 (guarantees no two ducks touch, incl diagonally).
+function genSolution(N,rng){
+  const cols=new Array(N).fill(-1), used=new Array(N).fill(false);
+  function bt(r){ if(r===N)return true; const order=shuffle([...Array(N).keys()],rng);
+    for(const c of order){ if(used[c])continue; if(r>0&&Math.abs(c-cols[r-1])<2)continue; cols[r]=c; used[c]=true; if(bt(r+1))return true; used[c]=false; cols[r]=-1; }
+    return false; }
+  return bt(0)?cols:null;
+}
+// regions: contiguous flood-grow from each solution duck cell.
+function genRegions(N,solCols,rng){
+  const region=Array.from({length:N},()=>new Array(N).fill(-1));
+  const cand=[];
+  const add=(r,c,reg)=>{ if(r<0||c<0||r>=N||c>=N)return; if(region[r][c]!==-1)return; cand.push([r,c,reg]); };
+  for(let r=0;r<N;r++){ region[r][solCols[r]]=r; add(r-1,solCols[r],r);add(r+1,solCols[r],r);add(r,solCols[r]-1,r);add(r,solCols[r]+1,r); }
+  let remaining=N*N-N, guard=0;
+  while(remaining>0&&cand.length&&guard++<N*N*8){ const i=Math.floor(rng()*cand.length); const [r,c,reg]=cand.splice(i,1)[0]; if(region[r][c]!==-1)continue; region[r][c]=reg; remaining--; add(r-1,c,reg);add(r+1,c,reg);add(r,c-1,reg);add(r,c+1,reg); }
+  if(remaining>0){ // safety: assign any stragglers to a neighbor region
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++) if(region[r][c]===-1){ const ns=[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].filter(([a,b])=>a>=0&&b>=0&&a<N&&b<N&&region[a][b]!==-1); if(ns.length){ region[r][c]=region[ns[0][0]][ns[0][1]]; } else region[r][c]=0; }
+  }
+  return region;
+}
+function countSolutions(N,region,limit){
+  const byReg=Array.from({length:N},()=>[]);
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++) byReg[region[r][c]].push([r,c]);
+  const order=[...Array(N).keys()].sort((a,b)=>byReg[a].length-byReg[b].length);
+  const uR=new Array(N).fill(false), uC=new Array(N).fill(false), placed=[];
+  let count=0;
+  const adjOk=(r,c)=>{ for(const[pr,pc]of placed){ if(Math.abs(pr-r)<=1&&Math.abs(pc-c)<=1)return false; } return true; };
+  function bt(k){ if(count>=limit)return; if(k===N){ count++; return; } const reg=order[k];
+    for(const[r,c]of byReg[reg]){ if(uR[r]||uC[c]||!adjOk(r,c))continue; uR[r]=uC[c]=true; placed.push([r,c]); bt(k+1); placed.pop(); uR[r]=uC[c]=false; if(count>=limit)return; } }
+  bt(0); return count;
+}
+function generatePuzzle(N,seed){
+  for(let attempt=0;attempt<500;attempt++){
+    const rng=mulberry32((seed^(attempt*2654435761))>>>0);
+    const sol=genSolution(N,rng); if(!sol)continue;
+    const region=genRegions(N,sol,rng);
+    if(countSolutions(N,region,2)===1) return {N,region,solCols:sol};
+  }
+  // fallback: accept a valid (maybe non-unique) board so play never blocks
+  const rng=mulberry32(seed>>>0); const sol=genSolution(N,rng)||[...Array(N).keys()];
+  return {N,region:genRegions(N,sol,rng),solCols:sol};
+}
+function levelSize(idx){ const lv=idx+1; if(lv<=4)return 5; if(lv<=10)return 6; if(lv<=18)return 7; if(lv<=28)return 8; return 9; }
+const TOTAL_LEVELS=40;
+
+/* ---------- region palette + icons ---------- */
+const REGION_COLORS=['#F7B9B0','#F8D7A0','#FBEFA6','#CDE9A6','#A9E3D0','#A9D6F1','#BBC6F1','#DBBBF0','#F2BBE0','#DCC8AC'];
+const DUCK_SVG='<svg class="duckicon" viewBox="0 0 48 48"><ellipse cx="22" cy="32" rx="15" ry="11.5" fill="#FFD23F" stroke="#5B4636" stroke-width="2.4"/><path d="M9 33 q-6 0 -8 4 q5 3 11 0 z" fill="#FFC53D" stroke="#5B4636" stroke-width="2.4" stroke-linejoin="round"/><circle cx="31" cy="18" r="9.5" fill="#FFD23F" stroke="#5B4636" stroke-width="2.4"/><path d="M39 17 l8 1.5 -8 4 z" fill="#FF9F45" stroke="#5B4636" stroke-width="2.4" stroke-linejoin="round"/><circle cx="33" cy="16" r="1.9" fill="#5B4636"/><circle cx="35" cy="22" r="2.2" fill="#F58CA8" opacity=".75"/></svg>';
+const X_SVG='<svg class="xmark" viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="3.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function heartSvg(on){ return '<svg viewBox="0 0 24 24" fill="'+(on?'#F0788A':'#E2D2BC')+'"><path d="M12 21s-7-4.4-9.5-9C1 8.4 3 5 6.4 5c2 0 3.4 1.4 5.6 3.6C14.2 6.4 15.6 5 17.6 5 21 5 23 8.4 21.5 12c-2.5 4.6-9.5 9-9.5 9z"/></svg>'; }
+function starSvg(on){ return '<svg viewBox="0 0 24 24" fill="'+(on?'#FFC53D':'#E4D0A0')+'" stroke="#F4A92B" stroke-width="1"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>'; }
+
+/* ---------- game state ---------- */
+const EMPTY=0, MARK=1, DUCK=2;
+let puzzle=null, N=5, gstate=null, hearts=3, duckCount=0, mode='levels', levelIdx=0;
+let heartsEnabled=true, history=[], boostersUsedThisLevel=0, heartsLostThisLevel=0, ended=false;
+
+function startLevel(m, idx){
+  mode=m; levelIdx=idx||0; ended=false; boostersUsedThisLevel=0; heartsLostThisLevel=0; history=[];
+  if(m==='levels'){ N=levelSize(levelIdx); puzzle=generatePuzzle(N, 7000+levelIdx*131); heartsEnabled=true; }
+  else if(m==='daily'){ const d=new Date(); const seed=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); N=7; puzzle=generatePuzzle(N, seed); heartsEnabled=true; }
+  else { N=Math.min(9,6+Math.floor((save.zenSolved||0)/4)); puzzle=generatePuzzle(N, (Math.random()*1e9)>>>0); heartsEnabled=false; }
+  gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));
+  hearts=3; duckCount=0;
+  buildGrid(); renderAll(); show('game');
+  if(!save.tutorialDone && m==='levels' && levelIdx===0) startTutorial();
+}
+
+/* ---------- conflict logic ---------- */
+function conflictAt(r,c){ // assumes cell would be a duck; returns true if it violates a rule vs OTHER ducks
+  for(let i=0;i<N;i++){ if(i!==c && gstate[r][i]===DUCK) return true; if(i!==r && gstate[i][c]===DUCK) return true; }
+  const reg=puzzle.region[r][c];
+  for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++){ if(rr===r&&cc===c)continue; if(gstate[rr][cc]===DUCK && puzzle.region[rr][cc]===reg) return true; }
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){ if(!dr&&!dc)continue; const rr=r+dr,cc=c+dc; if(rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===DUCK) return true; }
+  return false;
+}
+function conflictingCells(r,c){ const out=[]; const reg=puzzle.region[r][c];
+  for(let i=0;i<N;i++){ if(i!==c&&gstate[r][i]===DUCK)out.push([r,i]); if(i!==r&&gstate[i][c]===DUCK)out.push([i,c]); }
+  for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++){ if((rr!==r||cc!==c)&&gstate[rr][cc]===DUCK&&puzzle.region[rr][cc]===reg)out.push([rr,cc]); }
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){ if(!dr&&!dc)continue; const rr=r+dr,cc=c+dc; if(rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===DUCK)out.push([rr,cc]); }
+  return out;
+}
+
+/* ---------- input: tap cycles empty -> X -> duck -> empty ---------- */
+function snapshot(){ history.push({ g:gstate.map(row=>row.slice()), hearts, duckCount }); if(history.length>30)history.shift(); }
+function onCellTap(r,c){ if(ended)return; const cur=gstate[r][c];
+  if(cur===EMPTY){ snapshot(); gstate[r][c]=MARK; renderCell(r,c); haptic('light'); soundTick(); persistTutorialStep('mark'); }
+  else if(cur===MARK){ tryPlaceDuck(r,c); }
+  else { snapshot(); gstate[r][c]=EMPTY; duckCount--; renderCell(r,c); haptic('light'); }
+  updateObj();
+}
+function tryPlaceDuck(r,c){
+  if(conflictAt(r,c)){ // a mistake
+    const bad=conflictingCells(r,c).concat([[r,c]]); flashBad(bad); haptic('err'); soundBad();
+    if(heartsEnabled){ hearts--; heartsLostThisLevel++; renderHearts();
+      if(hearts<=0){ // revert the mark and end
+        gstate[r][c]=EMPTY; renderCell(r,c); onLose(); return; }
+    }
+    gstate[r][c]=EMPTY; renderCell(r,c); return;
+  }
+  snapshot(); gstate[r][c]=DUCK; duckCount++; renderCell(r,c); haptic('med'); soundPlace();
+  persistTutorialStep('duck');
+  if(duckCount===N) onWin();
+}
+function flashBad(cells){ cells.forEach(([r,c])=>{ const el=cellEl(r,c); if(el){ el.classList.add('bad'); setTimeout(()=>el.classList.remove('bad'),450); } }); shakeBoard(); }
+
+/* ---------- win / lose ---------- */
+function onWin(){ ended=true; haptic('ok'); soundWin(); confettiRain();
+  const stars=starsForWin();
+  if(mode==='levels'){ save.levelsDone=Math.max(save.levelsDone, levelIdx+1); save.stars[levelIdx]=Math.max(save.stars[levelIdx]||0, stars); grantFreeBooster(levelIdx+1); persist();
+    $('winTitle').textContent=L("Level "+(levelIdx+1)+" solved!","Уровень "+(levelIdx+1)+" пройден!"); $('winStars').innerHTML=starsForWin(true); }
+  else if(mode==='daily'){ const d=new Date(); save.lastDailyYMD=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); persist(); $('winTitle').textContent=L("Daily solved!","Ежедневный решён!"); $('winStars').innerHTML=starsForWin(true); }
+  else { save.zenSolved=(save.zenSolved||0)+1; save.zenBest=Math.max(save.zenBest||0,N); persist(); $('winTitle').textContent=L("Solved!","Решено!"); $('winStars').innerHTML=''; }
+  $('winSub').textContent=L("The duck plays a victory fanfare for you.","Утка трубит победный сигнал в твою честь.");
+  $('btnNext').textContent = mode==='zen'? L("Next puzzle","Дальше") : t('next');
+  playDuck('winVid',false); openScrim('scrimWin');
+}
+function starsForWin(asHtml){ let s=3; if(heartsLostThisLevel>=1)s--; if(boostersUsedThisLevel>=1)s--; s=Math.max(1,s); if(!asHtml)return s; let h=''; for(let i=0;i<3;i++)h+=starSvg(i<s); return h; }
+function onLose(){ ended=true; haptic('err'); soundLose(); $('loseTitle').textContent=L("Out of hearts","Сердца закончились"); $('loseSub').textContent=L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова."); playDuck('loseVid',false); openScrim('scrimLose'); }
+
+/* ---------- boosters ---------- */
+function useUndo(){ if(ended)return; if(save.boosters.undo<=0){ outOf('undo'); return; } if(!history.length){ toast(L("Nothing to undo","Нечего отменять")); return; } save.boosters.undo--; boostersUsedThisLevel++; const h=history.pop(); gstate=h.g; hearts=h.hearts; duckCount=h.duckCount; persist(); renderAll(); haptic('light'); }
+function useHint(){ if(ended)return; if(save.boosters.hint<=0){ outOf('hint'); return; } const mv=computeHint(); if(!mv){ toast(L("Looks good so far","Пока всё верно")); return; } save.boosters.hint--; boostersUsedThisLevel++; persist(); pulseCell(mv.r,mv.c); renderBoosters(); haptic('med'); toast(mv.msg); }
+function usePlaceDuck(){ if(ended)return; if(save.boosters.placeduck<=0){ outOf('placeduck'); return; } const cell=placeOneCorrect(); if(!cell){ toast(L("All ducks placed","Все утки на месте")); return; } save.boosters.placeduck--; boostersUsedThisLevel++; persist(); renderBoosters(); haptic('ok'); soundPlace(); if(duckCount===N) onWin(); }
+function outOf(which){ toast(L("Out of "+which,"Бустеры закончились")); openShop(); }
+function grantBoosters(g){ if(!g||!g.boosters)return; for(const k in g.boosters) save.boosters[k]=(save.boosters[k]||0)+g.boosters[k]; persist(); renderBoosters(); }
+function grantFreeBooster(lvl){ if(lvl%3===0){ const order=['hint','undo','placeduck']; const pick=order[(lvl/3-1)%3]; save.boosters[pick]=(save.boosters[pick]||0)+1; toast(L("+1 "+pick+" booster","+1 бустер")); } }
+
+function computeHint(){ // 1) flag a wrong duck; 2) point to a correct missing duck
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){ if(gstate[r][c]===DUCK && puzzle.solCols[r]!==c) return {r,c,msg:L("This duck looks misplaced","Эта утка стоит не там")}; }
+  for(let r=0;r<N;r++){ const c=puzzle.solCols[r]; if(gstate[r][c]!==DUCK) return {r,c,msg:L("A duck belongs around here","Утка где-то здесь")}; }
+  return null;
+}
+function placeOneCorrect(){
+  for(let r=0;r<N;r++){ const c=puzzle.solCols[r]; if(gstate[r][c]!==DUCK){
+    snapshot();
+    // remove any of the player's ducks that conflict with this correct cell (they must be wrong)
+    conflictingCells(r,c).forEach(([rr,cc])=>{ if(gstate[rr][cc]===DUCK){ gstate[rr][cc]=EMPTY; duckCount--; renderCell(rr,cc); } });
+    gstate[r][c]=DUCK; duckCount++; renderCell(r,c); pulseCell(r,c); return {r,c};
+  } }
+  return null;
+}
+
+/* ---------- DOM + render ---------- */
+function $(id){ return document.getElementById(id); }
+function show(scr){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===scr)); }
+let cellEls=[];
+function buildGrid(){ const g=$('grid'); g.style.gridTemplateColumns='repeat('+N+',1fr)'; g.style.gridTemplateRows='repeat('+N+',1fr)'; g.innerHTML=''; cellEls=[];
+  for(let r=0;r<N;r++){ const row=[]; for(let c=0;c<N;c++){ const d=document.createElement('div'); d.className='qcell'; d.dataset.r=r; d.dataset.c=c;
+    const reg=puzzle.region[r][c]; d.style.background=REGION_COLORS[reg%REGION_COLORS.length];
+    const top=(r===0)||puzzle.region[r-1][c]!==reg, left=(c===0)||puzzle.region[r][c-1]!==reg, bot=(r===N-1)||puzzle.region[r+1][c]!==reg, right=(c===N-1)||puzzle.region[r][c+1]!==reg;
+    d.style.borderTop=(top?'2.5px solid var(--line-hard)':'1px solid var(--line-soft)');
+    d.style.borderLeft=(left?'2.5px solid var(--line-hard)':'1px solid var(--line-soft)');
+    d.style.borderBottom=(bot?'2.5px solid var(--line-hard)':'1px solid var(--line-soft)');
+    d.style.borderRight=(right?'2.5px solid var(--line-hard)':'1px solid var(--line-soft)');
+    d.addEventListener('click',()=>onCellTap(r,c));
+    g.appendChild(d); row.push(d); } cellEls.push(row); }
+}
+function cellEl(r,c){ return cellEls[r]&&cellEls[r][c]; }
+function renderCell(r,c){ const el=cellEl(r,c); if(!el)return; const v=gstate[r][c]; el.classList.remove('wrongduck'); el.innerHTML = v===DUCK?DUCK_SVG : v===MARK?X_SVG : ''; }
+function renderBoard(){ for(let r=0;r<N;r++)for(let c=0;c<N;c++) renderCell(r,c); }
+function renderHearts(){ const h=$('hearts'); if(!heartsEnabled){ h.innerHTML=''; return; } let s=''; for(let i=0;i<3;i++)s+=heartSvg(i<hearts); h.innerHTML=s; }
+function renderHud(){ $('lvlLabel').textContent= mode==='zen'?L("ZEN","ДЗЕН"):mode==='daily'?L("DAILY","ДЕНЬ"):t('undo')&&L("LEVEL","УРОВЕНЬ"); $('levelVal').textContent= mode==='levels'?(levelIdx+1):(N+'x'+N); renderHearts(); }
+function renderBoosters(){ $('cntUndo').textContent=save.boosters.undo; $('cntHint').textContent=save.boosters.hint; $('cntDuck').textContent=save.boosters.placeduck;
+  [['undo','cntUndo'],['hint','cntHint'],['placeduck','cntDuck']].forEach(([k,c])=>{ const n=save.boosters[k],el=$(c); el.classList.toggle('zero',n<=0); el.textContent=n<=0?'+':n; }); }
+function updateObj(){ $('objText').textContent=L("One duck per area. None touching.","Одна утка в зоне. Не касаясь."); $('objProg').textContent=duckCount+'/'+N; }
+function renderAll(){ renderBoard(); renderHud(); renderBoosters(); updateObj(); }
+
+function pulseCell(r,c){ const el=cellEl(r,c); if(!el)return; el.classList.add('hintp'); setTimeout(()=>el.classList.remove('hintp'),2200); }
+
+/* ---------- fx ---------- */
+function shakeBoard(){ const b=document.querySelector('.boardwrap'); b.classList.add('shake'); setTimeout(()=>b.classList.remove('shake'),300); }
+function confettiRain(){ const cols=['#FFD23F','#FF9F45','#6FC1E8','#8BD17C','#F58CA8','#B79CE8']; for(let i=0;i<60;i++){ const cf=document.createElement('div'); cf.className='confetti'; cf.style.position='fixed'; cf.style.left=(Math.random()*100)+'vw'; cf.style.top='-20px'; cf.style.background=cols[i%cols.length]; cf.style.zIndex=85; cf.style.transition='transform '+(1.5+Math.random()*1.5)+'s linear, opacity .5s '+(1.2+Math.random())+'s'; document.body.appendChild(cf); requestAnimationFrame(()=>{ cf.style.transform='translateY('+(innerHeight+60)+'px) rotate('+(Math.random()*720)+'deg)'; cf.style.opacity='0'; }); setTimeout(()=>cf.remove(),3200); } }
+let toastTimer=null;
+function toast(m){ if(!m)return; const el=$('toast'); el.textContent=m; el.classList.add('on'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('on'),1900); }
+
+/* ---------- sound (procedural) ---------- */
+let actx=null, audioOn=save.sound;
+function ac(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return actx; }
+function blip(f,d,type,v){ if(!audioOn)return; const a=ac(); if(!a)return; const o=a.createOscillator(),g=a.createGain(); o.type=type||'sine'; o.frequency.value=f; g.gain.value=v||0.05; o.connect(g); g.connect(a.destination); const n=a.currentTime; g.gain.exponentialRampToValueAtTime(0.0001,n+d); o.start(n); o.stop(n+d); }
+function soundTick(){ blip(280,0.05,'sine',0.035); }
+function soundPlace(){ blip(523,0.1,'triangle',0.06); setTimeout(()=>blip(784,0.08,'triangle',0.05),70); }
+function soundBad(){ blip(180,0.18,'sawtooth',0.05); }
+function soundWin(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>blip(f,0.18,'triangle',0.07),i*110)); }
+function soundLose(){ [392,330,262].forEach((f,i)=>setTimeout(()=>blip(f,0.22,'sine',0.06),i*130)); }
+
+/* ---------- duck videos ---------- */
+let audioUnlocked=false;
+function unlockAudio(){ audioUnlocked=true; const a=ac(); if(a&&a.state==='suspended')a.resume(); document.removeEventListener('pointerdown',unlockAudio); }
+document.addEventListener('pointerdown',unlockAudio);
+function playDuck(id,forceMute){ const v=$(id); if(!v)return; try{ v.currentTime=0; v.muted=forceMute?true:!(audioOn&&audioUnlocked); const p=v.play(); if(p&&p.catch)p.catch(()=>{ v.muted=true; v.play().catch(()=>{}); }); }catch(e){} }
+
+/* ---------- scrims ---------- */
+function openScrim(id){ $(id).classList.add('on'); }
+function closeScrim(id){ $(id).classList.remove('on'); }
+function closeAll(){ document.querySelectorAll('.scrim').forEach(s=>s.classList.remove('on')); }
+
+/* ---------- shop + IAP ---------- */
+let SKUS_CACHE=null, iapEnabled=false;
+async function loadSkus(){ try{ const r=await fetch(API_BASE+'/api/skus'); const j=await r.json(); SKUS_CACHE=j.skus||[]; iapEnabled=!!j.enabled; }catch(e){ SKUS_CACHE=[]; } }
+function boosterIcon(k){ if(k==='hint')return '<svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="2.2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/><path d="M9 18h6"/></svg>'; if(k==='undo')return '<svg viewBox="0 0 24 24" fill="none" stroke="#5B4636" stroke-width="2.4" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>'; return '<svg viewBox="0 0 24 24" fill="#FFD23F" stroke="#5B4636" stroke-width="2"><path d="M14 8.5a3 3 0 1 0-3.6 2.94C9.5 14 7 15 5 15c2.5 3 6 4 9 3 3.5-1.2 5-4 5-7 0-1-.3-2-1-2.8L21 7l-3 .2A3 3 0 0 0 14 8.5z"/></svg>'; }
+function skuMainBooster(g){ if(!g||!g.boosters)return 'placeduck'; const ks=Object.keys(g.boosters); return ks.length>1?'placeduck':ks[0]; }
+function renderShop(){ const list=$('skuList'); list.innerHTML=''; if(!SKUS_CACHE||!SKUS_CACHE.length){ list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>'; return; }
+  const star='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';
+  SKUS_CACHE.forEach(s=>{ const row=document.createElement('div'); row.className='sku'; row.innerHTML='<div class="sicon">'+boosterIcon(skuMainBooster(s.grant))+'</div><div class="smeta"><div class="stitle">'+s.title+'</div><div class="sdesc">'+s.description+'</div></div><button class="sbuy">'+s.price+' '+star+'</button>'; row.querySelector('.sbuy').onclick=()=>buy(s.id); list.appendChild(row); });
+}
+function openShop(){ closeAll(); renderShop(); openScrim('scrimShop'); if(!SKUS_CACHE)loadSkus().then(renderShop); }
+async function buy(sku){ if(!iapEnabled||!initData){ toast(L("Open in Telegram to buy","Покупки в Telegram")); return; }
+  try{ const r=await fetch(API_BASE+'/api/create-invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sku,initData})}); const j=await r.json(); if(!j.link){ toast("Could not start payment"); return; }
+    TG.openInvoice(j.link, async(st)=>{ if(st==='paid'){ await pollPurchases(); toast(L("Thank you!","Спасибо!")); haptic('ok'); } }); }catch(e){ toast("Payment error"); }
+}
+async function pollPurchases(){ if(!initData)return; try{ const r=await fetch(API_BASE+'/api/poll-purchases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})}); const j=await r.json(); (j.purchases||[]).forEach(p=>grantBoosters(p.grant)); }catch(e){} }
+
+/* ---------- tutorial ---------- */
+let coachStep=-1;
+const COACH=[
+  {en:"Tap a cell to place a duck. Place one duck in every colored area.",ru:"Нажми на клетку, чтобы поставить утку. По одной утке в каждой зоне."},
+  {en:"Ducks cannot share a row or column, and cannot touch, not even diagonally.",ru:"Утки не могут стоять в одном ряду или столбце и не должны соприкасаться, даже по диагонали."},
+  {en:"Tap once for an X note to mark where no duck can go. Solve it with no mistakes!",ru:"Нажми один раз для пометки X, где утка не может стоять. Реши без ошибок!"},
+];
+function startTutorial(){ coachStep=0; showCoach(); }
+function showCoach(){ if(coachStep<0||coachStep>=COACH.length){ endTutorial(); return; } $('coachBubble').textContent=COACH[coachStep][LANG]||COACH[coachStep].en; $('coach').classList.add('on'); }
+function persistTutorialStep(kind){ if(coachStep<0)return; if(kind==='duck'&&coachStep===0){ coachStep=1; showCoach(); } else if(kind==='mark'&&coachStep>=1){ coachStep=COACH.length; endTutorial(); } }
+function endTutorial(){ coachStep=-1; $('coach').classList.remove('on'); if(!save.tutorialDone){ save.tutorialDone=true; persist(); } }
+
+/* ---------- levels map ---------- */
+function renderLevelsMap(){ const g=$('lvlgrid'); g.innerHTML=''; const unlocked=save.levelsDone;
+  for(let i=0;i<TOTAL_LEVELS;i++){ const locked=i>unlocked; const node=document.createElement('div'); node.className='lvlnode'+(locked?' locked':'')+(i<unlocked?' done':'')+(i===unlocked?' cur':'');
+    let inner='<div>'+(i+1)+'</div>'; if(i<unlocked){ const st=save.stars[i]||1; let s=''; for(let k=0;k<3;k++)s+=starSvg(k<st); inner+='<div class="stars">'+s+'</div>'; }
+    inner+='<div class="sz">'+levelSize(i)+'x'+levelSize(i)+'</div>'; node.innerHTML=inner; if(!locked)node.onclick=()=>{ closeAll(); startLevel('levels',i); }; g.appendChild(node); }
+}
+function openLevels(){ renderLevelsMap(); show('levels'); }
+
+/* ---------- home ---------- */
+function refreshHome(){ try{ const v=$('heroVid'); v.play&&v.play().catch(()=>{}); }catch(e){} const s=$('streakLine'); s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:''; }
+function ymd(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function touchStreak(){ const today=ymd(); if(save.lastPlayYMD===today)return; const y=new Date(Date.now()-86400000); const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate(); save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1; save.lastPlayYMD=today; persist(); }
+
+/* ---------- how-to ---------- */
+function fillHow(){ const en=[
+  "Place one duck in every colored area.",
+  "No two ducks can share a row or a column.",
+  "Ducks cannot touch each other, not even diagonally.",
+  "Tap a cell once for an X note, again for a duck, again to clear.",
+  "You have 3 hearts. A duck that breaks a rule costs one heart.",
+  "Stuck? Use Hint, Undo, or Place a Duck. No ads, boosters are Telegram Stars only."
+];
+  const ru=[
+  "Поставь по одной утке в каждой цветной зоне.",
+  "Две утки не могут стоять в одном ряду или столбце.",
+  "Утки не должны соприкасаться, даже по диагонали.",
+  "Нажми на клетку: метка X, затем утка, затем пусто.",
+  "У тебя 3 сердца. Утка, нарушившая правило, стоит одно сердце.",
+  "Застрял? Подсказка, Назад или Утка. Без рекламы, бустеры только за Telegram Stars."
+];
+  $('howBody').innerHTML=(LANG==='ru'?ru:en).map(x=>"<p style='margin:8px 0'>"+x+"</p>").join('');
+}
+
+/* ---------- wire up ---------- */
+function bind(){
+  $('btnPlay').onclick=()=>{ touchStreak(); openLevels(); };
+  $('btnZen').onclick=()=>{ touchStreak(); startLevel('zen',0); };
+  $('btnDaily').onclick=()=>{ touchStreak(); startLevel('daily',0); };
+  $('btnShop').onclick=openShop;
+  $('btnHowHome').onclick=()=>{ fillHow(); openScrim('scrimHow'); };
+  $('btnBack').onclick=()=>{ show('home'); refreshHome(); };
+  $('btnLvlBack').onclick=()=>{ show('home'); refreshHome(); };
+  $('btnRestart').onclick=()=>{ startLevel(mode,levelIdx); };
+  $('btnSound').onclick=()=>{ audioOn=!audioOn; save.sound=audioOn; persist(); $('soundIcon').style.opacity=audioOn?1:0.4; };
+  $('bsUndo').onclick=useUndo; $('bsHint').onclick=useHint; $('bsDuck').onclick=usePlaceDuck;
+  $('btnNext').onclick=()=>{ closeScrim('scrimWin'); if(mode==='levels'){ const nx=levelIdx+1; if(nx<TOTAL_LEVELS)startLevel('levels',nx); else { show('home'); refreshHome(); } } else if(mode==='zen'){ startLevel('zen',0); } else { show('home'); refreshHome(); } };
+  $('btnWinHome').onclick=()=>{ closeScrim('scrimWin'); show('home'); refreshHome(); };
+  $('btnRetry').onclick=()=>{ closeScrim('scrimLose'); startLevel(mode,levelIdx); };
+  $('btnLoseHome').onclick=()=>{ closeScrim('scrimLose'); show('home'); refreshHome(); };
+  $('btnLuOk').onclick=()=>closeScrim('scrimLevelUp');
+  $('shopClose').onclick=()=>closeScrim('scrimShop');
+  $('howClose').onclick=()=>closeScrim('scrimHow'); $('howOk').onclick=()=>closeScrim('scrimHow');
+}
+
+/* ---------- boot ---------- */
+function boot(){ applyI18n(); $('tagline').textContent=t('tagline'); bind(); fillHow(); refreshHome();
+  $('soundIcon').style.opacity=save.sound?1:0.4;
+  loadSkus(); pollPurchases(); cloudLoad();
+  if(initData){ try{ fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})}).catch(()=>{}); }catch(e){} }
+}
+boot();
+</script>
+</body>
+</html>

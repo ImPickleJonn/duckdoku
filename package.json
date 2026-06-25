@@ -1,0 +1,19 @@
+{
+  "name": "duckdoku",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Duckdoku — a cute block-sudoku puzzle for Telegram. No ads. Stars-only boosters.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "ducks": "node brand/gen-ducks.js",
+    "ducks:pro": "node brand/gen-ducks.js --pro"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.11.5"
+  }
+}

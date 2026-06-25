@@ -1,4 +1,6 @@
 node_modules/
+dist/
+ref/
 brand/.env
 .env
 .env.local

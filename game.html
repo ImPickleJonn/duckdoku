@@ -442,9 +442,13 @@ function onCellTap(r,c){
   updateCount();
 }
 function tryPlaceDuck(r,c,prev){
-  if(conflictAt(r,c)){const bad=conflictingCells(r,c).concat([[r,c]]);flashBad(bad);haptic('err');soundBad();
-    if(heartsEnabled){hearts--;heartsLost++;renderHearts();if(hearts<=0){if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}onLose();return;}}
-    if(gstate[r][c]===MARK){snapshot();gstate[r][c]=EMPTY;renderCell(r,c);}return;}
+  // The duck hides in ONE specific cell per region (the unique solution).
+  // Placing it anywhere else is a mistake and costs a heart.
+  if(puzzle.solCols[r]!==c){
+    flashBad([[r,c]]);haptic('err');soundBad();
+    if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}
+    if(heartsEnabled){hearts--;heartsLost++;renderHearts();if(hearts<=0)onLose();}
+    return;}
   snapshot();gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);haptic('med');soundPlace();onFtueAction('duck',r,c);
   if(duckCount===N&&!ftue)onWin(); else if(duckCount===N&&ftue&&ftue.active)onFtueWin();
 }

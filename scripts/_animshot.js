@@ -18,7 +18,7 @@ const URL = process.env.DD_URL || 'http://localhost:4055/game.html';
   const probe = () => page.evaluate(() => {
     const grid = document.getElementById('ddhGrid');
     const cells = Array.prototype.slice.call(grid.children);
-    const N = 5;
+    const N = Math.round(Math.sqrt(cells.length));
     let sig = '';
     for (let r = 0; r < N; r++) { for (let c = 0; c < N; c++) { const el = cells[r*N+c]; const x = el.querySelector('.ddh-x'); const host = el.classList.contains('ddh-host'); sig += host ? 'D' : (x && x.classList.contains('ddh-stamp')) ? 'X' : '.'; } sig += '/'; }
     return { stamped: document.querySelectorAll('.ddh-x.ddh-stamp').length, sig };

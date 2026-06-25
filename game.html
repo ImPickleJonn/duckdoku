@@ -50,16 +50,22 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .toptitle{font-size:5.4vw;color:var(--ink);}
 
 /* status row: count pill + hearts pill */
-.statusrow{width:100%;max-width:460px;display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px;}
-.pill{background:var(--card);border-radius:22px;box-shadow:0 3px 0 var(--shadow);padding:7px 14px;display:flex;align-items:center;gap:7px;}
-.pill .cnt{color:var(--green);font-size:4.6vw;}
-.pill .duckmini{width:26px;height:26px;}
-.hearts{display:flex;gap:4px;}
-.hearts svg{width:24px;height:24px;}
+.statusrow{width:100%;max-width:460px;display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px;}
+.progress{display:flex;align-items:center;gap:9px;background:var(--card);border-radius:24px;box-shadow:0 3px 0 var(--shadow);padding:5px 16px 5px 5px;}
+.pface{width:36px;height:36px;border-radius:50%;overflow:hidden;flex:none;background:#FBEFD2;box-shadow:inset 0 0 0 2.5px var(--orange);}
+.pface canvas{width:100%;height:100%;display:block;}
+.ptrack{width:80px;height:13px;border-radius:7px;background:#EEDFCD;overflow:hidden;}
+.pfill{height:100%;width:0;background:linear-gradient(180deg,#FBB44C,#E8942F);border-radius:7px;transition:width .3s;}
+.pcount{color:var(--green);font-size:4.6vw;min-width:40px;}
+.hearts{display:flex;gap:5px;}
+.hearts svg{width:28px;height:28px;filter:drop-shadow(0 2px 0 rgba(150,110,90,.12));}
 
 /* rules chips */
-.chips{width:100%;max-width:460px;display:flex;gap:7px;margin-bottom:12px;justify-content:center;flex-wrap:wrap;}
-.chip{background:var(--card);border-radius:14px;box-shadow:0 2px 0 var(--shadow);padding:7px 10px;font-size:2.9vw;color:var(--ink);font-weight:800;}
+.chips{width:100%;max-width:460px;display:flex;gap:0;margin-bottom:12px;background:var(--card);border-radius:18px;box-shadow:0 3px 0 var(--shadow);padding:9px 4px;}
+.chip{flex:1;display:flex;align-items:center;gap:6px;padding:2px 7px;font-size:2.65vw;color:var(--ink);font-weight:800;line-height:1.15;}
+.chip+.chip{border-left:2px solid var(--bg);}
+.chipvis{width:36px;height:36px;flex:none;}
+.chiptxt{flex:1;}
 
 /* ---------- BOARD ---------- */
 .boardwrap{width:100%;max-width:min(92vw,440px);aspect-ratio:1;position:relative;margin:0 auto;}
@@ -176,15 +182,19 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
     <div class="topbar">
       <button class="iconbtn" id="btnBack" aria-label="back"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <div class="toptitle" id="toptitle">Level 1</div>
-      <button class="iconbtn" id="btnGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.2"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.5 7.5 0 0 0 0-3l1.6-1.2-1.8-3.1-1.9.7a7.5 7.5 0 0 0-2.6-1.5L14.4 2h-3.6L10.5 4a7.5 7.5 0 0 0-2.6 1.5L6 4.8 4.2 7.9 5.8 9a7.5 7.5 0 0 0 0 3l-1.6 1.2 1.8 3.1 1.9-.7a7.5 7.5 0 0 0 2.6 1.5l.3 2.1h3.6l.3-2.1a7.5 7.5 0 0 0 2.6-1.5l1.9.7 1.8-3.1z" stroke-linejoin="round"/></svg></button>
-    </div>
-
-    <div class="statusrow" id="statusrow">
-      <div class="pill"><span class="duckmini" id="duckMini"></span><span class="cnt" id="countVal">0/5</span></div>
-      <div class="pill"><div class="hearts" id="hearts"></div></div>
+      <button class="iconbtn" id="btnGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44"><path d="M12 2.4c.95 0 1.78.62 2.04 1.5.66-.72 1.72-.92 2.6-.41.86.5 1.22 1.5.92 2.42.94-.22 1.92.27 2.27 1.18.34.9-.05 1.9-.9 2.36.85.46 1.24 1.46.9 2.36-.35.91-1.33 1.4-2.27 1.18.3.92-.06 1.92-.92 2.42-.88.51-1.94.31-2.6-.41-.26.88-1.09 1.5-2.04 1.5s-1.78-.62-2.04-1.5c-.66.72-1.72.92-2.6.41-.86-.5-1.22-1.5-.92-2.42-.94.22-1.92-.27-2.27-1.18-.34-.9.05-1.9.9-2.36-.85-.46-1.24-1.46-.9-2.36.35-.91 1.33-1.4 2.27-1.18-.3-.92.06-1.92.92-2.42.88-.51 1.94-.31 2.6.41.26-.88 1.09-1.5 2.04-1.5z"/><circle cx="12" cy="12" r="3.5" fill="#fff"/></svg></button>
     </div>
 
     <div class="chips" id="chips"></div>
+
+    <div class="statusrow" id="statusrow">
+      <div class="progress">
+        <div class="pface"><canvas class="pfacecv" width="72" height="72"></canvas></div>
+        <div class="ptrack"><div class="pfill" id="pfill"></div></div>
+        <div class="pcount" id="countVal">0/5</div>
+      </div>
+      <div class="hearts" id="hearts"></div>
+    </div>
 
     <div class="boardwrap"><div class="qboard" id="qboard"><div class="qgrid" id="grid"></div></div></div>
 
@@ -381,6 +391,7 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   used.forEach(s=>keyInto(s));
   if(gameOn&&gstate)for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]!==DUCK)continue;const el=cellEls[r]&&cellEls[r][c];if(!el)continue;const cv=el.querySelector('canvas.duckface');if(!cv)continue;const fx=faceFx.get(r*100+c);drawFace(cv,fx?fx.state:'idle');}
   if(boosterCv)drawFace(boosterCv,'happy');
+  if(gameOn&&gstate){const pf=document.querySelector('.pface canvas');if(pf)drawFace(pf,'idle');}
   if(winOn)drawFace($('winFace'),'happy');
   if(loseOn)drawFace($('loseFace'),'sad');}
 function duckReact(r,c,state,ms){if(faceVideosReady)faceFx.set(r*100+c,{state,until:Date.now()+(ms||1200)});}
@@ -477,10 +488,21 @@ function renderCell(r,c){const el=cellEl(r,c);if(!el)return;const v=gstate[r][c]
   if(v===DUCK)el.innerHTML=faceVideosReady?'<canvas class="duckface" width="100" height="100"></canvas>':DUCK_SVG;
   else el.innerHTML=v===MARK?X_SVG:'';}
 function renderBoard(){for(let r=0;r<N;r++)for(let c=0;c<N;c++)renderCell(r,c);}
-function renderHearts(){const h=$('hearts');if(!heartsEnabled){h.parentElement.style.display='none';return;}h.parentElement.style.display='';let s='';for(let i=0;i<3;i++)s+=heartSvg(i<hearts);h.innerHTML=s;}
-function updateCount(){$('countVal').textContent=duckCount+'/'+N;}
-function renderHud(){$('toptitle').textContent= mode==='levels'?L("Level ","Уровень ")+(levelIdx+1):mode==='daily'?L("Daily","Ежедневный"):L("Zen ","Дзен ")+N+'x'+N;$('duckMini').innerHTML=DUCK_MINI;updateCount();renderHearts();renderChips();}
-function renderChips(){const c=$('chips');c.innerHTML=[L("1 duck per color","1 утка на цвет"),L("1 per row and column","1 на ряд и столбец"),L("Ducks cannot touch","Утки не касаются")].map(x=>'<div class="chip">'+x+'</div>').join('');}
+function renderHearts(){const h=$('hearts');if(!heartsEnabled){h.style.display='none';return;}h.style.display='flex';let s='';for(let i=0;i<3;i++)s+=heartSvg(i<hearts);h.innerHTML=s;}
+function updateCount(){$('countVal').textContent=duckCount+'/'+N;const f=$('pfill');if(f)f.style.width=(N?Math.round(duckCount/N*100):0)+'%';}
+function renderHud(){$('toptitle').textContent= mode==='levels'?L("Level ","Уровень ")+(levelIdx+1):mode==='daily'?L("Daily","Ежедневный"):L("Zen ","Дзен ")+N+'x'+N;updateCount();renderHearts();renderChips();}
+function miniGrid(g){const cell=11,gap=2.5,pad=1,sz=3*cell+2*gap+2*pad;let s='<svg class="chipvis" viewBox="0 0 '+sz+' '+sz+'">';
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){const x=pad+c*(cell+gap),y=pad+r*(cell+gap),v=g[r][c],cx=x+cell/2,cy=y+cell/2;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+cell+'" height="'+cell+'" rx="3" fill="#E7D5B5"/>';
+    if(v==='x')s+='<path d="M'+(x+3)+' '+(y+3)+'L'+(x+cell-3)+' '+(y+cell-3)+'M'+(x+cell-3)+' '+(y+3)+'L'+(x+3)+' '+(y+cell-3)+'" stroke="#9C7B52" stroke-width="2" stroke-linecap="round"/>';
+    else if(v==='d')s+='<ellipse cx="'+cx+'" cy="'+(cy+1)+'" rx="'+(cell*0.34)+'" ry="'+(cell*0.3)+'" fill="#FFD23F"/><circle cx="'+(cx-1.6)+'" cy="'+cy+'" r="0.9" fill="#3A2A20"/><circle cx="'+(cx+1.6)+'" cy="'+cy+'" r="0.9" fill="#3A2A20"/><path d="M'+(cx-1.9)+' '+(cy+2.4)+' q1.9 1.9 3.8 0z" fill="#F2913C"/>';
+  }
+  return s+'</svg>';}
+function renderChips(){const c=$('chips');const items=[
+    {g:[['x','x','x'],['d','x','x'],['x','x','x']],t:L("1 Duck per color","1 утка на цвет")},
+    {g:[['d','x','x'],['x','',''],['x','','']],t:L("1 Duck per column and row","1 на столбец и ряд")},
+    {g:[['x','x','x'],['x','d','x'],['x','x','x']],t:L("Ducks cannot touch","Утки не касаются")}];
+  c.innerHTML=items.map(it=>'<div class="chip">'+miniGrid(it.g)+'<span class="chiptxt">'+it.t+'</span></div>').join('');}
 function renderBoosters(){[['undo','cntUndo'],['hint','cntHint'],['placeduck','cntDuck']].forEach(([k,id])=>{const n=save.boosters[k],el=$(id);el.classList.toggle('zero',n<=0);el.textContent=n<=0?'+':n;});}
 function renderAll(){renderBoard();renderHud();renderBoosters();}
 function pulseCell(r,c){const el=cellEl(r,c);if(!el)return;el.classList.add('spot');setTimeout(()=>el.classList.remove('spot'),1800);}

@@ -18,7 +18,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Nunito",sans-serif;font-weight:800;}
-#app{position:fixed;inset:0;transition:background .3s;}
+#app{position:fixed;inset:0;background:var(--bg);transition:background .3s;}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
   padding:calc(var(--safe-top) + 10px) 14px calc(var(--safe-bot) + 12px);}
 .screen.on{display:flex;}
@@ -54,12 +54,12 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 /* status row: count pill + hearts pill */
 .statusrow{width:100%;max-width:460px;display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px;}
 .progress{display:flex;align-items:center;gap:9px;background:var(--card);border-radius:24px;box-shadow:0 3px 0 var(--shadow);padding:5px 16px 5px 5px;}
-.pface{width:36px;height:36px;border-radius:50%;overflow:hidden;flex:none;background:#FBEFD2;box-shadow:inset 0 0 0 2.5px var(--orange);}
+.pface{width:42px;height:42px;flex:none;margin:-3px 0;}
 .pface canvas{width:100%;height:100%;display:block;}
 .ptrack{width:80px;height:13px;border-radius:7px;background:#EEDFCD;overflow:hidden;}
 .pfill{height:100%;width:0;background:linear-gradient(180deg,#FBB44C,#E8942F);border-radius:7px;transition:width .3s;}
 .pcount{color:var(--green);font-size:4.6vw;min-width:40px;}
-.hearts{display:flex;gap:5px;}
+.hearts{display:flex;gap:5px;background:var(--card);border-radius:24px;box-shadow:0 3px 0 var(--shadow);padding:7px 13px;}
 .hearts svg{width:28px;height:28px;filter:drop-shadow(0 2px 0 rgba(150,110,90,.12));}
 
 /* rules chips */
@@ -73,8 +73,9 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .boardspacer{height:clamp(10px,5vh,52px);flex:none;}
 .boardwrap{width:100%;max-width:min(92vw,440px);aspect-ratio:1;position:relative;margin:0 auto;}
 .qboard{position:absolute;inset:0;background:var(--card);border-radius:22px;padding:12px;box-shadow:0 6px 0 var(--shadow);}
-.qgrid{position:relative;width:100%;height:100%;display:grid;gap:6px;}
-.qcell{position:relative;border-radius:13px;display:flex;align-items:center;justify-content:center;z-index:1;
+.qgrid{position:relative;width:100%;height:100%;display:grid;gap:6px;touch-action:none;}
+@keyframes cellReveal{0%{transform:scale(0);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:1}}
+.qcell{position:relative;border-radius:13px;display:flex;align-items:center;justify-content:center;z-index:1;touch-action:none;
   box-shadow:inset 0 -3px 0 rgba(0,0,0,.10),inset 0 2px 0 rgba(255,255,255,.22);transition:filter .2s;}
 .qcell .duckface{width:82%;height:82%;animation:pop .16s cubic-bezier(.34,1.56,.64,1);}
 .qcell .xmark{width:62%;height:62%;animation:pop .12s ease;}
@@ -424,10 +425,20 @@ function conflictingCells(r,c){const out=[];const reg=puzzle.region[r][c];
   for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++){if((rr!==r||cc!==c)&&gstate[rr][cc]===DUCK&&puzzle.region[rr][cc]===reg)out.push([rr,cc]);}
   for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;if(rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===DUCK)out.push([rr,cc]);}return out;}
 
-/* ---------- input: single-tap = X, double-tap = duck ---------- */
+/* ---------- input: single-tap = X, double-tap = duck, swipe = paint X ---------- */
 let lastTapCell=null,lastTapTime=0;
+let paintMode=null,paintMoved=false,paintTouched=null,paintStart=null,suppressClick=false;
+function gridCellAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest?el.closest('.qcell'):null;}
+function paintApply(r,c){if(gstate[r][c]===DUCK)return;if(paintMode==='mark'){if(gstate[r][c]===EMPTY){gstate[r][c]=MARK;renderCell(r,c);}}else{if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}}}
+function bindPaint(){const g=$('grid');
+  g.addEventListener('pointerdown',e=>{ if(ended||(ftue&&ftue.active))return; const cell=e.target.closest&&e.target.closest('.qcell'); if(!cell)return; const r=+cell.dataset.r,c=+cell.dataset.c; if(gstate[r][c]===DUCK){paintMode=null;return;} paintMode=(gstate[r][c]===MARK)?'erase':'mark'; paintMoved=false; paintStart=[r,c]; paintTouched=new Set([r*100+c]); });
+  g.addEventListener('pointermove',e=>{ if(!paintMode)return; const cell=gridCellAt(e.clientX,e.clientY); if(!cell)return; const r=+cell.dataset.r,c=+cell.dataset.c,key=r*100+c; if(!paintMoved){ if(r===paintStart[0]&&c===paintStart[1])return; paintMoved=true; snapshot(); haptic('light'); paintApply(paintStart[0],paintStart[1]); } if(paintTouched.has(key))return; paintTouched.add(key); paintApply(r,c); soundTick(); });
+  const end=()=>{ if(paintMode&&paintMoved){ suppressClick=true; setTimeout(()=>{suppressClick=false;},80); } paintMode=null; };
+  g.addEventListener('pointerup',end); g.addEventListener('pointercancel',end); g.addEventListener('pointerleave',end);
+}
 function onCellTap(r,c){
   if(ended)return;
+  if(suppressClick){suppressClick=false;return;}
   if(ftue&&ftue.active&&ftue.allowOnly&&!ftue.allowOnly.has(r*100+c))return;
   const now=Date.now();const isDouble=(lastTapCell===r*100+c)&&(now-lastTapTime<320);
   lastTapCell=r*100+c;lastTapTime=now;
@@ -486,7 +497,9 @@ function show(scr){document.querySelectorAll('.screen').forEach(s=>s.classList.t
 let cellEls=[];
 function buildGrid(){const g=$('grid');g.style.gridTemplateColumns='repeat('+N+',1fr)';g.style.gridTemplateRows='repeat('+N+',1fr)';
   g.style.gap=(N>=8?'4px':N>=7?'5px':'6px');g.innerHTML='';cellEls=[];
-  for(let r=0;r<N;r++){const row=[];for(let c=0;c<N;c++){const d=document.createElement('div');d.className='qcell';d.style.background=regionVar(puzzle.region[r][c]);d.dataset.r=r;d.dataset.c=c;d.addEventListener('click',()=>onCellTap(r,c));g.appendChild(d);row.push(d);}cellEls.push(row);}}
+  for(let r=0;r<N;r++){const row=[];for(let c=0;c<N;c++){const d=document.createElement('div');d.className='qcell';d.style.background=regionVar(puzzle.region[r][c]);d.dataset.r=r;d.dataset.c=c;
+    d.style.animation='cellReveal .34s cubic-bezier(.34,1.56,.64,1) both '+((r+c)*0.028).toFixed(3)+'s'; // quick staggered reveal on level start
+    d.addEventListener('click',()=>onCellTap(r,c));g.appendChild(d);row.push(d);}cellEls.push(row);}}
 function cellEl(r,c){return cellEls[r]&&cellEls[r][c];}
 function renderCell(r,c){const el=cellEl(r,c);if(!el)return;const v=gstate[r][c];
   if(v===DUCK)el.innerHTML=faceVideosReady?'<canvas class="duckface" width="100" height="100"></canvas>':DUCK_SVG;
@@ -574,7 +587,7 @@ function ftueDim(on){$('app').classList.toggle('tutdim',on);$('qboard').classLis
 function ftueSpot(cells){cellEls.forEach(row=>row.forEach(el=>el.classList.remove('spot')));ftue.allowOnly=new Set();cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el)el.classList.add('spot');ftue.allowOnly.add(r*100+c);});}
 function showCoach(which,spec,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=bub(spec)+(withLamp?' '+LAMP_SVG:'');(which==='top'?$('coachTop'):$('coachBot')).classList.add('on');}
 function hideCoach(which){(which==='top'?$('coachTop'):$('coachBot')).classList.remove('on');}
-function handOver(r,c){const el=cellEl(r,c);if(!el){return;}const b=el.getBoundingClientRect();const h=$('handhint');h.style.display='block';h.style.left=(b.left+b.width*0.5-12)+'px';h.style.top=(b.top+b.height*0.5-9)+'px';}
+function handOver(r,c){const el=cellEl(r,c);if(!el){return;}const b=el.getBoundingClientRect();const h=$('handhint');h.style.display='block';h.style.left=(b.left+b.width*0.5-13)+'px';h.style.top=(b.top+b.height*0.5-26)+'px';}
 function handHide(){$('handhint').style.display='none';}
 function ftueStep0(){ // place the first duck (most-constrained region's solution cell)
   ftue.step=0;ftueDim(true);
@@ -648,7 +661,7 @@ function bind(){
 }
 
 /* ---------- boot ---------- */
-function boot(){applyI18n();$('tagline').textContent=t('tagline');bind();fillHow();refreshHome();initFaces();
+function boot(){applyI18n();$('tagline').textContent=t('tagline');bind();bindPaint();fillHow();refreshHome();initFaces();
   loadSkus();pollPurchases();cloudLoad();
   if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})}).catch(()=>{});}catch(e){}}
 }

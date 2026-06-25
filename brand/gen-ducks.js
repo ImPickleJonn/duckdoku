@@ -32,7 +32,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // Clean, simple, "clean-2D-game" friendly: the duck is the ONLY rich element,
 // rendered on a flat seamless pastel backdrop so it crops cleanly into a card.
-const STYLE = `STYLE (mandatory): one single adorable chunky 3D toy DUCKLING, cute low-poly/claymation toy render, smooth rounded shapes, bright buttery-yellow body, soft orange beak and little feet, two big friendly cartoon eyes with shiny highlights, rosy pink cheeks, tiny stubby wings. Bright saturated candy colors, soft clean studio lighting, gentle ambient occlusion, wholesome and charming. FLAT seamless solid pastel-cream background (#FBF6E9), the duck CENTERED and FULL-BODY with generous empty margin all around, a soft round contact shadow under it. NO text, NO logos, NO watermarks, NO UI, NO letters, NO other characters.`;
+const STYLE = `STYLE (mandatory): one single adorable chunky 3D toy DUCKLING, cute low-poly/claymation toy render, smooth rounded shapes, bright buttery-yellow body, soft orange beak and little feet, two LARGE expressive cartoon eyes, each a big round WHITE eyeball with a big round BLACK pupil and a bright catchlight (clearly visible oversized whites and pupils for a very cute expressive look), rosy pink cheeks, tiny stubby wings. Bright saturated candy colors, soft clean studio lighting, gentle ambient occlusion, wholesome and charming. FLAT seamless solid pastel-cream background (#FBF6E9), the duck CENTERED and FULL-BODY with generous empty margin all around, a soft round contact shadow under it. NO text, NO logos, NO watermarks, NO UI, NO letters, NO other characters.`;
 
 const SCENES = [
   { id:'hero',

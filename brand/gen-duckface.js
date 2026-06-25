@@ -30,28 +30,33 @@ const OUT_DIR=path.join(__dirname,'..','assets','ducks');
 fs.mkdirSync(OUT_DIR,{recursive:true});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-const STYLE=`STYLE (mandatory): ONE adorable chunky 3D toy DUCKLING HEAD only, EXTREME CLOSE-UP filling the frame, smooth rounded claymation / cute-Pixar-toy render, buttery yellow head, soft orange beak, two big friendly shiny round eyes, rosy pink cheeks, a tiny tuft of feathers on top. Soft clean studio lighting on the head. Head CENTERED with a small even margin all around. The ENTIRE background is a single FLAT perfectly-even VIVID CHROMA-KEY BLUE (#1666FF), no gradient, no scenery, no props, no shadow cast on the background. NO text, NO logos, NO watermarks.`;
+const STYLE=`STYLE (mandatory): ONE adorable chunky 3D toy DUCKLING HEAD only, EXTREME CLOSE-UP filling the frame, smooth rounded claymation / cute-Pixar-toy render, buttery yellow head, soft orange beak, two LARGE expressive cartoon eyes, each a big round WHITE eyeball with a big round BLACK pupil and a bright white catchlight (the whites and the black pupils are clearly visible and oversized for a very cute expressive look), rosy pink cheeks, a tiny tuft of feathers on top. Soft clean studio lighting on the head. Head CENTERED with a small even margin all around. The ENTIRE background is a single FLAT perfectly-even VIVID CHROMA-KEY BLUE (#1666FF), no gradient, no scenery, no props, no shadow cast on the background. NO text, NO logos, NO watermarks.`;
 
+// Expression variants EDIT the idle keyframe so it stays the SAME duck.
+const EDIT=`This image is a cute 3D toy duckling head on a flat blue background. Generate the EXACT SAME duckling: keep the character, the buttery-yellow color, the big white eyes with black pupils, the orange beak, the rosy cheeks, the tuft on top, the head size, the centered framing, and the flat vivid blue (#1666FF) background ALL IDENTICAL. Change ONLY the facial expression to:`;
 const SCENES=[
   { id:'face-idle',
     frame:`A single clean keyframe, square 1:1, full-bleed. ${STYLE}\nEXPRESSION: calm, content, gently smiling, looking forward, relaxed and cute. This is the resting idle pose.`,
     video:`The duckling head sits calmly and blinks its big eyes, tilts its head slightly and glances around curiously, gentle breathing bob. The camera is perfectly LOCKED and still, the head stays centered, the flat blue background never moves. Smooth seamless idle loop. No dialogue, no text.` },
 
-  { id:'face-happy',
-    frame:`A single clean keyframe, square 1:1, full-bleed. ${STYLE}\nEXPRESSION: overjoyed, beaming a big happy smile, eyes squinting happily with sparkles, rosy cheeks glowing. Celebration pose.`,
+  { id:'face-happy', editFrom:'face-idle',
+    frame:`${EDIT} OVERJOYED: a big happy open smile, the eyes curving / squinting up with joy, rosy cheeks glowing. Keep it perfectly consistent with the reference duckling.`,
     video:`The duckling head beams with a big joyful smile, eyes sparkle and squint happily, it does an excited little bounce and a proud nod, cheeks glowing. The camera is perfectly LOCKED and still, the head stays centered, the flat blue background never moves. Smooth seamless happy loop. No dialogue, no text.` },
 
-  { id:'face-oops',
-    frame:`A single clean keyframe, square 1:1, full-bleed. ${STYLE}\nEXPRESSION: surprised and worried, wide round eyes, raised brows, a tiny sweat drop, an "oops" look. Reaction pose, cute not scary.`,
+  { id:'face-oops', editFrom:'face-idle',
+    frame:`${EDIT} SURPRISED and worried: wide round eyes, raised brows, a tiny sweat drop, an "oops" look (cute, not scary). Keep it perfectly consistent with the reference duckling.`,
     video:`The duckling head reacts with wide surprised eyes and raised brows, gives a little worried wobble and shake, a tiny sweat drop appears, an endearing "oops" reaction. The camera is perfectly LOCKED and still, the head stays centered, the flat blue background never moves. Smooth seamless loop. No dialogue, no text.` },
 
-  { id:'face-sad',
-    frame:`A single clean keyframe, square 1:1, full-bleed. ${STYLE}\nEXPRESSION: cutely sad and dejected, droopy half-closed eyes with big glossy tears welling up, a small downturned beak, brows tilted up in the middle. Endearing and gentle, never distressing.`,
+  { id:'face-sad', editFrom:'face-idle',
+    frame:`${EDIT} CUTELY SAD: droopy half-closed teary eyes with big glossy tears welling up, a small downturned beak, brows tilted up in the middle (gentle, never distressing). Keep it perfectly consistent with the reference duckling.`,
     video:`The duckling head looks cutely sad, lower lip quivering, big glossy tears well up in its droopy eyes and one tiny tear rolls down, it gives a soft sniffle and a little downward droop. Gentle, sympathetic, cute. The camera is perfectly LOCKED and still, the head stays centered, the flat blue background never moves. Smooth seamless loop. No dialogue, no text.` },
 ];
 
 async function genKeyframe(s){
-  const body={ contents:[{ parts:[{ text:s.frame }] }], generationConfig:{ responseModalities:['IMAGE'], imageConfig:{ aspectRatio:'1:1', imageSize:'2K' } } };
+  const parts=[];
+  if(s.editFrom){ const base=path.join(OUT_DIR,s.editFrom+'-frame.png'); if(fs.existsSync(base)){ parts.push({ inline_data:{ mime_type:'image/png', data:fs.readFileSync(base).toString('base64') } }); console.log('  editing from '+s.editFrom); } }
+  parts.push({ text:s.frame });
+  const body={ contents:[{ parts }], generationConfig:{ responseModalities:['IMAGE'], imageConfig:{ aspectRatio:'1:1', imageSize:'2K' } } };
   for(let a=1;a<=4;a++){ try{
     const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GMODEL}:generateContent`,{ method:'POST', headers:{ 'x-goog-api-key':GKEY, 'Content-Type':'application/json' }, body:JSON.stringify(body) });
     if(!res.ok) throw new Error('HTTP '+res.status+': '+(await res.text()).slice(0,300));

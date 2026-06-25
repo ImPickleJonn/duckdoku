@@ -179,7 +179,12 @@ app.use(express.static(__dirname, {
 
 // Feature flags + public config the client reads on boot.
 app.get('/api/flags', (req, res) => {
-  res.json({ iap: !!BOT_TOKEN, dbReady, mixpanel_token: process.env.MIXPANEL_TOKEN || '' });
+  const cc = String(req.headers['cf-ipcountry'] || '').toUpperCase();
+  res.json({
+    iap: !!BOT_TOKEN, dbReady,
+    mixpanel_token: process.env.MIXPANEL_TOKEN || '',
+    country: (cc && cc !== 'XX' && cc !== 'T1') ? cc : '',
+  });
 });
 
 // List SKUs (client renders the shop from this).

@@ -292,6 +292,38 @@ function haptic(k){try{if(!TG||!TG.HapticFeedback)return;const H=TG.HapticFeedba
   if(k==='light')H.impactOccurred('light');else if(k==='med')H.impactOccurred('medium');else if(k==='heavy')H.impactOccurred('heavy');
   else if(k==='ok')H.notificationOccurred('success');else if(k==='err')H.notificationOccurred('error');}catch(e){}}
 
+/* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
+const DD_VERSION='0.3.0';
+function _mxHost(){try{const tg=TG;if(tg&&typeof tg.initData==='string'&&tg.initData.length>0)return'telegram';return'web';}catch(e){return'web';}}
+const MX={ready:false,token:'',_did:'',_super:{},_pre:[],
+  _enc(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}catch(_){try{return btoa(JSON.stringify(o));}catch(e){return'';}}},
+  _send(url,payload){try{const d=this._enc(payload);if(!d)return;const full=url+'?data='+encodeURIComponent(d)+'&ip=1&verbose=0';if(navigator.sendBeacon){try{if(navigator.sendBeacon(full))return;}catch(_){}}fetch(full,{method:'GET',mode:'no-cors',keepalive:true,cache:'no-store'}).catch(()=>{});}catch(_){}},
+  _iid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,10);},
+  init(token,did,profile){if(!token)return;this.token=token;this._did=did||this._did||('anon-'+this._iid());
+    this._super=Object.assign({app_version:DD_VERSION,host:_mxHost(),platform:(TG&&TG.platform)||'web',lang:LANG,env:(location.hostname.indexOf('localhost')>=0?'dev':'production')},this._super);
+    this.ready=true; if(profile)this.setProfile(profile);
+    const q=this._pre.splice(0);q.forEach(a=>this._emit(a[0],a[1]));},
+  setSuper(o){try{if(o)for(const k in o)this._super[k]=o[k];}catch(_){}},
+  _emit(name,props){try{const properties=Object.assign({},this._super,props||{},{token:this.token,distinct_id:this._did,time:Math.floor(Date.now()/1000),$insert_id:this._iid()});this._send('https://api.mixpanel.com/track',{event:name,properties});}catch(_){}},
+  track(name,props){if(!this.ready){this._pre.push([name,props||{}]);if(this._pre.length>200)this._pre.shift();return;}this._emit(name,props);},
+  setProfile(p){if(this.token&&this._did)this._send('https://api.mixpanel.com/engage',{$token:this.token,$distinct_id:this._did,$set:p});},
+  incr(p){if(this.token&&this._did)this._send('https://api.mixpanel.com/engage',{$token:this.token,$distinct_id:this._did,$add:p});},
+};
+let _lastOpen=0;
+function mxBoot(){
+  const u=TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user;
+  let did=u&&u.id?String(u.id):''; if(!did){try{did=localStorage.getItem('dd.anon')||('anon-'+MX._iid());localStorage.setItem('dd.anon',did);}catch(e){did='anon-'+MX._iid();}}
+  const profile=u?{$first_name:u.first_name,$last_name:u.last_name,username:u.username,telegram_id:u.id,language:u.language_code,is_premium:!!u.is_premium}:{};
+  fetch(API_BASE+'/api/flags').then(r=>r.json()).then(j=>{
+    MX.init(j.mixpanel_token||'',did,profile);
+    if(j.country)MX.setSuper({geo_country:j.country});
+    mxAppOpen('cold');
+  }).catch(()=>{ MX.init('',did,profile); });
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden)mxAppOpen('warm'); });
+}
+function mxAppOpen(kind){const now=Math.floor(Date.now()/1000);let since=0;try{const p=+localStorage.getItem('dd.lastOpen')||0;since=p?now-p:0;localStorage.setItem('dd.lastOpen',String(now));}catch(e){}
+  MX.track('AppOpenedOrRestored',{restore_type:kind,since_last_open_sec:since,is_returning:since>=72000,level:(save&&save.levelsDone+1)||1});}
+
 /* ---------- i18n ---------- */
 const I18N={
   en:{play:"Play",zen:"Zen",daily:"Daily",shop:"Shop",howto:"How to play",undo:"Undo",hint:"Hint",placeduck:"Place",
@@ -414,6 +446,7 @@ function startLevel(m,idx){
   N=levelSize(levelIdx);puzzle=generatePuzzle(N,7000+levelIdx*131);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
   buildGrid();renderAll();show('game');
+  MX.track('Level Started',{level:levelIdx+1,size:N+'x'+N});
 }
 
 /* ---------- conflict logic ---------- */
@@ -457,7 +490,7 @@ function tryPlaceDuck(r,c,prev){
   // The duck hides in ONE specific cell per region (the unique solution).
   // Placing it anywhere else is a mistake and costs a heart.
   if(puzzle.solCols[r]!==c){
-    flashBad([[r,c]]);haptic('err');soundBad();
+    flashBad([[r,c]]);haptic('err');soundBad();MX.track('Mistake Made',{level:levelIdx+1});
     if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}
     if(heartsEnabled){hearts--;heartsLost++;renderHearts();if(hearts<=0)onLose();}
     return;}
@@ -471,18 +504,19 @@ function onWin(){ended=true;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r]
   const stars=starsForWin();
   const praise=L(["Awesome!","Brilliant!","Quacktastic!","Well done!"][stars-1]||"Awesome!",["Отлично!","Блестяще!","Кряк-класс!","Молодец!"][stars-1]||"Отлично!");
   save.levelsDone=Math.max(save.levelsDone,levelIdx+1);save.stars[levelIdx]=Math.max(save.stars[levelIdx]||0,stars);grantFreeBooster(levelIdx+1);persist();
+  MX.track('Level Won',{level:levelIdx+1,stars,hearts_lost:heartsLost,boosters_used:boostersUsed});MX.incr({levels_won:1});
   $('winTitle').textContent=praise;$('winStars').innerHTML=starsHtml(stars);
   $('winSub').textContent=L("You solved it. The duck is delighted.","Ты решил. Утка в восторге.");
   $('btnNext').textContent=t('next');
   openScrim('scrimWin');}
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
-function onLose(){ended=true;haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");$('loseSub').textContent=L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");openScrim('scrimLose');}
+function onLose(){ended=true;MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");$('loseSub').textContent=L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");openScrim('scrimLose');}
 
 /* ---------- boosters ---------- */
-function useUndo(){if(ended)return;if(save.boosters.undo<=0){outOf('undo');return;}if(!history.length){toast(L("Nothing to undo","Нечего отменять"));return;}save.boosters.undo--;boostersUsed++;const h=history.pop();gstate=h.g;hearts=h.hearts;duckCount=h.duckCount;persist();renderAll();haptic('light');}
-function useHint(){if(ended)return;if(save.boosters.hint<=0){outOf('hint');return;}const mv=computeHint();if(!mv){toast(L("Looks good so far","Пока всё верно"));return;}save.boosters.hint--;boostersUsed++;persist();pulseCell(mv.r,mv.c);renderBoosters();haptic('med');toast(mv.msg);}
-function usePlaceDuck(){if(ended)return;if(save.boosters.placeduck<=0){outOf('placeduck');return;}const cell=placeOneCorrect();if(!cell){toast(L("All ducks placed","Все утки на месте"));return;}save.boosters.placeduck--;boostersUsed++;persist();renderBoosters();haptic('ok');soundPlace();if(duckCount===N)onWin();}
+function useUndo(){if(ended)return;if(save.boosters.undo<=0){outOf('undo');return;}if(!history.length){toast(L("Nothing to undo","Нечего отменять"));return;}save.boosters.undo--;boostersUsed++;MX.track('Booster Used',{type:'undo'});const h=history.pop();gstate=h.g;hearts=h.hearts;duckCount=h.duckCount;persist();renderAll();haptic('light');}
+function useHint(){if(ended)return;if(save.boosters.hint<=0){outOf('hint');return;}const mv=computeHint();if(!mv){toast(L("Looks good so far","Пока всё верно"));return;}save.boosters.hint--;boostersUsed++;MX.track('Booster Used',{type:'hint'});persist();pulseCell(mv.r,mv.c);renderBoosters();haptic('med');toast(mv.msg);}
+function usePlaceDuck(){if(ended)return;if(save.boosters.placeduck<=0){outOf('placeduck');return;}const cell=placeOneCorrect();if(!cell){toast(L("All ducks placed","Все утки на месте"));return;}save.boosters.placeduck--;boostersUsed++;MX.track('Booster Used',{type:'placeduck'});persist();renderBoosters();haptic('ok');soundPlace();if(duckCount===N)onWin();}
 function outOf(w){toast(L("Out of "+w,"Бустеры закончились"));openShop();}
 function grantBoosters(g){if(!g||!g.boosters)return;for(const k in g.boosters)save.boosters[k]=(save.boosters[k]||0)+g.boosters[k];persist();renderBoosters();}
 function grantFreeBooster(lvl){if(lvl%3===0){const order=['hint','undo','placeduck'];const pick=order[(lvl/3-1)%3];save.boosters[pick]=(save.boosters[pick]||0)+1;toast(L("+1 "+pick+" booster","+1 бустер"));}}
@@ -559,10 +593,11 @@ function skuMainBooster(g){if(!g||!g.boosters)return 'placeduck';const ks=Object
 function renderShop(){const list=$('skuList');list.innerHTML='';if(!SKUS_CACHE||!SKUS_CACHE.length){list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>';return;}
   const star='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';
   SKUS_CACHE.forEach(s=>{const row=document.createElement('div');row.className='sku';row.innerHTML='<div class="sicon">'+boosterIcon(skuMainBooster(s.grant))+'</div><div class="smeta"><div class="stitle">'+s.title+'</div><div class="sdesc">'+s.description+'</div></div><button class="sbuy">'+s.price+' '+star+'</button>';row.querySelector('.sbuy').onclick=()=>buy(s.id);list.appendChild(row);});}
-function openShop(){closeAll();renderShop();openScrim('scrimShop');if(!SKUS_CACHE)loadSkus().then(renderShop);}
+function openShop(){closeAll();renderShop();openScrim('scrimShop');MX.track('Shop Opened');if(!SKUS_CACHE)loadSkus().then(renderShop);}
 async function buy(sku){if(!iapEnabled||!initData){toast(L("Open in Telegram to buy","Покупки в Telegram"));return;}
   try{const r=await fetch(API_BASE+'/api/create-invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sku,initData})});const j=await r.json();if(!j.link){toast("Could not start payment");return;}
-    TG.openInvoice(j.link,async(st)=>{if(st==='paid'){await pollPurchases();toast(L("Thank you!","Спасибо!"));haptic('ok');}});}catch(e){toast("Payment error");}}
+    MX.track('IAP Invoice Opened',{sku});
+    TG.openInvoice(j.link,async(st)=>{MX.track('IAP '+(st==='paid'?'Success':st==='cancelled'?'Cancelled':'Failed'),{sku});if(st==='paid'){await pollPurchases();toast(L("Thank you!","Спасибо!"));haptic('ok');}});}catch(e){toast("Payment error");}}
 async function pollPurchases(){if(!initData)return;try{const r=await fetch(API_BASE+'/api/poll-purchases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})});const j=await r.json();(j.purchases||[]).forEach(p=>grantBoosters(p.grant));}catch(e){}}
 
 /* ================= FTUE (scripted first-run, matches Meowdoku) ================= */
@@ -577,6 +612,7 @@ const FT={
 function bub(spec){let s=spec[LANG]||spec.en;(spec.hl||[]).forEach(h=>{if(s.indexOf(h)>=0)s=s.replace(h,'<span class="hl">'+h+'</span>');});return s;}
 function startFTUE(){
   mode='levels';levelIdx=0;ended=false;boostersUsed=0;heartsLost=0;history=[];faceFx.clear();
+  MX.track('Tutorial Started');
   N=4;puzzle=generatePuzzle(4,4242);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
   buildGrid();renderAll();show('game');
@@ -620,7 +656,7 @@ function onFtueAction(kind,r,c){
   if(ftue.step===0&&kind==='duck'){ftue.lastDuck=[r,c];setTimeout(ftueStep1,260);}
   else if(ftue.step===1&&kind==='mark'){setTimeout(ftueStep2,260);}
 }
-function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();$('coachBotB').onclick=null;
+function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();$('coachBotB').onclick=null;MX.track('Tutorial Won');
   for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);
   save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);if(save.stars[0]==null)save.stars[0]=3;persist();
   ended=true;haptic('ok');soundWin();confettiRain();
@@ -661,7 +697,7 @@ function bind(){
 }
 
 /* ---------- boot ---------- */
-function boot(){applyI18n();$('tagline').textContent=t('tagline');bind();bindPaint();fillHow();refreshHome();initFaces();
+function boot(){applyI18n();$('tagline').textContent=t('tagline');bind();bindPaint();fillHow();refreshHome();initFaces();mxBoot();
   loadSkus();pollPurchases();cloudLoad();
   if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})}).catch(()=>{});}catch(e){}}
 }

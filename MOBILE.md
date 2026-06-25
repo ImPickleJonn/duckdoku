@@ -25,6 +25,41 @@ npx cap sync android
 - `android/local.properties` must point at the Android SDK, e.g. `sdk.dir=C\:\\Users\\jonnw\\android-sdk` (the SDK lives at `C:\Users\jonnw\android-sdk`). Without it gradle fails with "SDK location not found".
 - `JAVA_HOME` must be JDK 17 (`/c/Users/jonnw/jdk-17`), not necessarily on PATH.
 
+## Adjust + Facebook (Meta) marketing attribution
+
+Set up the same way as Dumpling Drop, so you can run paid Facebook/Meta user
+acquisition for the native Android (and later iOS) app.
+
+- Plugin: `com.adjust.sdk` (Cordova, v5) installed via npm + `npx cap sync`. It
+  brings the Adjust Android SDK, `play-services-ads-identifier` (GAID), the
+  `AD_ID` permission, and the Google Play install-referrer receiver, all merged
+  into the app manifest at build time (nothing to add by hand).
+- Facade: `assets/adjust.js` defines `window.DuckAdjust` (native only; a no-op on
+  web/Telegram). game.html loads it and calls:
+  - `DuckAdjust.init()` + `fire('appOpen')` in boot
+  - `fire('gameStarted')` on level start
+  - `fire('levelComplete')` on win
+  - `fire('purchaseCompleted')` on a paid Stars purchase
+  - (`levelFailed`, `boosterUsed` tokens are defined and ready to wire too)
+- Facebook link: Adjust forwards installs + events to Meta via the FB App ID set
+  with `setFbAppId`. You link the Meta partner once in the Adjust dashboard.
+
+### YOU MUST PROVIDE (paste into `assets/adjust.js` -> ADJUST_CONFIG, then rebuild)
+Until `appToken` is filled the SDK stays disabled (safe no-op), so nothing breaks
+in the meantime.
+1. `appToken` - create the Duckdoku app in the Adjust dashboard, copy its app token.
+2. `fbAppId` - create/confirm the Duckdoku app at developers.facebook.com, copy the App ID.
+3. `events.*` - create one Adjust event per action and paste each token: appOpen,
+   gameStarted, levelComplete, levelFailed, boosterUsed, purchaseCompleted.
+
+### Dashboard steps (one time, cannot be automated)
+- Adjust: create app -> get app token + event tokens. Partners -> add Facebook/Meta
+  and link your FB App ID. Map the event tokens to FB conversion events.
+- Facebook: Business/Developers -> create the app -> App ID. In Events Manager add
+  the app; Adjust handles the event forwarding once linked.
+- Then in `assets/adjust.js` set `environment:'sandbox'` to test, verify events show
+  in the Adjust dashboard, then flip back to `'production'` and rebuild the AAB.
+
 ## Firebase Cloud Messaging (push)
 - Firebase project `duckdoku-299f3`. FCM powers native Android push.
 - `android/app/google-services.json` is the client config (gitignored with the rest of `android/`). A backup lives at `dd-secrets/duckdoku-google-services.json`; restore it after `npx cap add android` on a fresh clone (`cp dd-secrets/duckdoku-google-services.json android/app/`).

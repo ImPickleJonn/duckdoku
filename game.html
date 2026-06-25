@@ -41,6 +41,8 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .btn.row{display:flex;gap:11px;}
 .btn.ghost{background:var(--card);color:var(--ink);font-size:4.2vw;flex:1;box-shadow:0 4px 0 var(--shadow);}
 .coins-line{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--ink-soft);font-size:3.6vw;margin-top:10px;min-height:18px;}
+.homegear{position:absolute;top:calc(var(--safe-top) + 12px);right:16px;z-index:2;}
+#home .menu .btn.play{font-size:6vw;padding:20px;}
 
 /* ---------- TOP BAR ---------- */
 .topbar{width:100%;max-width:460px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -68,6 +70,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .chiptxt{flex:1;}
 
 /* ---------- BOARD ---------- */
+.boardspacer{height:clamp(10px,5vh,52px);flex:none;}
 .boardwrap{width:100%;max-width:min(92vw,440px);aspect-ratio:1;position:relative;margin:0 auto;}
 .qboard{position:absolute;inset:0;background:var(--card);border-radius:22px;padding:12px;box-shadow:0 6px 0 var(--shadow);}
 .qgrid{position:relative;width:100%;height:100%;display:grid;gap:6px;}
@@ -86,7 +89,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 #app.tutdim .topbar,#app.tutdim .statusrow,#app.tutdim .chips,#app.tutdim .boosters{opacity:.22;pointer-events:none;}
 
 /* ---------- BOOSTERS ---------- */
-.boosters{width:100%;max-width:460px;display:flex;gap:26px;margin-top:16px;justify-content:center;}
+.boosters{width:100%;max-width:460px;display:flex;gap:26px;margin-top:26px;justify-content:center;}
 .booster{width:62px;height:62px;border-radius:50%;background:var(--card);box-shadow:0 4px 0 var(--shadow);display:flex;align-items:center;justify-content:center;position:relative;}
 .booster:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow);}
 .booster.active{outline:3px solid var(--orange);}
@@ -159,19 +162,15 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 
   <!-- ============ HOME ============ -->
   <section id="home" class="screen on">
+    <button class="iconbtn homegear" id="btnHomeGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44"><path d="M12 2.4c.95 0 1.78.62 2.04 1.5.66-.72 1.72-.92 2.6-.41.86.5 1.22 1.5.92 2.42.94-.22 1.92.27 2.27 1.18.34.9-.05 1.9-.9 2.36.85.46 1.24 1.46.9 2.36-.35.91-1.33 1.4-2.27 1.18.3.92-.06 1.92-.92 2.42-.88.51-1.94.31-2.6-.41-.26.88-1.09 1.5-2.04 1.5s-1.78-.62-2.04-1.5c-.66.72-1.72.92-2.6.41-.86-.5-1.22-1.5-.92-2.42-.94.22-1.92-.27-2.27-1.18-.34-.9.05-1.9.9-2.36-.85-.46-1.24-1.46-.9-2.36.35-.91 1.33-1.4 2.27-1.18-.3-.92.06-1.92.92-2.42.88-.51 1.94-.31 2.6.41.26-.88 1.09-1.5 2.04-1.5z"/><circle cx="12" cy="12" r="3.5" fill="#fff"/></svg></button>
     <div class="logo">Duck<b>doku</b></div>
     <div class="tag" id="tagline">A cozy duck logic puzzle</div>
+    <div class="fill"></div>
     <div class="hero-wrap">
       <video id="heroVid" autoplay loop muted playsinline poster="assets/ducks/hero-frame.png"><source src="assets/ducks/hero.mp4" type="video/mp4"></video>
     </div>
     <div class="menu">
-      <button class="btn play" id="btnPlay" data-i="play">Play</button>
-      <button class="btn alt" id="btnZen" data-i="zen">Zen</button>
-      <div class="btn row">
-        <button class="btn ghost" id="btnDaily" data-i="daily">Daily</button>
-        <button class="btn ghost" id="btnShop" data-i="shop">Shop</button>
-        <button class="btn ghost" id="btnHowHome" data-i="howto">How to play</button>
-      </div>
+      <button class="btn play" id="btnPlay" data-i="play">Level 1</button>
     </div>
     <div class="coins-line"><span id="streakLine"></span></div>
     <div class="fill"></div>
@@ -196,24 +195,16 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
       <div class="hearts" id="hearts"></div>
     </div>
 
+    <div class="boardspacer"></div>
     <div class="boardwrap"><div class="qboard" id="qboard"><div class="qgrid" id="grid"></div></div></div>
 
     <div class="boosters" id="boosters">
       <button class="booster" id="bsDuck"><canvas class="bface" width="80" height="80"></canvas><span class="bcount" id="cntDuck">0</span><span class="blabel" data-i="placeduck">Place</span></button>
-      <button class="booster" id="bsHint"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span class="bcount" id="cntHint">0</span><span class="blabel" data-i="hint">Hint</span></button>
-      <button class="booster" id="bsUndo"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg><span class="bcount" id="cntUndo">0</span><span class="blabel" data-i="undo">Undo</span></button>
+      <button class="booster" id="bsHint"><canvas class="bface" width="80" height="80"></canvas><span class="bcount" id="cntHint">0</span><span class="blabel" data-i="hint">Hint</span></button>
+      <button class="booster" id="bsUndo"><canvas class="bface" width="80" height="80"></canvas><span class="bcount" id="cntUndo">0</span><span class="blabel" data-i="undo">Undo</span></button>
     </div>
   </section>
 
-  <!-- ============ LEVELS MAP ============ -->
-  <section id="levels" class="screen">
-    <div class="topbar">
-      <button class="iconbtn" id="btnLvlBack" aria-label="back"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <div class="toptitle" data-i="adventure">Adventure</div>
-      <div style="width:44px"></div>
-    </div>
-    <div style="width:100%;max-width:460px;overflow-y:auto;flex:1"><div class="lvlgrid" id="lvlgrid"></div></div>
-  </section>
 
 </div>
 
@@ -264,6 +255,8 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
   <button class="closex" id="setClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <h2 data-i="settings">Settings</h2>
   <div class="setrow"><span data-i="sound">Sound</span><button class="iconbtn" id="setSound"><svg id="setSoundIcon" viewBox="0 0 24 24" fill="#6E4F44"><path d="M4 9v6h4l5 5V4L8 9H4z"/></svg></button></div>
+  <button class="btn play" id="setShop" data-i="shop" style="color:#fff">Shop</button>
+  <button class="btn alt" id="setHowto" data-i="howto" style="color:#fff">How to play</button>
   <button class="btn alt" id="setRestart" data-i="restart" style="color:#fff">Restart level</button>
   <button class="btn ghost" id="setHome" data-i="home">Home</button>
 </div></div>
@@ -274,6 +267,8 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
   <video id="fvhappy" loop muted playsinline preload="auto"><source src="assets/ducks/face-happy.mp4" type="video/mp4"></video>
   <video id="fvoops" loop muted playsinline preload="auto"><source src="assets/ducks/face-oops.mp4" type="video/mp4"></video>
   <video id="fvsad" loop muted playsinline preload="auto"><source src="assets/ducks/face-sad.mp4" type="video/mp4"></video>
+  <video id="fvbsthint" loop muted playsinline preload="auto"><source src="assets/ducks/bst-hint.mp4" type="video/mp4"></video>
+  <video id="fvbstundo" loop muted playsinline preload="auto"><source src="assets/ducks/bst-undo.mp4" type="video/mp4"></video>
 </div>
 
 <div class="fx" id="fx"></div>
@@ -361,12 +356,14 @@ function starSvg(on){return '<svg viewBox="0 0 24 24" fill="'+(on?'#FFD23F':'#5b
 
 /* ---------- live in-grid duck head (blue-screen video, keyed onto cells) ---------- */
 const FACE_STATES=['idle','happy','oops','sad'];
-let faceVideosReady=false;
+const ICON_CLIPS=['bsthint','bstundo'];
+const ALL_CLIPS=FACE_STATES.concat(ICON_CLIPS);
+let faceVideosReady=false,lastFaceTs=0;
 const faceVid={},faceKeyed={};
 let faceFx=new Map(); // r*100+c -> {state, until}
 function initFaces(){
-  FACE_STATES.forEach(s=>{faceVid[s]=document.getElementById('fv'+s);const cv=document.createElement('canvas');cv.width=cv.height=256;faceKeyed[s]=cv;});
-  FACE_STATES.forEach(s=>{const v=faceVid[s];if(!v)return;v.play&&v.play().catch(()=>{});['loadeddata','canplay'].forEach(ev=>v.addEventListener(ev,faceCheck));v.addEventListener('error',()=>{});});
+  ALL_CLIPS.forEach(s=>{faceVid[s]=document.getElementById('fv'+s);const cv=document.createElement('canvas');cv.width=cv.height=ICON_CLIPS.indexOf(s)>=0?96:256;faceKeyed[s]=cv;});
+  ALL_CLIPS.forEach(s=>{const v=faceVid[s];if(!v)return;v.play&&v.play().catch(()=>{});['loadeddata','canplay'].forEach(ev=>v.addEventListener(ev,faceCheck));v.addEventListener('error',()=>{});});
   setTimeout(faceCheck,700);setTimeout(faceCheck,2200);setTimeout(faceCheck,5000);
   requestAnimationFrame(faceLoop);
 }
@@ -384,13 +381,19 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const gameOn=$('game').classList.contains('on');
   const winOn=$('scrimWin').classList.contains('on'),loseOn=$('scrimLose').classList.contains('on');
   if(!gameOn&&!winOn&&!loseOn)return;
-  const now=Date.now();const used=new Set();
+  const now=Date.now();
+  if(now-lastFaceTs<32)return; lastFaceTs=now;
+  const used=new Set();
   if(gameOn&&gstate){used.add('idle');faceFx.forEach((fx,k)=>{if(now>fx.until)faceFx.delete(k);else used.add(fx.state);});}
   const boosterCv=gameOn?document.querySelector('#bsDuck canvas.bface'):null;if(boosterCv)used.add('happy');
+  const hintCv=gameOn?document.querySelector('#bsHint canvas.bface'):null;if(hintCv)used.add('bsthint');
+  const undoCv=gameOn?document.querySelector('#bsUndo canvas.bface'):null;if(undoCv)used.add('bstundo');
   if(winOn)used.add('happy');if(loseOn)used.add('sad');
   used.forEach(s=>keyInto(s));
   if(gameOn&&gstate)for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]!==DUCK)continue;const el=cellEls[r]&&cellEls[r][c];if(!el)continue;const cv=el.querySelector('canvas.duckface');if(!cv)continue;const fx=faceFx.get(r*100+c);drawFace(cv,fx?fx.state:'idle');}
   if(boosterCv)drawFace(boosterCv,'happy');
+  if(hintCv)drawFace(hintCv,'bsthint');
+  if(undoCv)drawFace(undoCv,'bstundo');
   if(gameOn&&gstate){const pf=document.querySelector('.pface canvas');if(pf)drawFace(pf,'idle');}
   if(winOn)drawFace($('winFace'),'happy');
   if(loseOn)drawFace($('loseFace'),'sad');}
@@ -406,9 +409,7 @@ function startLevel(m,idx){
   mode=m;levelIdx=idx||0;ended=false;boostersUsed=0;heartsLost=0;history=[];ftue=null;faceFx.clear();
   document.getElementById('app').classList.remove('tutdim');document.getElementById('qboard').classList.remove('dim');
   $('coachTop').classList.remove('on');$('coachBot').classList.remove('on');$('handhint').style.display='none';
-  if(m==='levels'){N=levelSize(levelIdx);puzzle=generatePuzzle(N,7000+levelIdx*131);heartsEnabled=true;}
-  else if(m==='daily'){const d=new Date();N=7;puzzle=generatePuzzle(N,d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate());heartsEnabled=true;}
-  else {N=Math.min(9,6+Math.floor((save.zenSolved||0)/4));puzzle=generatePuzzle(N,(Math.random()*1e9)>>>0);heartsEnabled=false;}
+  N=levelSize(levelIdx);puzzle=generatePuzzle(N,7000+levelIdx*131);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
   buildGrid();renderAll();show('game');
 }
@@ -453,12 +454,10 @@ function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.
 function onWin(){ended=true;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);haptic('ok');soundWin();confettiRain();
   const stars=starsForWin();
   const praise=L(["Awesome!","Brilliant!","Quacktastic!","Well done!"][stars-1]||"Awesome!",["Отлично!","Блестяще!","Кряк-класс!","Молодец!"][stars-1]||"Отлично!");
-  if(mode==='levels'){save.levelsDone=Math.max(save.levelsDone,levelIdx+1);save.stars[levelIdx]=Math.max(save.stars[levelIdx]||0,stars);grantFreeBooster(levelIdx+1);persist();}
-  else if(mode==='daily'){const d=new Date();save.lastDailyYMD=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();persist();}
-  else {save.zenSolved=(save.zenSolved||0)+1;save.zenBest=Math.max(save.zenBest||0,N);persist();}
+  save.levelsDone=Math.max(save.levelsDone,levelIdx+1);save.stars[levelIdx]=Math.max(save.stars[levelIdx]||0,stars);grantFreeBooster(levelIdx+1);persist();
   $('winTitle').textContent=praise;$('winStars').innerHTML=starsHtml(stars);
   $('winSub').textContent=L("You solved it. The duck is delighted.","Ты решил. Утка в восторге.");
-  $('btnNext').textContent= mode==='zen'?L("Next puzzle","Дальше"):t('next');
+  $('btnNext').textContent=t('next');
   openScrim('scrimWin');}
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
@@ -490,7 +489,7 @@ function renderCell(r,c){const el=cellEl(r,c);if(!el)return;const v=gstate[r][c]
 function renderBoard(){for(let r=0;r<N;r++)for(let c=0;c<N;c++)renderCell(r,c);}
 function renderHearts(){const h=$('hearts');if(!heartsEnabled){h.style.display='none';return;}h.style.display='flex';let s='';for(let i=0;i<3;i++)s+=heartSvg(i<hearts);h.innerHTML=s;}
 function updateCount(){$('countVal').textContent=duckCount+'/'+N;const f=$('pfill');if(f)f.style.width=(N?Math.round(duckCount/N*100):0)+'%';}
-function renderHud(){$('toptitle').textContent= mode==='levels'?L("Level ","Уровень ")+(levelIdx+1):mode==='daily'?L("Daily","Ежедневный"):L("Zen ","Дзен ")+N+'x'+N;updateCount();renderHearts();renderChips();}
+function renderHud(){$('toptitle').textContent=L("Level ","Уровень ")+(levelIdx+1);updateCount();renderHearts();renderChips();}
 function miniGrid(g){const cell=11,gap=2.5,pad=1,sz=3*cell+2*gap+2*pad;let s='<svg class="chipvis" viewBox="0 0 '+sz+' '+sz+'">';
   for(let r=0;r<3;r++)for(let c=0;c<3;c++){const x=pad+c*(cell+gap),y=pad+r*(cell+gap),v=g[r][c],cx=x+cell/2,cy=y+cell/2;
     s+='<rect x="'+x+'" y="'+y+'" width="'+cell+'" height="'+cell+'" rx="3" fill="#E7D5B5"/>';
@@ -610,18 +609,12 @@ function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach
   $('winTitle').textContent=L("Awesome!","Отлично!");$('winStars').innerHTML=starsHtml(3);$('winSub').textContent=L("You learned to play. Now the real puzzles begin.","Ты научился играть. Теперь начинаются настоящие головоломки.");
   $('btnNext').textContent=t('next');openScrim('scrimWin');}
 
-/* ---------- levels map ---------- */
-function renderLevelsMap(){const g=$('lvlgrid');g.innerHTML='';const unlocked=save.levelsDone;
-  for(let i=0;i<TOTAL_LEVELS;i++){const locked=i>unlocked;const node=document.createElement('div');node.className='lvlnode'+(locked?' locked':'')+(i<unlocked?' done':'')+(i===unlocked?' cur':'');
-    let inner='<div>'+(i+1)+'</div>';if(i<unlocked){const st=save.stars[i]||1;let s='';for(let k=0;k<3;k++)s+=starSvg(k<st);inner+='<div class="stars">'+s+'</div>';}
-    inner+='<div class="sz">'+levelSize(i)+'x'+levelSize(i)+'</div>';node.innerHTML=inner;if(!locked)node.onclick=()=>{closeAll();startLevel('levels',i);};g.appendChild(node);}}
-function openLevels(){renderLevelsMap();show('levels');}
-
 /* ---------- home + misc ---------- */
-function refreshHome(){try{const v=$('heroVid');v.play&&v.play().catch(()=>{});}catch(e){}const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';}
+function refreshHome(){try{const v=$('heroVid');v.play&&v.play().catch(()=>{});}catch(e){}const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');}
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;const y=new Date(Date.now()-86400000);const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1;save.lastPlayYMD=today;persist();}
-function startAdventure(){touchStreak();if(!save.tutorialDone){startFTUE();}else{openLevels();}}
+function startPlay(){touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
+function openSettings(inGame){setSoundIcon();$('setRestart').style.display=inGame?'':'none';$('setHome').style.display=inGame?'':'none';openScrim('scrimSet');}
 function fillHow(){const en=["Place one duck in every colored area.","No two ducks can share a row or a column.","Ducks cannot touch each other, not even diagonally.","Single-tap a cell for an X note. Double-tap to place a duck.","You have 3 hearts. A duck that breaks a rule costs one heart.","Stuck? Use Hint, Undo, or Place a Duck. No ads, boosters are Telegram Stars only."];
   const ru=["Поставь по одной утке в каждой цветной зоне.","Две утки не могут быть в одном ряду или столбце.","Утки не должны соприкасаться, даже по диагонали.","Одно нажатие на клетку ставит метку X. Двойное ставит утку.","У тебя 3 сердца. Утка, нарушившая правило, стоит одно сердце.","Застрял? Подсказка, Назад или Утка. Без рекламы, бустеры только за Telegram Stars."];
   $('howBody').innerHTML=(LANG==='ru'?ru:en).map(x=>"<p style='margin:8px 0'>"+x+"</p>").join('');}
@@ -629,25 +622,23 @@ function setSoundIcon(){$('setSoundIcon').style.opacity=audioOn?1:0.35;}
 
 /* ---------- wire up ---------- */
 function bind(){
-  $('btnPlay').onclick=startAdventure;
-  $('btnZen').onclick=()=>{touchStreak();startLevel('zen',0);};
-  $('btnDaily').onclick=()=>{touchStreak();startLevel('daily',0);};
-  $('btnShop').onclick=openShop;
-  $('btnHowHome').onclick=()=>{fillHow();openScrim('scrimHow');};
+  $('btnPlay').onclick=startPlay;
+  $('btnHomeGear').onclick=()=>openSettings(false);
   $('btnBack').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
-  $('btnLvlBack').onclick=()=>{show('home');refreshHome();};
-  $('btnGear').onclick=()=>{setSoundIcon();openScrim('scrimSet');};
+  $('btnGear').onclick=()=>openSettings(true);
   $('bsUndo').onclick=useUndo;$('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
-  $('btnNext').onclick=()=>{closeScrim('scrimWin');if(mode==='levels'){const nx=levelIdx+1;if(nx<TOTAL_LEVELS)startLevel('levels',nx);else{show('home');refreshHome();}}else if(mode==='zen'){startLevel('zen',0);}else{show('home');refreshHome();}};
+  $('btnNext').onclick=()=>{closeScrim('scrimWin');startLevel('levels',levelIdx+1);};
   $('btnWinHome').onclick=()=>{closeScrim('scrimWin');show('home');refreshHome();};
-  $('btnRetry').onclick=()=>{closeScrim('scrimLose');startLevel(mode,levelIdx);};
+  $('btnRetry').onclick=()=>{closeScrim('scrimLose');if(!save.tutorialDone){startFTUE();}else{startLevel('levels',levelIdx);}};
   $('btnLoseHome').onclick=()=>{closeScrim('scrimLose');show('home');refreshHome();};
   $('btnLuOk').onclick=()=>closeScrim('scrimLevelUp');
   $('shopClose').onclick=()=>closeScrim('scrimShop');
   $('howClose').onclick=()=>closeScrim('scrimHow');$('howOk').onclick=()=>closeScrim('scrimHow');
   $('setClose').onclick=()=>closeScrim('scrimSet');
   $('setSound').onclick=()=>{audioOn=!audioOn;save.sound=audioOn;persist();setSoundIcon();};
-  $('setRestart').onclick=()=>{closeScrim('scrimSet');startLevel(mode,levelIdx);};
+  $('setHowto').onclick=()=>{closeScrim('scrimSet');fillHow();openScrim('scrimHow');};
+  $('setShop').onclick=()=>{closeScrim('scrimSet');openShop();};
+  $('setRestart').onclick=()=>{closeScrim('scrimSet');startLevel('levels',levelIdx);};
   $('setHome').onclick=()=>{closeScrim('scrimSet');show('home');refreshHome();};
 }
 

@@ -13,3 +13,6 @@ npm-debug.log*
 brand/appicon/
 assets/store/_shots.png
 assets/store/*-raw.png
+_animshots/
+_shotsrv.log
+_aabbuild.log

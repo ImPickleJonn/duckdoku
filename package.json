@@ -15,12 +15,13 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@capacitor/push-notifications": "^6.0.5",
     "express": "^4.19.2",
     "pg": "^8.11.5"
   },
   "optionalDependencies": {
+    "@capacitor/android": "^6.1.2",
     "@capacitor/cli": "^6.1.2",
-    "@capacitor/core": "^6.1.2",
-    "@capacitor/android": "^6.1.2"
+    "@capacitor/core": "^6.1.2"
   }
 }

@@ -302,6 +302,24 @@ app.get('/api/leaderboard', (req, res) => {
   res.json({ top: arr.slice(0, 50) });
 });
 
+// FCM device tokens from the native Android app (Firebase Cloud Messaging).
+// Stored in memory (add Postgres for durability). Server-side SEND additionally
+// needs a Firebase Admin service account JSON (see fcmSend below) which is not
+// wired yet, so this just collects tokens so push can be turned on later.
+const fcmTokens = new Map(); // token -> { did, platform, lang, level, ts }
+app.post('/api/fcm-register', (req, res) => {
+  const b = req.body || {};
+  const token = String(b.token || '').trim();
+  if (!token || token.length > 400) return res.status(400).json({ error: 'bad token' });
+  fcmTokens.set(token, { did: String(b.did || '').slice(0, 64), platform: String(b.platform || 'android').slice(0, 16), lang: (b.lang === 'ru' ? 'ru' : 'en'), level: Number(b.level) || 1, ts: Date.now() });
+  if (fcmTokens.size > 50000) { const k = fcmTokens.keys().next().value; fcmTokens.delete(k); }
+  res.json({ ok: true });
+});
+// Placeholder for server-side FCM push. Wire FIREBASE_SA (a Firebase Admin
+// service account JSON from the Firebase console: Project settings, Service
+// accounts) to enable sending; until then this is a safe no-op.
+async function fcmSend(/* token, title, body */) { return false; }
+
 // Telegram webhook: answer pre_checkout fast, record successful payments.
 app.post('/api/telegram-webhook', async (req, res) => {
   if (WEBHOOK_SECRET && req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) return res.status(403).end();

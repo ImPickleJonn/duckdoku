@@ -164,6 +164,163 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .lvlnode .stars{display:flex;gap:1px;margin-top:2px;}
 .lvlnode .stars svg{width:11px;height:11px;}
 .lvlnode .sz{position:absolute;bottom:5px;font-size:2.6vw;color:inherit;opacity:.7;font-weight:800;}
+
+/* ===== Duckdoku home hero: "Quiet Deduction" (grafted ordered-stamp + drop-in) ===== */
+.ddh{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.ddh-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(3,1fr);
+  gap:6px;
+  width:86%;height:86%;
+}
+.ddh-cell{
+  position:relative;
+  border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.10), inset 0 2px 0 rgba(255,255,255,.22);
+}
+/* outer region tiles: settled, dim slightly while eliminated, brighten on reset */
+.ddh-out{
+  background:var(--rc);
+  filter:brightness(1) saturate(.97);
+  transition:filter .4s ease;
+}
+.ddh-out.ddh-dim{filter:brightness(.88) saturate(.9);}
+/* center deduced cell: warm cream, stays bright */
+.ddh-mid{
+  background:#FFF6E2;
+  overflow:visible;
+}
+.ddh-mid.ddh-flash{
+  animation:ddhFlash .5s ease;
+}
+@keyframes ddhFlash{
+  0%{box-shadow:inset 0 -3px 0 rgba(0,0,0,.10), inset 0 2px 0 rgba(255,255,255,.22), 0 0 0 0 rgba(255,210,63,0);}
+  40%{box-shadow:inset 0 0 0 4px #FFD23F, 0 0 18px 5px rgba(255,210,63,.7);}
+  100%{box-shadow:inset 0 -3px 0 rgba(0,0,0,.10), inset 0 2px 0 rgba(255,255,255,.22), 0 0 0 0 rgba(255,210,63,0);}
+}
+
+/* ---- white X notes: stamp in (overshoot + tiny shake), retract on reset ---- */
+.ddh-x{
+  position:absolute;inset:14%;
+  opacity:0;transform:scale(.55);
+  transform-origin:center;
+  will-change:transform,opacity;
+}
+.ddh-x svg{width:100%;height:100%;display:block;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.18));}
+.ddh-x.ddh-stamp{
+  animation:ddhStamp .28s cubic-bezier(.34,1.7,.5,1) forwards, ddhShake .13s ease .12s;
+}
+.ddh-x.ddh-retract{
+  animation:ddhRetract .34s ease forwards;
+}
+@keyframes ddhStamp{
+  0%{opacity:0;transform:scale(1.42);}
+  55%{opacity:1;transform:scale(.9);}
+  100%{opacity:1;transform:scale(1);}
+}
+@keyframes ddhShake{
+  0%,100%{margin-left:0;}
+  30%{margin-left:-2px;}
+  70%{margin-left:2px;}
+}
+@keyframes ddhRetract{
+  0%{opacity:1;transform:scale(1);}
+  100%{opacity:0;transform:scale(.5);}
+}
+
+/* ---- the duck (smaller, centered) ---- */
+.ddh-duck{
+  position:relative;
+  width:76%;height:76%;
+  opacity:0;
+  transform:translateY(-30%) scale(.4);
+  transform-origin:50% 100%;
+  will-change:transform,opacity;
+}
+.ddh-duck.ddh-land{
+  animation:ddhLand .52s cubic-bezier(.3,1.5,.5,1) forwards;
+}
+.ddh-duck.ddh-bob{
+  animation:ddhBob 2600ms ease-in-out infinite;
+  opacity:1;
+}
+.ddh-duck.ddh-leave{
+  animation:ddhLeave .34s ease forwards;
+}
+@keyframes ddhLand{
+  0%{opacity:0;transform:translateY(-30%) scale(.4);}
+  45%{opacity:1;transform:translateY(0) scaleX(1.14) scaleY(.8);}
+  72%{transform:translateY(-7%) scaleX(.92) scaleY(1.1);}
+  100%{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes ddhBob{
+  0%,100%{transform:translateY(0) scale(1);}
+  50%{transform:translateY(-5%) scale(1.02);}
+}
+@keyframes ddhLeave{
+  0%{opacity:1;transform:translateY(0) scale(1);}
+  100%{opacity:0;transform:translateY(-12%) scale(.4);}
+}
+.ddh-fallback,.ddh-face{
+  position:absolute;inset:0;width:100%;height:100%;
+}
+.ddh-fallback svg{width:100%;height:100%;display:block;}
+.ddh-face{opacity:0;transition:opacity .4s ease;}
+.ddh-face.ready{opacity:1;}
+.ddh-duck.face-on .ddh-fallback{opacity:0;transition:opacity .4s ease;}
+
+/* ---- center cell warm glow swell on landing ---- */
+.ddh-glow{
+  position:absolute;inset:0;border-radius:13px;pointer-events:none;
+  box-shadow:0 0 0 0 rgba(255,210,63,0);
+}
+.ddh-glow.ddh-swell{animation:ddhGlow 1.1s ease;}
+@keyframes ddhGlow{
+  0%{box-shadow:0 0 0 0 rgba(255,210,63,0);}
+  30%{box-shadow:0 0 18px 5px rgba(255,210,63,.55);}
+  60%{box-shadow:0 0 10px 2px rgba(255,210,63,.18);}
+  100%{box-shadow:0 0 0 0 rgba(255,210,63,0);}
+}
+
+/* ---- minimal celebration: 3 gold sparkles + 1 faint ring ---- */
+.ddh-spark{
+  position:absolute;width:13%;height:13%;border-radius:50%;
+  background:radial-gradient(circle,#FFE38A 0%,#FFD23F 55%,rgba(255,210,63,0) 72%);
+  opacity:0;transform:scale(0);pointer-events:none;z-index:4;
+}
+.ddh-spark.s1{left:6%;top:10%;}
+.ddh-spark.s2{right:4%;top:30%;}
+.ddh-spark.s3{left:20%;bottom:6%;}
+.ddh-mid.ddh-cele .ddh-spark.s1{animation:ddhSpark .62s ease 40ms;}
+.ddh-mid.ddh-cele .ddh-spark.s2{animation:ddhSpark .62s ease 160ms;}
+.ddh-mid.ddh-cele .ddh-spark.s3{animation:ddhSpark .62s ease 280ms;}
+@keyframes ddhSpark{
+  0%{opacity:0;transform:scale(0);}
+  40%{opacity:1;transform:scale(1.1);}
+  100%{opacity:0;transform:scale(1.6);}
+}
+.ddh-ring{
+  position:absolute;inset:4%;border-radius:50%;
+  border:3px solid rgba(255,210,63,.9);
+  opacity:0;transform:scale(.4);pointer-events:none;z-index:3;
+}
+.ddh-mid.ddh-cele .ddh-ring{animation:ddhRing .6s ease;}
+@keyframes ddhRing{
+  0%{opacity:0;transform:scale(.4);}
+  35%{opacity:.85;transform:scale(.7);}
+  100%{opacity:0;transform:scale(1.3);}
+}
+
+/* respect reduced-motion: show the solved pose, no looping motion */
+@media (prefers-reduced-motion:reduce){
+  .ddh-out,.ddh-duck,.ddh-glow,.ddh-spark,.ddh-ring{animation:none!important;}
+  .ddh-out{filter:brightness(.88) saturate(.9);}
+  .ddh-out .ddh-x{opacity:1!important;transform:scale(1)!important;animation:none!important;}
+  .ddh-duck{opacity:1!important;transform:none!important;}
+}
 </style>
 </head>
 <body>
@@ -177,7 +334,29 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
     <div class="tag" id="tagline">A cozy duck logic puzzle</div>
     <div class="fill"></div>
     <div class="hero-wrap">
-      <video id="heroVid" autoplay loop muted playsinline poster="assets/ducks/hero-frame.png"><source src="assets/ducks/hero.mp4" type="video/mp4"></video>
+      <div class="ddh" aria-hidden="true">
+        <div class="ddh-grid">
+          <div class="ddh-cell ddh-out" data-ci="0" style="--rc:#E58A77"><span class="ddh-x"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg></span></div>
+          <div class="ddh-cell ddh-out" data-ci="1" style="--rc:#6FA9E4"><span class="ddh-x"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg></span></div>
+          <div class="ddh-cell ddh-out" data-ci="2" style="--rc:#8BCB6E"><span class="ddh-x"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg></span></div>
+          <div class="ddh-cell ddh-out" data-ci="3" style="--rc:#B773E8"><span class="ddh-x"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg></span></div>
+          <div class="ddh-cell ddh-mid" data-ci="4">
+            <span class="ddh-glow"></span>
+            <div class="ddh-duck">
+              <div class="ddh-fallback"><svg viewBox="0 0 64 64"><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><circle cx="25" cy="32" r="4" fill="#3A2A20"/><circle cx="40" cy="32" r="4" fill="#3A2A20"/><path d="M25 43 q7 7 15 0 q-2 7 -7.5 7 q-5.5 0 -7.5 -7z" fill="#F2913C"/></svg></div>
+              <canvas class="ddh-face" width="256" height="256"></canvas>
+            </div>
+            <span class="ddh-spark s1"></span>
+            <span class="ddh-spark s2"></span>
+            <span class="ddh-spark s3"></span>
+            <span class="ddh-ring"></span>
+          </div>
+          <div class="ddh-cell ddh-out" data-ci="5" style="--rc:#E8B24C"><span class="ddh-x"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg></span></div>
+          <div class="ddh-cell ddh-out" data-ci="6" style="--rc:#4BB6A7"><span class="ddh-x"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg></span></div>
+          <div class="ddh-cell ddh-out" data-ci="7" style="--rc:#9E8BE6"><span class="ddh-x"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg></span></div>
+          <div class="ddh-cell ddh-out" data-ci="8" style="--rc:#EF94B6"><span class="ddh-x"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg></span></div>
+        </div>
+      </div>
     </div>
     <div class="menu">
       <button class="btn play" id="btnPlay" data-i="play">Level 1</button>
@@ -693,7 +872,7 @@ function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach
   $('btnNext').textContent=t('next');openScrim('scrimWin');}
 
 /* ---------- home + misc ---------- */
-function refreshHome(){try{const v=$('heroVid');v.play&&v.play().catch(()=>{});}catch(e){}const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');}
+function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');}
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;const y=new Date(Date.now()-86400000);const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1;save.lastPlayYMD=today;persist();}
 function startPlay(){touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
@@ -728,10 +907,150 @@ function bind(){
 }
 
 /* ---------- boot ---------- */
-function boot(){applyI18n();$('tagline').textContent=t('tagline');bind();bindPaint();fillHow();refreshHome();initFaces();mxBoot();
+// Firebase Cloud Messaging push, NATIVE Android only (no-op in Telegram/web).
+// Registers the device with FCM and sends the token to the server so it can DM
+// the player. Guarded by Capacitor.isNativePlatform so the web/Telegram build skips it.
+function fcmInit(){
+  try{
+    var C=window.Capacitor;
+    if(!C||!C.isNativePlatform||!C.isNativePlatform())return;
+    var PN=C.Plugins&&C.Plugins.PushNotifications;
+    if(!PN)return;
+    PN.addListener('registration',function(tok){
+      try{var did='';try{did=localStorage.getItem('dd.anon')||'';}catch(e){}
+        fetch(API_BASE+'/api/fcm-register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok&&tok.value,did:did,platform:'android',lang:LANG,level:(save&&save.levelsDone+1)||1})}).catch(function(){});
+      }catch(e){}
+    });
+    PN.addListener('registrationError',function(){});
+    PN.requestPermissions().then(function(p){if(p&&p.receive==='granted')PN.register();}).catch(function(){});
+  }catch(e){}
+}
+function boot(){applyI18n();$('tagline').textContent=t('tagline');bind();bindPaint();fillHow();refreshHome();initFaces();mxBoot();fcmInit();
   loadSkus();pollPurchases();cloudLoad();
   if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,lang:LANG,levelsDone:(save&&save.levelsDone)||0,tz:-(new Date().getTimezoneOffset()/60)})}).catch(()=>{});}catch(e){}}
 }
+/* ===== Duckdoku home hero: "Quiet Deduction" choreographer =====
+   Self-starting, self-rearming setTimeout timeline. Eight region tiles ring a
+   smaller duck; white X notes stamp corners then column then row (Star-Battle
+   rule) so exactly the center survives, then the duck DROPS in with a squash
+   landing and a restrained gold celebration, then it all retracts to a clean
+   board and loops. Live keyed duck head via drawFace when faceVideosReady, else
+   the DUCK_MINI SVG fallback. Pauses fully when home is off-screen or the tab is
+   hidden (low CPU). */
+(function ddhHero(){
+  var wrap=document.querySelector('.ddh');
+  if(!wrap)return;
+  var grid=wrap.querySelector('.ddh-grid');
+  var mid=wrap.querySelector('.ddh-mid');
+  var glow=wrap.querySelector('.ddh-glow');
+  var duck=wrap.querySelector('.ddh-duck');
+  var face=wrap.querySelector('.ddh-face');
+  var cells=Array.prototype.slice.call(grid.querySelectorAll('.ddh-cell'));
+  function byI(i){return cells.filter(function(c){return +c.dataset.ci===i;})[0];}
+
+  var CORNERS=[0,2,6,8];      /* corners first */
+  var COL_CELLS=[1,7];        /* answer's column (above + below center) */
+  var ROW_CELLS=[3,5];        /* answer's row (left + right of center) */
+
+  var timers=[];
+  function at(ms,fn){timers.push(setTimeout(fn,ms));}
+  function clearTimers(){timers.forEach(clearTimeout);timers=[];}
+  function xOf(i){return byI(i).querySelector('.ddh-x');}
+
+  function resetVisuals(){
+    cells.forEach(function(c){c.classList.remove('ddh-dim');});
+    cells.forEach(function(c){
+      var x=c.querySelector('.ddh-x');
+      if(x){x.classList.remove('ddh-stamp','ddh-retract');x.style.opacity='';x.style.transform='';}
+    });
+    mid.classList.remove('ddh-flash','ddh-cele');
+    glow.classList.remove('ddh-swell');
+    duck.classList.remove('ddh-land','ddh-bob','ddh-leave');
+    paintDuck('idle');
+    void grid.offsetWidth;
+  }
+
+  function stamp(i){
+    var x=xOf(i);if(!x)return;
+    x.classList.remove('ddh-retract');
+    void x.offsetWidth;
+    x.classList.add('ddh-stamp');
+    byI(i).classList.add('ddh-dim');
+  }
+
+  function runCycle(){
+    clearTimers();
+    resetVisuals();
+    var t=700;
+    CORNERS.forEach(function(i){ at(t,function(){stamp(i);}); t+=200; });
+    t+=120;
+    COL_CELLS.forEach(function(i){ at(t,function(){stamp(i);}); t+=190; });
+    ROW_CELLS.forEach(function(i){ at(t,function(){stamp(i);}); t+=190; });
+    var settled=t+220;
+    at(settled,function(){
+      mid.classList.add('ddh-flash');
+      glow.classList.add('ddh-swell');
+      duck.classList.remove('ddh-bob','ddh-leave');
+      void duck.offsetWidth;
+      duck.classList.add('ddh-land');
+      paintDuck('happy');
+    });
+    at(settled+520,function(){
+      duck.classList.remove('ddh-land');
+      duck.classList.add('ddh-bob');
+    });
+    at(settled+160,function(){ mid.classList.add('ddh-cele'); });
+    var hold=settled+1900;
+    at(hold,function(){ paintDuck('idle'); });
+    at(hold+200,function(){
+      cells.forEach(function(c){
+        var x=c.querySelector('.ddh-x');
+        if(x&&x.classList.contains('ddh-stamp')){x.classList.remove('ddh-stamp');x.classList.add('ddh-retract');}
+        c.classList.remove('ddh-dim');
+      });
+      duck.classList.remove('ddh-bob');
+      duck.classList.add('ddh-leave');
+    });
+    at(hold+900,function(){ runCycle(); });
+  }
+
+  var faceReadyShown=false, curMode='idle';
+  function showKeyed(){ if(!faceReadyShown){faceReadyShown=true;face.classList.add('ready');duck.classList.add('face-on');} }
+  /* faceLoop only keys faces during the game, so on the home we key the live
+     (playing) video frame ourselves via keyInto, then draw it. Only hide the
+     DUCK_MINI fallback once keying actually produced a frame. */
+  function paintDuck(mode){
+    curMode=mode;
+    if(typeof faceVideosReady!=='undefined' && faceVideosReady && typeof keyInto==='function' && typeof drawFace==='function' && face){
+      try{ if(keyInto(mode)){ drawFace(face,mode); showKeyed(); return; } }catch(e){}
+    }
+  }
+
+  var lastPaint=0;
+  function homeOn(){
+    var h=document.getElementById('home');
+    return !document.hidden && h && h.classList.contains('on');
+  }
+  function tick(now){
+    requestAnimationFrame(tick);
+    if(!homeOn())return;
+    if(!face||!face.isConnected)return;
+    if(typeof faceVideosReady==='undefined'||!faceVideosReady)return;
+    if(duck.classList.contains('ddh-leave'))return;
+    if(now-lastPaint<100)return; lastPaint=now;
+    try{ if(typeof keyInto==='function'&&keyInto(curMode)){ drawFace(face,curMode); showKeyed(); } }catch(e){}
+  }
+
+  var running=false;
+  function start(){ if(running)return; running=true; runCycle(); }
+  function stop(){ running=false; clearTimers(); resetVisuals(); }
+  function sync(){ if(homeOn()){ if(!running)start(); } else { if(running)stop(); } }
+
+  document.addEventListener('visibilitychange',sync);
+  setInterval(sync,600);
+  requestAnimationFrame(tick);
+  sync();
+})();
 boot();
 </script>
 </body>

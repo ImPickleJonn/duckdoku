@@ -439,50 +439,117 @@ function lbLoad() {
   } catch (e) {}
 }
 
-// ---- notification content (EN + RU, no emoji, no dashes) ----
+// ---- notification content (EN + RU, no emoji, no dashes, salt rotated) ----
+// Each type carries several copy variants; a per-user daily salt rotates them so
+// repeat sends never read the same. Mirrors the Rail the Way notification system.
 const NOTIF_CTA = { en: 'Play now', ru: 'Играть' };
 const NOTIF = {
-  comeback:  { media: 'comeback',  en: 'Your ducks miss you. A fresh puzzle is waiting whenever you are ready.', ru: 'Утята скучают по тебе. Новая головоломка ждёт, когда захочешь.' },
-  daily:     { media: 'daily',     en: 'A new day, a new duck puzzle. Come find every hidden duck.', ru: 'Новый день, новая утиная головоломка. Найди всех спрятанных уток.' },
-  newlevels: { media: 'celebrate', en: 'New levels are open. Think you can find every hidden duck?', ru: 'Открылись новые уровни. Думаешь, найдёшь всех спрятанных уток?' },
-  gift:      { media: 'gift',      en: 'A little gift is waiting. A free booster for your next puzzle.', ru: 'Тебя ждёт подарок. Бесплатный бустер для следующей головоломки.' },
-  nudge:     { media: 'comeback',  en: 'One quick puzzle? The duck is ready when you are.', ru: 'Одна быстрая головоломка? Утка готова, когда и ты.' },
+  comeback: {
+    en: ['Your ducks miss you. A fresh puzzle is waiting whenever you are ready.',
+         'The pond has been quiet without you. One cozy puzzle to come back to?',
+         'A little duck is still hiding, waiting for you to find it.'],
+    ru: ['Утята скучают по тебе. Новая головоломка ждёт, когда захочешь.',
+         'Без тебя на пруду тихо. Одна уютная головоломка, чтобы вернуться?',
+         'Маленькая утка всё ещё прячется и ждёт, когда ты её найдёшь.'],
+  },
+  daily: {
+    en: ['A new day, a new duck puzzle. Come find every hidden duck.',
+         'Today the pond is fresh. Can you spot every duck?'],
+    ru: ['Новый день, новая утиная головоломка. Найди всех спрятанных уток.',
+         'Сегодня на пруду всё свежее. Найдёшь всех уток?'],
+  },
+  nudge: {
+    en: ['One quick puzzle? The duck is ready when you are.',
+         'Just one little duck to find. Quick game?',
+         'A tidy little board is waiting. Find the duck?'],
+    ru: ['Одна быстрая головоломка? Утка готова, когда и ты.',
+         'Всего одна уточка, которую нужно найти. Быстрая игра?',
+         'Тебя ждёт аккуратная доска. Найдёшь утку?'],
+  },
+  newlevels: {
+    en: ['New puzzles are open. Think you can find every hidden duck?',
+         'Fresh boards just landed. Ready for a trickier hunt?'],
+    ru: ['Открылись новые головоломки. Думаешь, найдёшь всех спрятанных уток?',
+         'Появились новые доски. Готов к более хитрой охоте?'],
+  },
 };
-// media key -> filename served from /assets/notif (set once art/gifs are generated). Empty -> text only.
-const NOTIF_MEDIA = {};
-function notifMediaUrl(key) { const f = NOTIF_MEDIA[key]; return f ? (ASSET_BASE() + '/assets/notif/' + f) : ''; }
+// Media pools per type: cute duck stills (photos) + animated 3D duck clips, all
+// already shipped under /assets/ducks. sendNotif alternates photo and animation
+// by a per-user daily salt and degrades gracefully photo -> animation -> text.
+const NOTIF_MEDIA = {
+  comeback:  { photos: ['assets/notif/comeback.png', 'assets/ducks/face-sad-frame.png', 'assets/ducks/hero-frame.png'],     anims: ['assets/ducks/hero.mp4', 'assets/ducks/face-happy.mp4'] },
+  daily:     { photos: ['assets/notif/daily.png', 'assets/ducks/hero-frame.png', 'assets/ducks/face-happy-frame.png'],      anims: ['assets/ducks/hero.mp4', 'assets/ducks/victory.mp4'] },
+  nudge:     { photos: ['assets/notif/nudge.png', 'assets/ducks/face-happy-frame.png', 'assets/ducks/hero-frame.png'],      anims: ['assets/ducks/hero.mp4', 'assets/ducks/face-happy.mp4'] },
+  newlevels: { photos: ['assets/notif/newlevels.png', 'assets/ducks/victory-frame.png', 'assets/ducks/levelup-frame.png'],  anims: ['assets/ducks/victory.mp4', 'assets/ducks/levelup.mp4'] },
+};
+const NOTIF_COOLDOWN = { comeback: 48 * 3600e3, daily: 24 * 3600e3, nudge: 24 * 3600e3, newlevels: 36 * 3600e3 };
+function notifAssetUrl(p) { return ASSET_BASE() + '/' + String(p).replace(/^\/+/, ''); }
+function notifPick(arr, salt) { return (arr && arr.length) ? arr[Math.abs(salt | 0) % arr.length] : ''; }
 async function sendNotif(s, key) {
-  const def = NOTIF[key]; if (!def) return { ok: false };
+  const def = NOTIF[key]; if (!def || !s || !s.chatId) return { ok: false };
   const lang = s.lang === 'ru' ? 'ru' : 'en';
-  const caption = def[lang] || def.en;
+  const salt = (Number(s.uid || s.chatId) || 0) + Math.floor(Date.now() / 86400000);
+  const ri = Math.abs(salt | 0);
+  const caption = notifPick(def[lang] || def.en, salt);
+  if (!caption) return { ok: false };
   const reply_markup = { inline_keyboard: [[{ text: NOTIF_CTA[lang] || NOTIF_CTA.en, web_app: { url: GAME() } }]] };
-  const url = notifMediaUrl(def.media);
-  if (url && /\.(mp4|gif)(\?|$)/i.test(url)) return tg('sendAnimation', { chat_id: s.chatId, animation: url, caption, reply_markup });
-  if (url) return tg('sendPhoto', { chat_id: s.chatId, photo: url, caption, reply_markup });
+  const media = NOTIF_MEDIA[key] || {};
+  const photo = (media.photos && media.photos.length) ? notifAssetUrl(media.photos[ri % media.photos.length]) : '';
+  const anim = (media.anims && media.anims.length) ? notifAssetUrl(media.anims[ri % media.anims.length]) : '';
+  const photoItem = photo ? { m: 'sendPhoto', k: 'photo', v: photo } : null;
+  const animItem = anim ? { m: 'sendAnimation', k: 'animation', v: anim } : null;
+  // Alternate which media leads (animation vs photo) by salt, fall back across both, then text.
+  const seq = ((ri % 2 === 0) ? [animItem, photoItem] : [photoItem, animItem]).filter(Boolean);
+  for (const it of seq) {
+    const payload = { chat_id: s.chatId, caption, reply_markup };
+    payload[it.k] = it.v;
+    const r = await tg(it.m, payload);
+    if (r && r.ok) return r;
+    if (r && r.error_code === 403) return r; // blocked: stop trying
+  }
   return tg('sendMessage', { chat_id: s.chatId, text: caption, reply_markup });
 }
 
-// ---- loop: cooldowns + daily cap + quiet hours + NOTIFY_OFF kill switch ----
+// ---- loop: per-type cooldown + 3/day cap + 4h spacing + quiet hours + kill switch ----
 const NOTIF_LOOP_MS = 10 * 60 * 1000;
+const NOTIF_CAP_DAY = 3;
+const NOTIF_MIN_SPACING_MS = 4 * 3600 * 1000;
+const NOTIF_MAX_PER_PASS = 25;
 function nowYMD() { return new Date().toISOString().slice(0, 10); }
 function inQuiet(s) { const off = Number(s.tz) || 0; const h = (((new Date().getUTCHours()) + off) % 24 + 24) % 24; return h < 9 || h >= 22; }
-function canNotify(s) {
-  if (s.optOut) return false;
-  if (Date.now() - (s.lastNotifTs || 0) < 22 * 3600 * 1000) return false;
-  if (s.notifYMD === nowYMD() && (s.notifN || 0) >= 1) return false;
+function notifCan(s, key) {
+  if (!s || s.optOut || !s.chatId) return false;
   if (inQuiet(s)) return false;
+  if (Date.now() - (s.lastNotifTs || 0) < NOTIF_MIN_SPACING_MS) return false;
+  if (s.notifYMD === nowYMD() && (s.notifN || 0) >= NOTIF_CAP_DAY) return false;
+  const last = (s.notifLast && s.notifLast[key]) || 0;
+  if (Date.now() - last < (NOTIF_COOLDOWN[key] || 24 * 3600e3)) return false;
   return true;
 }
-function pickTrigger(s) { const h = (Date.now() - (s.lastActive || 0)) / 3600000; if (h >= 48) return 'comeback'; if (h >= 20) return 'daily'; return null; }
+function pickTrigger(s) {
+  const h = (Date.now() - (s.lastActive || 0)) / 3600000;
+  const played = (s.levelsDone || 0) > 0;
+  if (h >= 72 && notifCan(s, 'comeback')) return 'comeback';
+  if (played && h >= 18 && h < 72 && notifCan(s, 'daily')) return 'daily';
+  if (played && h >= 8 && notifCan(s, 'nudge')) return 'nudge';
+  return null;
+}
 async function notifyLoop() {
   if (process.env.NOTIFY_OFF === '1' || !BOT_TOKEN) return;
-  for (const [, s] of users) {
+  let sent = 0;
+  for (const [uid, s] of users) {
+    if (sent >= NOTIF_MAX_PER_PASS) break;
     try {
-      if (!canNotify(s)) continue;
       const k = pickTrigger(s); if (!k) continue;
+      s.uid = s.uid || uid;
       const r = await sendNotif(s, k);
-      if (r && r.ok) { const ymd = nowYMD(); s.notifN = (s.notifYMD === ymd ? (s.notifN || 0) : 0) + 1; s.notifYMD = ymd; s.lastNotifTs = Date.now(); }
-      else if (r && (r.error_code === 403)) { s.optOut = true; }
+      if (r && r.ok) {
+        const ymd = nowYMD();
+        s.notifN = (s.notifYMD === ymd ? (s.notifN || 0) : 0) + 1; s.notifYMD = ymd;
+        s.lastNotifTs = Date.now();
+        s.notifLast = s.notifLast || {}; s.notifLast[k] = Date.now();
+        sent++;
+      } else if (r && r.error_code === 403) { s.optOut = true; }
       await new Promise(res => setTimeout(res, 150));
     } catch (e) {}
   }

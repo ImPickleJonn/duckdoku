@@ -108,8 +108,9 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .coach .bubble .hl{color:var(--red);}
 .coach .bubble .lampicon{width:30px;height:30px;flex:none;}
 .coach .gotit{margin-top:12px;}
-#handhint{position:fixed;z-index:88;width:42px;height:42px;pointer-events:none;display:none;animation:tap 1.05s infinite;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));}
-@keyframes tap{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+#handhint{position:fixed;z-index:88;width:62px;pointer-events:none;display:none;}
+#handhint img{width:100%;height:auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));transform-origin:20% 15%;animation:fingerTapImg 1.05s ease-in-out infinite;}
+@keyframes fingerTapImg{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-3px,4px) scale(.92)}}
 
 /* ---------- MODALS ---------- */
 .scrim{position:fixed;inset:0;background:rgba(40,28,24,.5);display:none;align-items:center;justify-content:center;z-index:90;padding:18px;}
@@ -211,7 +212,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 <!-- coach bubbles + hand -->
 <div class="coach" id="coachTop"><div class="bubble" id="coachTopB"></div></div>
 <div class="coach" id="coachBot"><div class="bubble" id="coachBotB"></div></div>
-<img id="handhint" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff' stroke='%236E4F44' stroke-width='1.1'><path d='M9 11V5a1.5 1.5 0 0 1 3 0v6m0-1a1.5 1.5 0 0 1 3 0v2m0-1a1.5 1.5 0 0 1 3 0v3a6 6 0 0 1-6 6h-1a6 6 0 0 1-5.3-3.2L4 13.5a1.5 1.5 0 0 1 2.6-1.5L8 14'/></svg>">
+<div id="handhint"><img src="assets/ui/finger.png" alt=""></div>
 
 <!-- ============ SCRIMS ============ -->
 <div class="scrim" id="scrimWin"><div class="modal dark modal-rel">
@@ -573,7 +574,7 @@ function ftueDim(on){$('app').classList.toggle('tutdim',on);$('qboard').classLis
 function ftueSpot(cells){cellEls.forEach(row=>row.forEach(el=>el.classList.remove('spot')));ftue.allowOnly=new Set();cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el)el.classList.add('spot');ftue.allowOnly.add(r*100+c);});}
 function showCoach(which,spec,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=bub(spec)+(withLamp?' '+LAMP_SVG:'');(which==='top'?$('coachTop'):$('coachBot')).classList.add('on');}
 function hideCoach(which){(which==='top'?$('coachTop'):$('coachBot')).classList.remove('on');}
-function handOver(r,c){const el=cellEl(r,c);if(!el){return;}const b=el.getBoundingClientRect();const h=$('handhint');h.style.display='block';h.style.left=(b.left+b.width*0.55)+'px';h.style.top=(b.top+b.height*0.55)+'px';}
+function handOver(r,c){const el=cellEl(r,c);if(!el){return;}const b=el.getBoundingClientRect();const h=$('handhint');h.style.display='block';h.style.left=(b.left+b.width*0.5-12)+'px';h.style.top=(b.top+b.height*0.5-9)+'px';}
 function handHide(){$('handhint').style.display='none';}
 function ftueStep0(){ // place the first duck (most-constrained region's solution cell)
   ftue.step=0;ftueDim(true);

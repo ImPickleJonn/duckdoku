@@ -18,6 +18,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 const { Pool } = require('pg');
 
 const app = express();
@@ -284,11 +285,21 @@ app.post('/api/heartbeat', (req, res) => {
     chatId: user.id,
     lang: (body.lang || user.language_code || 'en').slice(0, 2) === 'ru' ? 'ru' : 'en',
     lastActive: Date.now(),
-    levelsDone: Number(body.levelsDone) || 0,
+    levelsDone: Math.max(Number(body.levelsDone) || 0, (users.get(user.id) || {}).levelsDone || 0),
     tz: (typeof body.tz === 'number') ? body.tz : (users.get(user.id) || {}).tz,
     first: user.first_name,
+    name: user.first_name || user.username || 'Duck',
   });
+  lbSaveSoon();
   res.json({ ok: true });
+});
+
+// Public leaderboard: top players by highest level reached.
+app.get('/api/leaderboard', (req, res) => {
+  const arr = [];
+  for (const [, s] of users) { const lvl = s.levelsDone || 0; if (lvl > 0) arr.push({ name: s.name || s.first || 'Duck', level: lvl }); }
+  arr.sort((a, b) => b.level - a.level);
+  res.json({ top: arr.slice(0, 50) });
 });
 
 // Telegram webhook: answer pre_checkout fast, record successful payments.
@@ -317,6 +328,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
             } catch (e) { console.error('[iap] webhook db write:', e.message); }
           }
           pushPending(payload.uid, payload.sku);
+          payments.push({ uid: payload.uid, sku: payload.sku, stars: sp.total_amount || sku.price || 0, chargeId: sp.telegram_payment_charge_id, ts: Date.now(), refunded: false });
+          if (payments.length > 2000) payments.shift();
           notifyPurchase({ sku: payload.sku, stars: sp.total_amount || sku.price || 0, userId: payload.uid, username: update.message.from && update.message.from.username });
         }
       } catch (e) { /* malformed payload */ }
@@ -380,6 +393,34 @@ function playKb(lang) { return { inline_keyboard: [[{ text: lang === 'ru' ? 'И�
 const users = new Map();
 function noteUser(uid, patch) { if (!uid) return null; const s = users.get(uid) || { chatId: uid, lang: 'en', optOut: false }; Object.assign(s, patch); users.set(uid, s); return s; }
 
+// Stars payments ledger (in-memory) for /refund within 48h.
+const payments = []; // { uid, sku, stars, chargeId, ts, refunded }
+
+// Leaderboard: highest level reached, from the in-memory users map with a
+// best-effort disk snapshot so it survives restarts (add Postgres for full durability).
+const LB_FILE = path.join(__dirname, 'data', 'leaderboard.json');
+let lbTimer = null;
+function lbSaveSoon() {
+  if (lbTimer) return;
+  lbTimer = setTimeout(() => {
+    lbTimer = null;
+    try {
+      const arr = [];
+      for (const [uid, s] of users) { const lvl = s.levelsDone || 0; if (lvl > 0) arr.push({ uid, name: s.name || s.first || 'Duck', level: lvl }); }
+      arr.sort((a, b) => b.level - a.level);
+      fs.mkdirSync(path.dirname(LB_FILE), { recursive: true });
+      fs.writeFileSync(LB_FILE, JSON.stringify(arr.slice(0, 500)));
+    } catch (e) {}
+  }, 8000);
+}
+function lbLoad() {
+  try {
+    const arr = JSON.parse(fs.readFileSync(LB_FILE, 'utf8'));
+    for (const r of arr) if (r && r.uid) { const s = users.get(r.uid) || { chatId: r.uid, lang: 'en', optOut: false }; if ((r.level || 0) > (s.levelsDone || 0)) { s.name = r.name; s.levelsDone = r.level; } users.set(r.uid, s); }
+    console.log('[lb] loaded ' + arr.length + ' entries');
+  } catch (e) {}
+}
+
 // ---- notification content (EN + RU, no emoji, no dashes) ----
 const NOTIF_CTA = { en: 'Play now', ru: 'Играть' };
 const NOTIF = {
@@ -440,6 +481,7 @@ const BOTMSG = {
   privacy: { en: 'Privacy\n\nDuckdoku stores your game progress on your device and, in the Telegram app, in your account so it follows you across devices. We use anonymous analytics to improve the game. We never sell your data. No ads.', ru: 'Конфиденциальность\n\nDuckdoku хранит прогресс на устройстве и, в приложении Telegram, в аккаунте, чтобы он был с тобой на всех устройствах. Мы используем анонимную аналитику, чтобы улучшать игру. Мы не продаём данные. Без рекламы.' },
   terms: { en: 'Terms\n\nDuckdoku is provided as is for your enjoyment. Booster purchases are made with Telegram Stars and are final. Play fair and have fun.', ru: 'Условия\n\nDuckdoku предоставляется как есть для твоего удовольствия. Покупки бустеров совершаются за Telegram Stars и возврату не подлежат. Играй честно и получай удовольствие.' },
   muted: { en: 'You will not get reminder messages anymore. Send /start any time to come back.', ru: 'Ты больше не будешь получать напоминания. Отправь /start, когда захочешь вернуться.' },
+  paysupport: { en: 'Purchases in Duckdoku are handled securely by Telegram Stars, right inside the app. If something went wrong, you can refund your most recent purchase within 48 hours: just send /refund here and it reverts automatically. For anything else, write to us in this chat and we will read it.', ru: 'Покупки в Duckdoku проходят безопасно через Telegram Stars, прямо в приложении. Если что то пошло не так, можно вернуть последнюю покупку в течение 48 часов: просто отправь сюда /refund, и она отменится автоматически. По другим вопросам напиши в этот чат, мы прочитаем.' },
 };
 function welcomeText(first) {
   return 'Hi ' + (first || 'there') + '. Welcome to Duckdoku.\n\n' +
@@ -472,6 +514,15 @@ async function handleCommand(m) {
   if (cmd === 'support') return tg('sendMessage', { chat_id: chat, text: BOTMSG.support[lang] });
   if (cmd === 'privacy') return tg('sendMessage', { chat_id: chat, text: BOTMSG.privacy[lang] });
   if (cmd === 'terms') return tg('sendMessage', { chat_id: chat, text: BOTMSG.terms[lang] });
+  if (cmd === 'paysupport') return tg('sendMessage', { chat_id: chat, text: BOTMSG.paysupport[lang] });
+  if (cmd === 'refund') {
+    const list = payments.filter(x => String(x.uid) === String(uid) && !x.refunded && (Date.now() - x.ts) < 48 * 3600 * 1000);
+    if (!list.length) return tg('sendMessage', { chat_id: chat, text: lang === 'ru' ? 'Нет покупок для возврата за последние 48 часов.' : 'No refundable purchase found from the last 48 hours.' });
+    const last = list[list.length - 1];
+    const r = await tg('refundStarPayment', { user_id: parseInt(uid, 10), telegram_payment_charge_id: last.chargeId });
+    if (r && r.ok) { last.refunded = true; return tg('sendMessage', { chat_id: chat, text: lang === 'ru' ? 'Готово. Звёзды за последнюю покупку возвращены.' : 'Done. Your most recent purchase has been refunded.' }); }
+    return tg('sendMessage', { chat_id: chat, text: lang === 'ru' ? 'Не удалось вернуть. Напиши нам сюда.' : 'Refund could not be processed. Please message us here.' });
+  }
   if (cmd === 'stop' || cmd === 'mute') { noteUser(uid, { optOut: true }); return tg('sendMessage', { chat_id: chat, text: BOTMSG.muted[lang] }); }
   if (cmd === 'stats') { if (isAdmin(uid)) return tg('sendMessage', { chat_id: chat, text: statsText() }); return; }
   if (cmd === 'preview') { if (isAdmin(uid)) return previewAll(chat, lang); return; }
@@ -488,6 +539,7 @@ const BOT_CMDS = [
   { command: 'support', description: 'Get help' },
   { command: 'privacy', description: 'Privacy' },
   { command: 'terms', description: 'Terms' },
+  { command: 'paysupport', description: 'Payment help and refunds' },
 ];
 async function configureBotProfile() {
   if (!BOT_TOKEN) return;
@@ -531,6 +583,7 @@ app.post('/api/ship-notify', async (req, res) => {
 app.get('/healthz', (req, res) => res.json({ ok: true, dbReady }));
 
 initSchema().finally(() => {
+  lbLoad();
   app.listen(PORT, () => console.log(`Duckdoku server on :${PORT} (iap ${BOT_TOKEN ? 'on' : 'off'})`));
   if (BOT_TOKEN) {
     setTimeout(() => { configureBotProfile().catch(() => {}); }, 1500);

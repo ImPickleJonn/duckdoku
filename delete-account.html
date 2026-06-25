@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#F3ECEC">
+<title>Delete your Duckdoku data</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#F3ECEC;--ink:#6E4F44;--soft:#9C8B74;--card:#fff;--orange:#E8942F;--orange-d:#C9781E;--red:#E0433A;--shadow:rgba(150,110,90,.16)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-weight:600;line-height:1.55}
+.wrap{max-width:720px;margin:0 auto;padding:28px 18px 60px}
+.logo{font-size:34px;font-weight:900;letter-spacing:.5px;text-align:center;margin:10px 0 2px}
+.logo b{color:var(--orange)}
+.sub{text-align:center;color:var(--soft);font-size:14px;margin-bottom:22px}
+.card{background:var(--card);border-radius:20px;box-shadow:0 4px 0 var(--shadow);padding:22px 20px;margin-bottom:16px}
+h2{font-size:19px;font-weight:900;margin:18px 0 8px}
+h2:first-child{margin-top:0}
+p,li{font-size:15px;color:#5b4636}
+ul{padding-left:20px;margin:6px 0}
+a{color:var(--orange);font-weight:800}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:16px;font-size:17px;font-weight:900;cursor:pointer;margin-top:14px}
+.btn.del{background:var(--red);color:#fff;box-shadow:0 4px 0 #b5352d}
+.btn.del:active{transform:translateY(3px);box-shadow:0 1px 0 #b5352d}
+.note{font-size:13px;color:var(--soft);margin-top:10px;text-align:center}
+.msg{display:none;border-radius:14px;padding:14px;margin-top:14px;font-weight:800;text-align:center}
+.msg.ok{display:block;background:#E4F4E0;color:#2f7d3a}
+.msg.err{display:block;background:#FBE4E1;color:#b5352d}
+.foot{text-align:center;color:var(--soft);font-size:13px;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">Duck<b>doku</b></div>
+  <div class="sub">Delete your data</div>
+  <div class="card">
+    <h2>What is stored</h2>
+    <p>Your game progress, and when you play inside Telegram, your Telegram user id and basic profile (first name, username, language) used to save progress and send optional reminders. See our <a href="/privacy">Privacy Policy</a>.</p>
+
+    <h2>Delete it now (in Telegram)</h2>
+    <p>If you opened this page from the Duckdoku bot, tap the button below. This permanently deletes your saved progress and profile data from our servers and clears the game data on this device. This cannot be undone.</p>
+    <button class="btn del" id="del">Delete my data</button>
+    <div class="msg" id="msg"></div>
+    <div class="note" id="note"></div>
+
+    <h2>Delete it by request</h2>
+    <p>Not in Telegram, or prefer to ask us? Message <a href="https://t.me/ImPickleJonn">@ImPickleJonn</a> and we will delete your data within 30 days.</p>
+  </div>
+  <div class="foot">Duckdoku. No ads, just ducks.</div>
+</div>
+<script>
+(function(){
+  var TG=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
+  try{ if(TG){ TG.ready(); TG.expand&&TG.expand(); } }catch(e){}
+  var initData=TG&&TG.initData?TG.initData:'';
+  var API=(location.hostname==='localhost'||location.hostname==='127.0.0.1')?'':'https://duckdoku.onrender.com';
+  var btn=document.getElementById('del'), msg=document.getElementById('msg'), note=document.getElementById('note');
+  if(!initData){ note.textContent='Open this page from the Duckdoku bot to use the button, or message us to request deletion.'; }
+  btn.addEventListener('click', function(){
+    if(!initData){ msg.className='msg err'; msg.textContent='Please open this page from the Duckdoku bot in Telegram, or message @ImPickleJonn.'; return; }
+    btn.disabled=true; btn.textContent='Deleting...';
+    fetch(API+'/api/delete-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:initData})})
+      .then(function(r){return r.json();})
+      .then(function(j){
+        try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf('duckdoku')===0||k.indexOf('dd.')===0) localStorage.removeItem(k); }); }catch(e){}
+        if(j&&j.ok){ msg.className='msg ok'; msg.textContent='Your data has been deleted. Thank you for playing.'; btn.style.display='none'; }
+        else { btn.disabled=false; btn.textContent='Delete my data'; msg.className='msg err'; msg.textContent='Could not delete right now. Please message @ImPickleJonn.'; }
+      })
+      .catch(function(){ btn.disabled=false; btn.textContent='Delete my data'; msg.className='msg err'; msg.textContent='Network error. Please try again or message @ImPickleJonn.'; });
+  });
+})();
+</script>
+</body>
+</html>

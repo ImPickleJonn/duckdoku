@@ -498,6 +498,24 @@ async function configureBotProfile() {
   await tg('setMyDescription', { description: 'Duckdoku is a cozy logic puzzle. A duck hides in one cell of every colored area. Find them all without two ducks sharing a row, a column, or touching. No ads.' });
 }
 
+// Account / data deletion (Play + Telegram compliance). Validates the caller
+// via Telegram initData and removes their server-side data. The page at
+// /delete-account also clears on-device localStorage.
+app.post('/api/delete-account', async (req, res) => {
+  const user = validateInitData((req.body || {}).initData);
+  if (!user) return res.status(401).json({ error: 'invalid initData' });
+  try { users.delete(user.id); } catch (e) {}
+  try { drainPending(user.id); } catch (e) {}
+  if (dbReady) {
+    try {
+      await dbPool.query('DELETE FROM players WHERE tg_id = $1', [user.id]);
+      await dbPool.query('DELETE FROM iap_grants WHERE tg_id = $1', [user.id]);
+    } catch (e) { console.error('[delete] db error:', e.message); }
+  }
+  console.log('[delete] removed data for', user.id);
+  res.json({ ok: true });
+});
+
 // Secret-guarded endpoint so the local ship-notify script can DM the owner
 // without ever holding the bot token (token stays on the server).
 app.post('/api/ship-notify', async (req, res) => {

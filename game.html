@@ -384,6 +384,7 @@ function regionVar(i){return 'var(--r'+(i%10)+')';}
 const DUCK_SVG='<svg class="duckface" viewBox="0 0 64 64"><path d="M30 6c2-3 7-2 7 2 0 2-1 3-3 4" fill="#F2913C"/><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><ellipse cx="14" cy="40" rx="7" ry="9" fill="#FBC02D"/><circle cx="24" cy="32" r="5" fill="#fff"/><circle cx="25" cy="33" r="2.7" fill="#3A2A20"/><circle cx="41" cy="32" r="5" fill="#fff"/><circle cx="42" cy="33" r="2.7" fill="#3A2A20"/><path d="M24 43 q8 8 17 0 q-3 8 -8.5 8 q-5.5 0 -8.5 -8z" fill="#F2913C" stroke="#D9762A" stroke-width="1"/><ellipse cx="17" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/><ellipse cx="47" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/></svg>';
 const DUCK_MINI='<svg viewBox="0 0 64 64"><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><circle cx="25" cy="32" r="4" fill="#3A2A20"/><circle cx="40" cy="32" r="4" fill="#3A2A20"/><path d="M25 43 q7 7 15 0 q-2 7 -7.5 7 q-5.5 0 -7.5 -7z" fill="#F2913C"/></svg>';
 const X_SVG='<svg class="xmark" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg>';
+const REDX_SVG='<svg class="xmark redx" viewBox="0 0 64 64" fill="none" stroke="#E0433A" stroke-width="13" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg>';
 const LAMP_SVG='<svg class="lampicon" viewBox="0 0 24 24" fill="#FFD23F" stroke="#6E4F44" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/><path d="M9 18h6M10 21h4" stroke-width="2" stroke-linecap="round"/></svg>';
 function heartSvg(on){return '<svg viewBox="0 0 24 24" fill="'+(on?'#F0544C':'#E4D2CC')+'"><path d="M12 21s-7-4.4-9.5-9C1 8.4 3 5 6.4 5c2 0 3.4 1.4 5.6 3.6C14.2 6.4 15.6 5 17.6 5 21 5 23 8.4 21.5 12c-2.5 4.6-9.5 9-9.5 9z"/></svg>';}
 function starSvg(on){return '<svg viewBox="0 0 24 24" fill="'+(on?'#FFD23F':'#5b4a3a')+'" stroke="#F4A92B" stroke-width="1"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';}
@@ -434,7 +435,7 @@ function faceLoop(){requestAnimationFrame(faceLoop);
 function duckReact(r,c,state,ms){if(faceVideosReady)faceFx.set(r*100+c,{state,until:Date.now()+(ms||1200)});}
 
 /* ---------- game state ---------- */
-const EMPTY=0,MARK=1,DUCK=2;
+const EMPTY=0,MARK=1,DUCK=2,RED=3;
 let puzzle=null,N=5,gstate=null,hearts=3,duckCount=0,mode='levels',levelIdx=0;
 let heartsEnabled=true,history=[],boostersUsed=0,heartsLost=0,ended=false;
 let ftue=null; // {active, step, target:[r,c], allowOnly:set}
@@ -462,7 +463,7 @@ function conflictingCells(r,c){const out=[];const reg=puzzle.region[r][c];
 let lastTapCell=null,lastTapTime=0;
 let paintMode=null,paintMoved=false,paintTouched=null,paintStart=null,suppressClick=false;
 function gridCellAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest?el.closest('.qcell'):null;}
-function paintApply(r,c){if(gstate[r][c]===DUCK)return;if(paintMode==='mark'){if(gstate[r][c]===EMPTY){gstate[r][c]=MARK;renderCell(r,c);}}else{if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}}}
+function paintApply(r,c){if(gstate[r][c]===DUCK||gstate[r][c]===RED)return;if(paintMode==='mark'){if(gstate[r][c]===EMPTY){gstate[r][c]=MARK;renderCell(r,c);}}else{if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}}}
 function bindPaint(){const g=$('grid');
   g.addEventListener('pointerdown',e=>{ if(ended||(ftue&&ftue.active))return; const cell=e.target.closest&&e.target.closest('.qcell'); if(!cell)return; const r=+cell.dataset.r,c=+cell.dataset.c; if(gstate[r][c]===DUCK){paintMode=null;return;} paintMode=(gstate[r][c]===MARK)?'erase':'mark'; paintMoved=false; paintStart=[r,c]; paintTouched=new Set([r*100+c]); });
   g.addEventListener('pointermove',e=>{ if(!paintMode)return; const cell=gridCellAt(e.clientX,e.clientY); if(!cell)return; const r=+cell.dataset.r,c=+cell.dataset.c,key=r*100+c; if(!paintMoved){ if(r===paintStart[0]&&c===paintStart[1])return; paintMoved=true; snapshot(); haptic('light'); paintApply(paintStart[0],paintStart[1]); } if(paintTouched.has(key))return; paintTouched.add(key); paintApply(r,c); soundTick(); });
@@ -473,29 +474,28 @@ function onCellTap(r,c){
   if(ended)return;
   if(suppressClick){suppressClick=false;return;}
   if(ftue&&ftue.active&&ftue.allowOnly&&!ftue.allowOnly.has(r*100+c))return;
+  const cur=gstate[r][c];
+  if(cur===DUCK||cur===RED)return; // found ducks and wrong-guess red X are locked forever
   const now=Date.now();const isDouble=(lastTapCell===r*100+c)&&(now-lastTapTime<320);
   lastTapCell=r*100+c;lastTapTime=now;
-  const cur=gstate[r][c];
-  if(isDouble){ // place / remove duck
-    if(cur===DUCK){snapshot();gstate[r][c]=EMPTY;duckCount--;renderCell(r,c);haptic('light');}
-    else{tryPlaceDuck(r,c,cur);}
-    lastTapCell=null;
-  } else { // single tap toggles X (not on a duck)
+  if(isDouble){ tryGuess(r,c); lastTapCell=null; }
+  else { // single tap toggles the player's own X note
     if(cur===EMPTY){snapshot();gstate[r][c]=MARK;renderCell(r,c);haptic('light');soundTick();onFtueAction('mark',r,c);}
     else if(cur===MARK){snapshot();gstate[r][c]=EMPTY;renderCell(r,c);haptic('light');}
   }
   updateCount();
 }
-function tryPlaceDuck(r,c,prev){
+function tryGuess(r,c){
   // The duck hides in ONE specific cell per region (the unique solution).
-  // Placing it anywhere else is a mistake and costs a heart.
-  if(puzzle.solCols[r]!==c){
-    flashBad([[r,c]]);haptic('err');soundBad();MX.track('Mistake Made',{level:levelIdx+1});
-    if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}
+  if(puzzle.solCols[r]===c){
+    // correct: the duck is found and LOCKED forever (cannot be removed)
+    gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);haptic('med');soundPlace();onFtueAction('duck',r,c);
+    if(duckCount===N&&!ftue)onWin(); else if(duckCount===N&&ftue&&ftue.active)onFtueWin();
+  } else {
+    // wrong: leave a PERMANENT red X (locked) and lose a heart
+    gstate[r][c]=RED;renderCell(r,c);flashBad([[r,c]]);haptic('err');soundBad();MX.track('Mistake Made',{level:levelIdx+1});
     if(heartsEnabled){hearts--;heartsLost++;renderHearts();if(hearts<=0)onLose();}
-    return;}
-  snapshot();gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);haptic('med');soundPlace();onFtueAction('duck',r,c);
-  if(duckCount===N&&!ftue)onWin(); else if(duckCount===N&&ftue&&ftue.active)onFtueWin();
+  }
 }
 function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),460);}if(gstate[r]&&gstate[r][c]===DUCK)duckReact(r,c,'oops',1000);});shakeBoard();}
 
@@ -514,7 +514,10 @@ function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
 function onLose(){ended=true;MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");$('loseSub').textContent=L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");openScrim('scrimLose');}
 
 /* ---------- boosters ---------- */
-function useUndo(){if(ended)return;if(save.boosters.undo<=0){outOf('undo');return;}if(!history.length){toast(L("Nothing to undo","Нечего отменять"));return;}save.boosters.undo--;boostersUsed++;MX.track('Booster Used',{type:'undo'});const h=history.pop();gstate=h.g;hearts=h.hearts;duckCount=h.duckCount;persist();renderAll();haptic('light');}
+function useUndo(){if(ended)return;if(save.boosters.undo<=0){outOf('undo');return;}if(!history.length){toast(L("Nothing to undo","Нечего отменять"));return;}save.boosters.undo--;boostersUsed++;MX.track('Booster Used',{type:'undo'});const h=history.pop();
+  // Undo only reverts the player's X notes. Found ducks and red X stay locked; hearts are not refunded.
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){ if(gstate[r][c]===DUCK||gstate[r][c]===RED)continue; const v=h.g[r][c]; gstate[r][c]=(v===DUCK||v===RED)?EMPTY:v; }
+  persist();renderAll();haptic('light');}
 function useHint(){if(ended)return;if(save.boosters.hint<=0){outOf('hint');return;}const mv=computeHint();if(!mv){toast(L("Looks good so far","Пока всё верно"));return;}save.boosters.hint--;boostersUsed++;MX.track('Booster Used',{type:'hint'});persist();pulseCell(mv.r,mv.c);renderBoosters();haptic('med');toast(mv.msg);}
 function usePlaceDuck(){if(ended)return;if(save.boosters.placeduck<=0){outOf('placeduck');return;}const cell=placeOneCorrect();if(!cell){toast(L("All ducks placed","Все утки на месте"));return;}save.boosters.placeduck--;boostersUsed++;MX.track('Booster Used',{type:'placeduck'});persist();renderBoosters();haptic('ok');soundPlace();if(duckCount===N)onWin();}
 function outOf(w){toast(L("Out of "+w,"Бустеры закончились"));openShop();}
@@ -522,7 +525,7 @@ function grantBoosters(g){if(!g||!g.boosters)return;for(const k in g.boosters)sa
 function grantFreeBooster(lvl){if(lvl%3===0){const order=['hint','undo','placeduck'];const pick=order[(lvl/3-1)%3];save.boosters[pick]=(save.boosters[pick]||0)+1;toast(L("+1 "+pick+" booster","+1 бустер"));}}
 function computeHint(){for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]===DUCK&&puzzle.solCols[r]!==c)return {r,c,msg:L("This duck looks misplaced","Эта утка стоит не там")};}
   for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK)return {r,c,msg:L("A duck belongs around here","Утка где-то здесь")};}return null;}
-function placeOneCorrect(){for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK){snapshot();conflictingCells(r,c).forEach(([rr,cc])=>{if(gstate[rr][cc]===DUCK){gstate[rr][cc]=EMPTY;duckCount--;renderCell(rr,cc);}});gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);pulseCell(r,c);return {r,c};}}return null;}
+function placeOneCorrect(){for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);pulseCell(r,c);return {r,c};}}return null;}
 function snapshot(){history.push({g:gstate.map(row=>row.slice()),hearts,duckCount});if(history.length>40)history.shift();}
 
 /* ---------- DOM + render ---------- */
@@ -537,6 +540,7 @@ function buildGrid(){const g=$('grid');g.style.gridTemplateColumns='repeat('+N+'
 function cellEl(r,c){return cellEls[r]&&cellEls[r][c];}
 function renderCell(r,c){const el=cellEl(r,c);if(!el)return;const v=gstate[r][c];
   if(v===DUCK)el.innerHTML=faceVideosReady?'<canvas class="duckface" width="100" height="100"></canvas>':DUCK_SVG;
+  else if(v===RED)el.innerHTML=REDX_SVG;
   else el.innerHTML=v===MARK?X_SVG:'';}
 function renderBoard(){for(let r=0;r<N;r++)for(let c=0;c<N;c++)renderCell(r,c);}
 function renderHearts(){const h=$('hearts');if(!heartsEnabled){h.style.display='none';return;}h.style.display='flex';let s='';for(let i=0;i<3;i++)s+=heartSvg(i<hearts);h.innerHTML=s;}

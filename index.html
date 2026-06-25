@@ -1,640 +1,115 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#F3ECEC">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#bfe6ff">
 <title>Duckdoku</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+/* phones, Capacitor, or anything embedded go straight to the raw game */
+(function(){
+  try{
+    var mob=/Android|iPhone|iPod|Mobile/i.test(navigator.userAgent||'');
+    if(mob||(window.innerWidth||0)<700||window.Capacitor||window.top!==window.self){
+      try{ if(Date.now()-(+sessionStorage.getItem('ddRedir')||0)<3000)return; sessionStorage.setItem('ddRedir',String(Date.now())); }catch(e){}
+      location.replace('game.html'+(location.search||'')+(location.hash||''));
+    }
+  }catch(e){}
+})();
+</script>
 <style>
-:root{
-  --bg:#F3ECEC; --card:#FFFFFF; --ink:#6E4F44; --ink-soft:#A98F84; --red:#D64541;
-  --orange:#E8942F; --orange-d:#C9781E; --heart:#F0544C; --green:#3FB46E; --gold:#FFD23F;
-  --shadow:rgba(150,110,90,.16);
-  --r0:#E58A77; --r1:#B773E8; --r2:#4BB6A7; --r3:#E8B24C; --r4:#6FA9E4;
-  --r5:#8BCB6E; --r6:#EF94B6; --r7:#E0925A; --r8:#9E8BE6; --r9:#56C7BD;
-  --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
-html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Nunito",sans-serif;font-weight:800;}
-#app{position:fixed;inset:0;transition:background .3s;}
-.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
-  padding:calc(var(--safe-top) + 10px) 14px calc(var(--safe-bot) + 12px);}
-.screen.on{display:flex;}
-.fill{flex:1;}
-button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(--ink);}
-.hidden{display:none!important;}
-
-/* ---------- HOME ---------- */
-#home{justify-content:flex-start;text-align:center;}
-.logo{font-size:13vw;letter-spacing:.5px;margin:3vh 0 0;line-height:1;color:var(--ink);text-shadow:0 3px 0 #fff,0 5px 0 var(--orange-d);}
-.logo b{color:var(--orange);}
-.tag{color:var(--ink-soft);font-size:4.2vw;margin:8px 0 0;}
-.hero-wrap{width:min(58vw,280px);aspect-ratio:1;margin:2.5vh auto 1vh;}
-.hero-wrap video,.hero-wrap img{width:100%;height:100%;object-fit:contain;border-radius:28px;}
-.menu{width:min(86vw,420px);display:flex;flex-direction:column;gap:11px;margin-top:1vh;}
-.btn{padding:17px;border-radius:20px;font-size:5vw;box-shadow:0 5px 0 var(--shadow);transition:transform .06s;}
-.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--shadow);}
-.btn.play{background:var(--orange);color:#fff;text-shadow:0 1px 0 var(--orange-d);}
-.btn.alt{background:var(--r2);color:#fff;}
-.btn.row{display:flex;gap:11px;}
-.btn.ghost{background:var(--card);color:var(--ink);font-size:4.2vw;flex:1;box-shadow:0 4px 0 var(--shadow);}
-.coins-line{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--ink-soft);font-size:3.6vw;margin-top:10px;min-height:18px;}
-
-/* ---------- TOP BAR ---------- */
-.topbar{width:100%;max-width:460px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.iconbtn{width:44px;height:44px;border-radius:50%;background:var(--card);box-shadow:0 3px 0 var(--shadow);display:flex;align-items:center;justify-content:center;flex:none;}
-.iconbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--shadow);}
-.iconbtn svg{width:22px;height:22px;}
-.toptitle{font-size:5.4vw;color:var(--ink);}
-
-/* status row: count pill + hearts pill */
-.statusrow{width:100%;max-width:460px;display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px;}
-.pill{background:var(--card);border-radius:22px;box-shadow:0 3px 0 var(--shadow);padding:7px 14px;display:flex;align-items:center;gap:7px;}
-.pill .cnt{color:var(--green);font-size:4.6vw;}
-.pill .duckmini{width:26px;height:26px;}
-.hearts{display:flex;gap:4px;}
-.hearts svg{width:24px;height:24px;}
-
-/* rules chips */
-.chips{width:100%;max-width:460px;display:flex;gap:7px;margin-bottom:12px;justify-content:center;flex-wrap:wrap;}
-.chip{background:var(--card);border-radius:14px;box-shadow:0 2px 0 var(--shadow);padding:7px 10px;font-size:2.9vw;color:var(--ink);font-weight:800;}
-
-/* ---------- BOARD ---------- */
-.boardwrap{width:100%;max-width:min(92vw,440px);aspect-ratio:1;position:relative;margin:0 auto;}
-.qboard{position:absolute;inset:0;background:var(--card);border-radius:22px;padding:12px;box-shadow:0 6px 0 var(--shadow);}
-.qgrid{position:relative;width:100%;height:100%;display:grid;gap:6px;}
-.qcell{position:relative;border-radius:13px;display:flex;align-items:center;justify-content:center;z-index:1;
-  box-shadow:inset 0 -3px 0 rgba(0,0,0,.10),inset 0 2px 0 rgba(255,255,255,.22);transition:filter .2s;}
-.qcell .duckface{width:82%;height:82%;animation:pop .16s cubic-bezier(.34,1.56,.64,1);}
-.qcell .xmark{width:62%;height:62%;animation:pop .12s ease;}
-@keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
-.qcell.bad{animation:bad .45s;}
-@keyframes bad{0%,100%{box-shadow:inset 0 0 0 0 var(--red)}30%,70%{box-shadow:inset 0 0 0 4px var(--red)}}
-/* FTUE dim + spotlight */
-.qboard.dim::after{content:"";position:absolute;inset:0;background:rgba(30,22,20,.82);border-radius:22px;z-index:5;}
-.qboard.dim .qcell{pointer-events:none;}
-.qcell.spot{z-index:10!important;outline:3px solid var(--gold);box-shadow:0 0 16px 3px rgba(255,210,63,.85);pointer-events:auto!important;}
-#app.tutdim{background:#241B19;}
-#app.tutdim .topbar,#app.tutdim .statusrow,#app.tutdim .chips,#app.tutdim .boosters{opacity:.22;pointer-events:none;}
-
-/* ---------- BOOSTERS ---------- */
-.boosters{width:100%;max-width:460px;display:flex;gap:26px;margin-top:16px;justify-content:center;}
-.booster{width:62px;height:62px;border-radius:50%;background:var(--card);box-shadow:0 4px 0 var(--shadow);display:flex;align-items:center;justify-content:center;position:relative;}
-.booster:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow);}
-.booster.active{outline:3px solid var(--orange);}
-.booster svg{width:32px;height:32px;}
-.booster canvas.bface{width:40px;height:40px;display:block;}
-.modalface{width:100%;height:100%;display:block;}
-.booster .bcount{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 5px;background:var(--heart);color:#fff;border-radius:11px;font-size:3.1vw;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 var(--shadow);}
-.booster .bcount.zero{background:var(--green);}
-.blabel{position:absolute;bottom:-18px;font-size:2.7vw;color:var(--ink-soft);white-space:nowrap;}
-
-/* ---------- COACH (FTUE) ---------- */
-.coach{position:fixed;left:0;right:0;z-index:84;display:none;justify-content:center;padding:0 18px;pointer-events:none;}
-.coach.on{display:flex;}
-#coachTop{top:calc(var(--safe-top) + 14vh);} #coachBot{bottom:calc(var(--safe-bot) + 16px);}
-.coach .bubble{background:var(--card);color:var(--ink);border-radius:20px;padding:14px 18px;font-size:4vw;max-width:440px;box-shadow:0 6px 0 var(--shadow);text-align:center;pointer-events:auto;display:flex;align-items:center;gap:10px;justify-content:center;}
-.coach .bubble .hl{color:var(--red);}
-.coach .bubble .lampicon{width:30px;height:30px;flex:none;}
-.coach .gotit{margin-top:12px;}
-#handhint{position:fixed;z-index:88;width:42px;height:42px;pointer-events:none;display:none;animation:tap 1.05s infinite;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));}
-@keyframes tap{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-
-/* ---------- MODALS ---------- */
-.scrim{position:fixed;inset:0;background:rgba(40,28,24,.5);display:none;align-items:center;justify-content:center;z-index:90;padding:18px;}
-.scrim.on{display:flex;}
-.modal{width:min(92vw,420px);background:var(--bg);border-radius:28px;padding:24px 20px 20px;box-shadow:0 12px 0 var(--shadow);text-align:center;max-height:92vh;overflow-y:auto;}
-.modal.dark{background:#2A2018;color:#fff;}
-.modal h2{font-size:8vw;margin:6px 0 2px;}
-.modal.dark h2{color:#fff;text-shadow:0 2px 0 var(--orange-d);}
-.modal p{font-weight:700;color:var(--ink-soft);font-size:4vw;margin:6px 0 14px;line-height:1.4;}
-.modal.dark p{color:#E9D9C9;}
-.modal .duckslot{width:min(46vw,200px);aspect-ratio:1;margin:0 auto 6px;border-radius:50%;overflow:hidden;}
-.modal.dark .duckslot{box-shadow:0 0 0 6px rgba(255,210,63,.18),0 0 40px 6px rgba(255,210,63,.25);}
-.modal .duckslot video,.modal .duckslot img{width:100%;height:100%;object-fit:cover;}
-.modal .btn{width:100%;margin-top:8px;}
-.winstars{display:flex;justify-content:center;gap:8px;margin:6px 0 6px;}
-.winstars svg{width:40px;height:40px;}
-.closex{position:absolute;top:16px;right:18px;width:38px;height:38px;border-radius:50%;background:var(--card);box-shadow:0 3px 0 var(--shadow);z-index:2;}
-.modal-rel{position:relative;}
-.sku{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:18px;padding:12px;margin:8px 0;box-shadow:0 3px 0 var(--shadow);text-align:left;}
-.sku .sicon{width:46px;height:46px;flex:none;border-radius:14px;background:var(--bg);display:flex;align-items:center;justify-content:center;}
-.sku .sicon svg{width:28px;height:28px;}
-.sku .smeta{flex:1;}
-.sku .stitle{font-size:4.2vw;} .sku .sdesc{font-size:3.2vw;color:var(--ink-soft);font-weight:700;margin-top:2px;}
-.sku .sbuy{background:var(--orange);color:#fff;border-radius:14px;padding:10px 12px;font-size:3.8vw;display:flex;align-items:center;gap:4px;box-shadow:0 3px 0 var(--orange-d);white-space:nowrap;}
-.sku .sbuy:active{transform:translateY(2px);box-shadow:0 1px 0 var(--orange-d);}
-.star{width:16px;height:16px;}
-.setrow{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:16px;padding:14px 16px;margin:8px 0;box-shadow:0 3px 0 var(--shadow);font-size:4.2vw;}
-
-/* fx */
-.fx{position:fixed;inset:0;pointer-events:none;z-index:86;}
-.confetti{position:absolute;width:9px;height:14px;border-radius:2px;}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--safe-bot) + 96px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:14px;font-size:3.8vw;z-index:95;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;max-width:88vw;text-align:center;}
-.toast.on{opacity:1;transform:translateX(-50%) translateY(-6px);}
-.shake{animation:shake .3s;}
-@keyframes shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-5px,2px)}75%{transform:translate(5px,-2px)}}
-
-/* levels map */
-.lvlgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:6px 2px 20px;}
-.lvlnode{aspect-ratio:1;border-radius:18px;background:var(--card);box-shadow:0 4px 0 var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:6vw;position:relative;}
-.lvlnode.locked{background:#EFE3DF;color:var(--ink-soft);}
-.lvlnode.done{background:var(--orange);color:#fff;}
-.lvlnode.cur{outline:3px solid var(--orange);}
-.lvlnode .stars{display:flex;gap:1px;margin-top:2px;}
-.lvlnode .stars svg{width:11px;height:11px;}
-.lvlnode .sz{position:absolute;bottom:5px;font-size:2.6vw;color:inherit;opacity:.7;font-weight:800;}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#bfe6ff;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+/* ---- sky: soft blue with a warm sun glow ---- */
+.bg{position:fixed;inset:0;background:
+  radial-gradient(54vw 42vw at 80% 12%, rgba(255,243,200,.9) 0%, rgba(255,228,150,.35) 36%, transparent 64%),
+  linear-gradient(180deg,#bfe6ff 0%,#d7f0ff 40%,#eaf8ff 60%,#e9f7ec 72%,#dff3e6 100%)}
+@keyframes drift{0%{transform:translateY(0)}100%{transform:translateY(-16px)}}
+@keyframes twinkle{0%,100%{opacity:.18;transform:scale(.7)}50%{opacity:.95;transform:scale(1.1)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
+@keyframes ripple{0%{transform:scale(.6);opacity:.5}100%{transform:scale(1.5);opacity:0}}
+.cloud{position:fixed;pointer-events:none;will-change:transform;opacity:.96;filter:drop-shadow(0 6px 8px rgba(90,140,190,.18))}
+.spark{position:fixed;pointer-events:none}
+.duckie{position:fixed;pointer-events:none;animation:bob 4s ease-in-out infinite}
+.pad{position:fixed;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.cloud,.spark,.duckie{animation:none!important}}
+/* ---- pond at the bottom ---- */
+.pond{position:fixed;left:0;right:0;bottom:0;height:34vh;pointer-events:none;
+  background:linear-gradient(180deg, rgba(120,200,236,.0) 0%, #8fd0ef 14%, #5fb6e6 55%, #4aa3da 100%);
+  border-top-left-radius:50% 22px;border-top-right-radius:50% 22px}
+.ripp{position:fixed;border:2px solid rgba(255,255,255,.6);border-radius:50%;pointer-events:none}
+/* ---- soft vignette to seat the phone ---- */
+.vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(135vh 105vh at 50% 46%, transparent 56%, rgba(40,80,120,.26) 100%)}
+/* ---- centered phone frame ---- */
+.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.frame{position:relative;
+  width:min(412px, calc((100vh - 40px) * 0.49), calc(100vw - 28px));
+  height:min(852px, calc(100vh - 28px));
+  background:linear-gradient(165deg,#f6b15a 0%,#e8942f 34%,#c9781e 100%);
+  border-radius:46px;padding:12px;
+  box-shadow:
+    0 46px 96px rgba(120,80,30,.45),
+    0 16px 34px rgba(120,80,30,.4),
+    inset 0 0 0 2px rgba(255,221,150,.7),
+    inset 0 3px 0 rgba(255,255,255,.32)}
+.notch{position:absolute;top:13px;left:50%;transform:translateX(-50%);width:34%;height:7px;border-radius:5px;background:rgba(90,55,20,.35);z-index:3}
+.frame-inner{width:100%;height:100%;border-radius:34px;overflow:hidden;background:#F3ECEC;position:relative}
+iframe{width:100%;height:100%;border:0;display:block;background:#F3ECEC}
+.brand{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:3;
+  font-weight:900;font-size:16px;letter-spacing:.4px;color:#6E4F44;opacity:.8;pointer-events:none;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.brand b{color:#e8942f}
 </style>
 </head>
 <body>
-<div id="app">
+<div class="bg"></div>
 
-  <!-- ============ HOME ============ -->
-  <section id="home" class="screen on">
-    <div class="logo">Duck<b>doku</b></div>
-    <div class="tag" id="tagline">A cozy duck logic puzzle</div>
-    <div class="hero-wrap">
-      <video id="heroVid" autoplay loop muted playsinline poster="assets/ducks/hero-frame.png"><source src="assets/ducks/hero.mp4" type="video/mp4"></video>
+<!-- drifting clouds -->
+<svg class="cloud" style="left:6%;top:14%;width:150px;animation:drift 10s ease-in-out infinite alternate" viewBox="0 0 100 60" aria-hidden="true"><g fill="#fff"><ellipse cx="32" cy="40" rx="24" ry="18"/><ellipse cx="56" cy="34" rx="27" ry="23"/><ellipse cx="76" cy="42" rx="20" ry="16"/><rect x="14" y="40" width="74" height="17" rx="8.5"/></g></svg>
+<svg class="cloud" style="right:7%;top:26%;width:116px;animation:drift 12s ease-in-out infinite alternate;animation-delay:1.4s" viewBox="0 0 100 60" aria-hidden="true"><g fill="#fff"><ellipse cx="32" cy="40" rx="24" ry="18"/><ellipse cx="56" cy="34" rx="27" ry="23"/><ellipse cx="76" cy="42" rx="20" ry="16"/><rect x="14" y="40" width="74" height="17" rx="8.5"/></g></svg>
+<svg class="cloud" style="left:12%;top:40%;width:96px;animation:drift 11s ease-in-out infinite alternate;animation-delay:.6s;opacity:.85" viewBox="0 0 100 60" aria-hidden="true"><g fill="#fff"><ellipse cx="32" cy="40" rx="24" ry="18"/><ellipse cx="56" cy="34" rx="27" ry="23"/><ellipse cx="76" cy="42" rx="20" ry="16"/><rect x="14" y="40" width="74" height="17" rx="8.5"/></g></svg>
+
+<!-- gold sparkles -->
+<svg class="spark" style="left:24%;top:22%;width:20px;animation:twinkle 3.2s ease-in-out infinite" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" fill="#ffc01e"/></svg>
+<svg class="spark" style="right:26%;top:15%;width:15px;animation:twinkle 4s ease-in-out infinite;animation-delay:.5s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" fill="#ffd34d"/></svg>
+<svg class="spark" style="left:8%;top:58%;width:17px;animation:twinkle 3.6s ease-in-out infinite;animation-delay:1.1s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" fill="#ffc01e"/></svg>
+<svg class="spark" style="right:9%;top:46%;width:22px;animation:twinkle 4.4s ease-in-out infinite;animation-delay:.8s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" fill="#ffd34d"/></svg>
+<svg class="spark" style="left:40%;top:10%;width:14px;animation:twinkle 3.9s ease-in-out infinite;animation-delay:1.6s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" fill="#ffc01e"/></svg>
+
+<!-- pond -->
+<div class="pond"></div>
+<div class="ripp" style="left:16%;bottom:14%;width:60px;height:18px;animation:ripple 5s ease-out infinite"></div>
+<div class="ripp" style="right:18%;bottom:20%;width:50px;height:15px;animation:ripple 6s ease-out infinite;animation-delay:1.5s"></div>
+<div class="ripp" style="left:24%;bottom:8%;width:70px;height:20px;animation:ripple 5.5s ease-out infinite;animation-delay:2.5s"></div>
+
+<!-- lily pads + lotus -->
+<svg class="pad" style="left:5%;bottom:11%;width:120px" viewBox="0 0 120 60" aria-hidden="true"><path d="M60 6 C100 6 116 26 116 36 C116 50 92 56 60 56 C28 56 4 50 4 36 C4 26 20 6 60 6 Z" fill="#7cc06a"/><path d="M60 30 L60 6 A 30 30 0 0 0 40 12 Z" fill="#6aa959"/></svg>
+<svg class="pad" style="right:6%;bottom:16%;width:96px" viewBox="0 0 120 60" aria-hidden="true"><path d="M60 6 C100 6 116 26 116 36 C116 50 92 56 60 56 C28 56 4 50 4 36 C4 26 20 6 60 6 Z" fill="#8bd17c"/><path d="M60 30 L60 6 A 30 30 0 0 1 80 12 Z" fill="#79bd6b"/></svg>
+<svg class="pad" style="right:10%;bottom:15%;width:46px" viewBox="0 0 60 60" aria-hidden="true"><g><ellipse cx="30" cy="40" rx="20" ry="9" fill="#f7b8d0"/><path d="M30 40 C20 24 22 16 30 12 C38 16 40 24 30 40 Z" fill="#ef94b6"/><path d="M30 40 C16 34 12 26 16 18 C26 20 32 28 30 40 Z" fill="#f4a7c5"/><path d="M30 40 C44 34 48 26 44 18 C34 20 28 28 30 40 Z" fill="#f4a7c5"/><circle cx="30" cy="32" r="5" fill="#ffd23f"/></g></svg>
+
+<!-- reeds / cattails -->
+<svg style="position:fixed;left:1%;bottom:8%;width:54px;height:30vh;pointer-events:none" viewBox="0 0 60 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><g stroke="#5fa64e" stroke-width="6" fill="none" stroke-linecap="round"><path d="M20 300 L20 60"/><path d="M38 300 L38 96"/></g><rect x="14" y="40" width="12" height="40" rx="6" fill="#8a5a32"/><rect x="32" y="78" width="12" height="36" rx="6" fill="#a06a3c"/><path d="M20 60 q-10 -14 -2 -26" stroke="#6cbb56" stroke-width="5" fill="none" stroke-linecap="round"/></svg>
+<svg style="position:fixed;right:1%;bottom:10%;width:50px;height:26vh;pointer-events:none" viewBox="0 0 60 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><g stroke="#5fa64e" stroke-width="6" fill="none" stroke-linecap="round"><path d="M30 300 L30 70"/><path d="M44 300 L44 120"/></g><rect x="24" y="50" width="12" height="40" rx="6" fill="#8a5a32"/><path d="M30 70 q12 -14 3 -28" stroke="#6cbb56" stroke-width="5" fill="none" stroke-linecap="round"/></svg>
+
+<!-- little floating rubber ducks -->
+<svg class="duckie" style="left:8%;bottom:5%;width:64px;animation-duration:4.2s" viewBox="0 0 64 48" aria-hidden="true"><ellipse cx="30" cy="34" rx="22" ry="13" fill="#FFD23F"/><circle cx="44" cy="20" r="11" fill="#FFD23F"/><path d="M53 20 l10 2 -10 4 z" fill="#F2913C"/><circle cx="46" cy="17" r="2" fill="#3A2A20"/><path d="M9 34 q-7 1 -9 5 q7 2 12 -1z" fill="#FBC02D"/><ellipse cx="40" cy="25" rx="4" ry="2.6" fill="#F58CA8" opacity=".6"/></svg>
+<svg class="duckie" style="right:9%;bottom:4%;width:50px;animation-duration:5s;animation-delay:.8s;transform:scaleX(-1)" viewBox="0 0 64 48" aria-hidden="true"><ellipse cx="30" cy="34" rx="22" ry="13" fill="#FFCE2E"/><circle cx="44" cy="20" r="11" fill="#FFCE2E"/><path d="M53 20 l10 2 -10 4 z" fill="#F2913C"/><circle cx="46" cy="17" r="2" fill="#3A2A20"/><path d="M9 34 q-7 1 -9 5 q7 2 12 -1z" fill="#F5BD1F"/></svg>
+
+<div class="vignette"></div>
+
+<div class="stage">
+  <div class="frame">
+    <div class="notch"></div>
+    <div class="frame-inner">
+      <iframe id="dd-game" title="Duckdoku" allow="autoplay; fullscreen; clipboard-write; web-share"></iframe>
     </div>
-    <div class="menu">
-      <button class="btn play" id="btnPlay" data-i="play">Play</button>
-      <button class="btn alt" id="btnZen" data-i="zen">Zen</button>
-      <div class="btn row">
-        <button class="btn ghost" id="btnDaily" data-i="daily">Daily</button>
-        <button class="btn ghost" id="btnShop" data-i="shop">Shop</button>
-        <button class="btn ghost" id="btnHowHome" data-i="howto">How to play</button>
-      </div>
-    </div>
-    <div class="coins-line"><span id="streakLine"></span></div>
-    <div class="fill"></div>
-  </section>
-
-  <!-- ============ GAME ============ -->
-  <section id="game" class="screen">
-    <div class="topbar">
-      <button class="iconbtn" id="btnBack" aria-label="back"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <div class="toptitle" id="toptitle">Level 1</div>
-      <button class="iconbtn" id="btnGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.2"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.5 7.5 0 0 0 0-3l1.6-1.2-1.8-3.1-1.9.7a7.5 7.5 0 0 0-2.6-1.5L14.4 2h-3.6L10.5 4a7.5 7.5 0 0 0-2.6 1.5L6 4.8 4.2 7.9 5.8 9a7.5 7.5 0 0 0 0 3l-1.6 1.2 1.8 3.1 1.9-.7a7.5 7.5 0 0 0 2.6 1.5l.3 2.1h3.6l.3-2.1a7.5 7.5 0 0 0 2.6-1.5l1.9.7 1.8-3.1z" stroke-linejoin="round"/></svg></button>
-    </div>
-
-    <div class="statusrow" id="statusrow">
-      <div class="pill"><span class="duckmini" id="duckMini"></span><span class="cnt" id="countVal">0/5</span></div>
-      <div class="pill"><div class="hearts" id="hearts"></div></div>
-    </div>
-
-    <div class="chips" id="chips"></div>
-
-    <div class="boardwrap"><div class="qboard" id="qboard"><div class="qgrid" id="grid"></div></div></div>
-
-    <div class="boosters" id="boosters">
-      <button class="booster" id="bsDuck"><canvas class="bface" width="80" height="80"></canvas><span class="bcount" id="cntDuck">0</span><span class="blabel" data-i="placeduck">Place</span></button>
-      <button class="booster" id="bsHint"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span class="bcount" id="cntHint">0</span><span class="blabel" data-i="hint">Hint</span></button>
-      <button class="booster" id="bsUndo"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg><span class="bcount" id="cntUndo">0</span><span class="blabel" data-i="undo">Undo</span></button>
-    </div>
-  </section>
-
-  <!-- ============ LEVELS MAP ============ -->
-  <section id="levels" class="screen">
-    <div class="topbar">
-      <button class="iconbtn" id="btnLvlBack" aria-label="back"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <div class="toptitle" data-i="adventure">Adventure</div>
-      <div style="width:44px"></div>
-    </div>
-    <div style="width:100%;max-width:460px;overflow-y:auto;flex:1"><div class="lvlgrid" id="lvlgrid"></div></div>
-  </section>
-
+  </div>
 </div>
+<div class="brand">Duck<b>doku</b></div>
 
-<!-- coach bubbles + hand -->
-<div class="coach" id="coachTop"><div class="bubble" id="coachTopB"></div></div>
-<div class="coach" id="coachBot"><div class="bubble" id="coachBotB"></div></div>
-<img id="handhint" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff' stroke='%236E4F44' stroke-width='1.1'><path d='M9 11V5a1.5 1.5 0 0 1 3 0v6m0-1a1.5 1.5 0 0 1 3 0v2m0-1a1.5 1.5 0 0 1 3 0v3a6 6 0 0 1-6 6h-1a6 6 0 0 1-5.3-3.2L4 13.5a1.5 1.5 0 0 1 2.6-1.5L8 14'/></svg>">
-
-<!-- ============ SCRIMS ============ -->
-<div class="scrim" id="scrimWin"><div class="modal dark modal-rel">
-  <div class="duckslot"><canvas id="winFace" class="modalface" width="240" height="240"></canvas></div>
-  <h2 id="winTitle">Awesome!</h2>
-  <div class="winstars" id="winStars"></div>
-  <p id="winSub">The duck plays a victory fanfare for you.</p>
-  <button class="btn play" id="btnNext" data-i="next">Next level</button>
-  <button class="btn ghost" id="btnWinHome" data-i="home" style="background:#3b2f25;color:#fff">Home</button>
-</div></div>
-
-<div class="scrim" id="scrimLose"><div class="modal modal-rel">
-  <div class="duckslot"><canvas id="loseFace" class="modalface" width="240" height="240"></canvas></div>
-  <h2 id="loseTitle">Out of hearts</h2>
-  <p id="loseSub">No worries. Try the puzzle again.</p>
-  <button class="btn play" id="btnRetry" data-i="retry">Try again</button>
-  <button class="btn ghost" id="btnLoseHome" data-i="home">Home</button>
-</div></div>
-
-<div class="scrim" id="scrimLevelUp"><div class="modal dark modal-rel">
-  <div class="duckslot"><video id="luVid" autoplay loop muted playsinline poster="assets/ducks/levelup-frame.png"><source src="assets/ducks/levelup.mp4" type="video/mp4"></video></div>
-  <h2 data-i="levelup">Level up!</h2>
-  <p id="luSub">The duck is proud of you.</p>
-  <button class="btn play" id="btnLuOk" data-i="keepgoing">Keep going</button>
-</div></div>
-
-<div class="scrim" id="scrimShop"><div class="modal modal-rel">
-  <button class="closex" id="shopClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  <h2 data-i="shop">Shop</h2><p data-i="shopsub">Boosters to help you. No ads, ever.</p>
-  <div id="skuList"></div>
-</div></div>
-
-<div class="scrim" id="scrimHow"><div class="modal modal-rel">
-  <button class="closex" id="howClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  <h2 data-i="howto">How to play</h2>
-  <div style="text-align:left;font-weight:700;color:var(--ink-soft);font-size:3.9vw;line-height:1.5" id="howBody"></div>
-  <button class="btn play" id="howOk" data-i="gotit">Got it</button>
-</div></div>
-
-<div class="scrim" id="scrimSet"><div class="modal modal-rel">
-  <button class="closex" id="setClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  <h2 data-i="settings">Settings</h2>
-  <div class="setrow"><span data-i="sound">Sound</span><button class="iconbtn" id="setSound"><svg id="setSoundIcon" viewBox="0 0 24 24" fill="#6E4F44"><path d="M4 9v6h4l5 5V4L8 9H4z"/></svg></button></div>
-  <button class="btn alt" id="setRestart" data-i="restart" style="color:#fff">Restart level</button>
-  <button class="btn ghost" id="setHome" data-i="home">Home</button>
-</div></div>
-
-<!-- hidden source clips for the live in-grid duck head (chroma-keyed onto cells) -->
-<div style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none">
-  <video id="fvidle" loop muted playsinline preload="auto"><source src="assets/ducks/face-idle.mp4" type="video/mp4"></video>
-  <video id="fvhappy" loop muted playsinline preload="auto"><source src="assets/ducks/face-happy.mp4" type="video/mp4"></video>
-  <video id="fvoops" loop muted playsinline preload="auto"><source src="assets/ducks/face-oops.mp4" type="video/mp4"></video>
-  <video id="fvsad" loop muted playsinline preload="auto"><source src="assets/ducks/face-sad.mp4" type="video/mp4"></video>
-</div>
-
-<div class="fx" id="fx"></div>
-<div class="toast" id="toast"></div>
-
+<noscript><a href="game.html" style="color:#6E4F44">Play Duckdoku</a></noscript>
 <script>
-"use strict";
-/* =================================================================
-   DUCKDOKU - cute-duck Queens / Star-Battle logic puzzle.
-   One duck per colored region; none sharing a row, column, or
-   touching (incl diagonally). Single-tap = X note, double-tap =
-   place a duck. Light theme, no ads, 3 Stars boosters.
-   ================================================================= */
-const TG=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
-try{ if(TG){ TG.ready();TG.expand();TG.setHeaderColor&&TG.setHeaderColor('#F3ECEC');TG.disableVerticalSwipes&&TG.disableVerticalSwipes(); } }catch(e){}
-const initData=TG&&TG.initData?TG.initData:'';
-const API_BASE=(function(){const h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h.endsWith('.onrender.com'))return '';return 'https://duckdoku.onrender.com';})();
-function haptic(k){try{if(!TG||!TG.HapticFeedback)return;const H=TG.HapticFeedback;
-  if(k==='light')H.impactOccurred('light');else if(k==='med')H.impactOccurred('medium');else if(k==='heavy')H.impactOccurred('heavy');
-  else if(k==='ok')H.notificationOccurred('success');else if(k==='err')H.notificationOccurred('error');}catch(e){}}
-
-/* ---------- i18n ---------- */
-const I18N={
-  en:{play:"Play",zen:"Zen",daily:"Daily",shop:"Shop",howto:"How to play",undo:"Undo",hint:"Hint",placeduck:"Place",
-    next:"Next level",home:"Home",retry:"Try again",levelup:"Level up!",keepgoing:"Keep going",gotit:"Got it",
-    adventure:"Adventure",shopsub:"Boosters to help you. No ads, ever.",tagline:"A cozy duck logic puzzle",
-    settings:"Settings",sound:"Sound",restart:"Restart level"},
-  ru:{play:"Играть",zen:"Дзен",daily:"Ежедневный",shop:"Магазин",howto:"Как играть",undo:"Назад",hint:"Подсказка",placeduck:"Утка",
-    next:"Дальше",home:"Домой",retry:"Заново",levelup:"Новый уровень!",keepgoing:"Играть",gotit:"Понятно",
-    adventure:"Кампания",shopsub:"Бустеры в помощь. Без рекламы.",tagline:"Уютный пазл с уткой",
-    settings:"Настройки",sound:"Звук",restart:"Заново"},
-};
-let LANG=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.language_code||navigator.language||'en').slice(0,2);
-if(!I18N[LANG])LANG='en';
-function t(k){return (I18N[LANG]&&I18N[LANG][k])||I18N.en[k]||k;}
-function L(en,ru){return LANG==='ru'?ru:en;}
-function applyI18n(){document.querySelectorAll('[data-i]').forEach(el=>{el.textContent=t(el.getAttribute('data-i'));});}
-
-/* ---------- save ---------- */
-const SAVE_KEY='duckdoku.save.v2';
-const DEFAULT_SAVE={levelsDone:0,stars:{},boosters:{undo:3,hint:3,placeduck:2},zenBest:0,zenSolved:0,
-  tutorialDone:false,sound:true,streak:0,lastPlayYMD:null,lastDailyYMD:null};
-let save=loadSave();
-function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s)return Object.assign({},DEFAULT_SAVE,s,{boosters:Object.assign({},DEFAULT_SAVE.boosters,s.boosters)});}catch(e){}return JSON.parse(JSON.stringify(DEFAULT_SAVE));}
-let saveTimer=null;
-function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,1500);}
-function cloudSave(){if(!initData)return;try{fetch(API_BASE+'/api/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,save,lang:LANG})}).catch(()=>{});}catch(e){}}
-async function cloudLoad(){if(!initData)return;try{const r=await fetch(API_BASE+'/api/sync/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})});const j=await r.json();if(j&&j.save&&(j.save.levelsDone||0)>=(save.levelsDone||0)&&(j.save.levelsDone||j.save.zenSolved)){save=Object.assign({},DEFAULT_SAVE,j.save,{boosters:Object.assign({},DEFAULT_SAVE.boosters,j.save.boosters)});refreshHome();}}catch(e){}}
-
-/* ---------- seeded RNG + puzzle generation ---------- */
-function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
-function shuffle(arr,rng){for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
-function genSolution(N,rng){const cols=new Array(N).fill(-1),used=new Array(N).fill(false);
-  function bt(r){if(r===N)return true;const order=shuffle([...Array(N).keys()],rng);
-    for(const c of order){if(used[c])continue;if(r>0&&Math.abs(c-cols[r-1])<2)continue;cols[r]=c;used[c]=true;if(bt(r+1))return true;used[c]=false;cols[r]=-1;}return false;}
-  return bt(0)?cols:null;}
-function genRegions(N,solCols,rng){const region=Array.from({length:N},()=>new Array(N).fill(-1));const cand=[];
-  const add=(r,c,reg)=>{if(r<0||c<0||r>=N||c>=N)return;if(region[r][c]!==-1)return;cand.push([r,c,reg]);};
-  for(let r=0;r<N;r++){region[r][solCols[r]]=r;add(r-1,solCols[r],r);add(r+1,solCols[r],r);add(r,solCols[r]-1,r);add(r,solCols[r]+1,r);}
-  let remaining=N*N-N,guard=0;
-  while(remaining>0&&cand.length&&guard++<N*N*8){const i=Math.floor(rng()*cand.length);const [r,c,reg]=cand.splice(i,1)[0];if(region[r][c]!==-1)continue;region[r][c]=reg;remaining--;add(r-1,c,reg);add(r+1,c,reg);add(r,c-1,reg);add(r,c+1,reg);}
-  if(remaining>0){for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(region[r][c]===-1){const ns=[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].filter(([a,b])=>a>=0&&b>=0&&a<N&&b<N&&region[a][b]!==-1);region[r][c]=ns.length?region[ns[0][0]][ns[0][1]]:0;}}
-  return region;}
-function countSolutions(N,region,limit){const byReg=Array.from({length:N},()=>[]);
-  for(let r=0;r<N;r++)for(let c=0;c<N;c++)byReg[region[r][c]].push([r,c]);
-  const order=[...Array(N).keys()].sort((a,b)=>byReg[a].length-byReg[b].length);
-  const uR=new Array(N).fill(false),uC=new Array(N).fill(false),placed=[];let count=0;
-  const adjOk=(r,c)=>{for(const[pr,pc]of placed){if(Math.abs(pr-r)<=1&&Math.abs(pc-c)<=1)return false;}return true;};
-  function bt(k){if(count>=limit)return;if(k===N){count++;return;}const reg=order[k];
-    for(const[r,c]of byReg[reg]){if(uR[r]||uC[c]||!adjOk(r,c))continue;uR[r]=uC[c]=true;placed.push([r,c]);bt(k+1);placed.pop();uR[r]=uC[c]=false;if(count>=limit)return;}}
-  bt(0);return count;}
-function generatePuzzle(N,seed){for(let a=0;a<500;a++){const rng=mulberry32((seed^(a*2654435761))>>>0);const sol=genSolution(N,rng);if(!sol)continue;const region=genRegions(N,sol,rng);if(countSolutions(N,region,2)===1)return {N,region,solCols:sol};}
-  const rng=mulberry32(seed>>>0);const sol=genSolution(N,rng)||[...Array(N).keys()];return {N,region:genRegions(N,sol,rng),solCols:sol};}
-function levelSize(idx){const lv=idx+1;if(lv<=4)return 5;if(lv<=10)return 6;if(lv<=18)return 7;if(lv<=28)return 8;return 9;}
-const TOTAL_LEVELS=40;
-
-/* ---------- icons ---------- */
-function regionVar(i){return 'var(--r'+(i%10)+')';}
-const DUCK_SVG='<svg class="duckface" viewBox="0 0 64 64"><path d="M30 6c2-3 7-2 7 2 0 2-1 3-3 4" fill="#F2913C"/><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><ellipse cx="14" cy="40" rx="7" ry="9" fill="#FBC02D"/><circle cx="24" cy="32" r="5" fill="#fff"/><circle cx="25" cy="33" r="2.7" fill="#3A2A20"/><circle cx="41" cy="32" r="5" fill="#fff"/><circle cx="42" cy="33" r="2.7" fill="#3A2A20"/><path d="M24 43 q8 8 17 0 q-3 8 -8.5 8 q-5.5 0 -8.5 -8z" fill="#F2913C" stroke="#D9762A" stroke-width="1"/><ellipse cx="17" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/><ellipse cx="47" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/></svg>';
-const DUCK_MINI='<svg viewBox="0 0 64 64"><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><circle cx="25" cy="32" r="4" fill="#3A2A20"/><circle cx="40" cy="32" r="4" fill="#3A2A20"/><path d="M25 43 q7 7 15 0 q-2 7 -7.5 7 q-5.5 0 -7.5 -7z" fill="#F2913C"/></svg>';
-const X_SVG='<svg class="xmark" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46 M46 18 L18 46"/></svg>';
-const LAMP_SVG='<svg class="lampicon" viewBox="0 0 24 24" fill="#FFD23F" stroke="#6E4F44" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/><path d="M9 18h6M10 21h4" stroke-width="2" stroke-linecap="round"/></svg>';
-function heartSvg(on){return '<svg viewBox="0 0 24 24" fill="'+(on?'#F0544C':'#E4D2CC')+'"><path d="M12 21s-7-4.4-9.5-9C1 8.4 3 5 6.4 5c2 0 3.4 1.4 5.6 3.6C14.2 6.4 15.6 5 17.6 5 21 5 23 8.4 21.5 12c-2.5 4.6-9.5 9-9.5 9z"/></svg>';}
-function starSvg(on){return '<svg viewBox="0 0 24 24" fill="'+(on?'#FFD23F':'#5b4a3a')+'" stroke="#F4A92B" stroke-width="1"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';}
-
-/* ---------- live in-grid duck head (blue-screen video, keyed onto cells) ---------- */
-const FACE_STATES=['idle','happy','oops','sad'];
-let faceVideosReady=false;
-const faceVid={},faceKeyed={};
-let faceFx=new Map(); // r*100+c -> {state, until}
-function initFaces(){
-  FACE_STATES.forEach(s=>{faceVid[s]=document.getElementById('fv'+s);const cv=document.createElement('canvas');cv.width=cv.height=256;faceKeyed[s]=cv;});
-  FACE_STATES.forEach(s=>{const v=faceVid[s];if(!v)return;v.play&&v.play().catch(()=>{});['loadeddata','canplay'].forEach(ev=>v.addEventListener(ev,faceCheck));v.addEventListener('error',()=>{});});
-  setTimeout(faceCheck,700);setTimeout(faceCheck,2200);setTimeout(faceCheck,5000);
-  requestAnimationFrame(faceLoop);
-}
-function faceCheck(){if(faceVid.idle&&faceVid.idle.readyState>=2&&!faceVideosReady){faceVideosReady=true;if(gstate&&$('game').classList.contains('on'))renderBoard();}}
-function keyInto(state){const v=faceVid[state],cv=faceKeyed[state];if(!v||v.readyState<2)return false;const S=cv.width,ctx=cv.getContext('2d',{willReadFrequently:true});ctx.clearRect(0,0,S,S);
-  ctx.drawImage(v,0,0,S,S);const im=ctx.getImageData(0,0,S,S),d=im.data;
-  for(let i=0;i<d.length;i+=4){const r=d[i],g=d[i+1],b=d[i+2];
-    if(b>80&&b>r*1.18&&b>g*1.10){d[i+3]=0;} // blue -> transparent
-    else if(b>70&&b>r*1.05&&b>g){d[i+3]=Math.max(0,d[i+3]-110);d[i]=Math.min(d[i],g);} // soft edge + despill
-  }
-  ctx.putImageData(im,0,0);return true;}
-function drawFace(cv,st){if(!cv)return;const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(faceKeyed[st],0,0,cv.width,cv.height);}
-function faceLoop(){requestAnimationFrame(faceLoop);
-  if(!faceVideosReady)return;
-  const gameOn=$('game').classList.contains('on');
-  const winOn=$('scrimWin').classList.contains('on'),loseOn=$('scrimLose').classList.contains('on');
-  if(!gameOn&&!winOn&&!loseOn)return;
-  const now=Date.now();const used=new Set();
-  if(gameOn&&gstate){used.add('idle');faceFx.forEach((fx,k)=>{if(now>fx.until)faceFx.delete(k);else used.add(fx.state);});}
-  const boosterCv=gameOn?document.querySelector('#bsDuck canvas.bface'):null;if(boosterCv)used.add('happy');
-  if(winOn)used.add('happy');if(loseOn)used.add('sad');
-  used.forEach(s=>keyInto(s));
-  if(gameOn&&gstate)for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]!==DUCK)continue;const el=cellEls[r]&&cellEls[r][c];if(!el)continue;const cv=el.querySelector('canvas.duckface');if(!cv)continue;const fx=faceFx.get(r*100+c);drawFace(cv,fx?fx.state:'idle');}
-  if(boosterCv)drawFace(boosterCv,'happy');
-  if(winOn)drawFace($('winFace'),'happy');
-  if(loseOn)drawFace($('loseFace'),'sad');}
-function duckReact(r,c,state,ms){if(faceVideosReady)faceFx.set(r*100+c,{state,until:Date.now()+(ms||1200)});}
-
-/* ---------- game state ---------- */
-const EMPTY=0,MARK=1,DUCK=2;
-let puzzle=null,N=5,gstate=null,hearts=3,duckCount=0,mode='levels',levelIdx=0;
-let heartsEnabled=true,history=[],boostersUsed=0,heartsLost=0,ended=false;
-let ftue=null; // {active, step, target:[r,c], allowOnly:set}
-
-function startLevel(m,idx){
-  mode=m;levelIdx=idx||0;ended=false;boostersUsed=0;heartsLost=0;history=[];ftue=null;faceFx.clear();
-  document.getElementById('app').classList.remove('tutdim');document.getElementById('qboard').classList.remove('dim');
-  $('coachTop').classList.remove('on');$('coachBot').classList.remove('on');$('handhint').style.display='none';
-  if(m==='levels'){N=levelSize(levelIdx);puzzle=generatePuzzle(N,7000+levelIdx*131);heartsEnabled=true;}
-  else if(m==='daily'){const d=new Date();N=7;puzzle=generatePuzzle(N,d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate());heartsEnabled=true;}
-  else {N=Math.min(9,6+Math.floor((save.zenSolved||0)/4));puzzle=generatePuzzle(N,(Math.random()*1e9)>>>0);heartsEnabled=false;}
-  gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
-  buildGrid();renderAll();show('game');
-}
-
-/* ---------- conflict logic ---------- */
-function conflictAt(r,c){for(let i=0;i<N;i++){if(i!==c&&gstate[r][i]===DUCK)return true;if(i!==r&&gstate[i][c]===DUCK)return true;}
-  const reg=puzzle.region[r][c];for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++){if((rr!==r||cc!==c)&&gstate[rr][cc]===DUCK&&puzzle.region[rr][cc]===reg)return true;}
-  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;if(rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===DUCK)return true;}return false;}
-function conflictingCells(r,c){const out=[];const reg=puzzle.region[r][c];
-  for(let i=0;i<N;i++){if(i!==c&&gstate[r][i]===DUCK)out.push([r,i]);if(i!==r&&gstate[i][c]===DUCK)out.push([i,c]);}
-  for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++){if((rr!==r||cc!==c)&&gstate[rr][cc]===DUCK&&puzzle.region[rr][cc]===reg)out.push([rr,cc]);}
-  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;if(rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===DUCK)out.push([rr,cc]);}return out;}
-
-/* ---------- input: single-tap = X, double-tap = duck ---------- */
-let lastTapCell=null,lastTapTime=0;
-function onCellTap(r,c){
-  if(ended)return;
-  if(ftue&&ftue.active&&ftue.allowOnly&&!ftue.allowOnly.has(r*100+c))return;
-  const now=Date.now();const isDouble=(lastTapCell===r*100+c)&&(now-lastTapTime<320);
-  lastTapCell=r*100+c;lastTapTime=now;
-  const cur=gstate[r][c];
-  if(isDouble){ // place / remove duck
-    if(cur===DUCK){snapshot();gstate[r][c]=EMPTY;duckCount--;renderCell(r,c);haptic('light');}
-    else{tryPlaceDuck(r,c,cur);}
-    lastTapCell=null;
-  } else { // single tap toggles X (not on a duck)
-    if(cur===EMPTY){snapshot();gstate[r][c]=MARK;renderCell(r,c);haptic('light');soundTick();onFtueAction('mark',r,c);}
-    else if(cur===MARK){snapshot();gstate[r][c]=EMPTY;renderCell(r,c);haptic('light');}
-  }
-  updateCount();
-}
-function tryPlaceDuck(r,c,prev){
-  if(conflictAt(r,c)){const bad=conflictingCells(r,c).concat([[r,c]]);flashBad(bad);haptic('err');soundBad();
-    if(heartsEnabled){hearts--;heartsLost++;renderHearts();if(hearts<=0){if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}onLose();return;}}
-    if(gstate[r][c]===MARK){snapshot();gstate[r][c]=EMPTY;renderCell(r,c);}return;}
-  snapshot();gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);haptic('med');soundPlace();onFtueAction('duck',r,c);
-  if(duckCount===N&&!ftue)onWin(); else if(duckCount===N&&ftue&&ftue.active)onFtueWin();
-}
-function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),460);}if(gstate[r]&&gstate[r][c]===DUCK)duckReact(r,c,'oops',1000);});shakeBoard();}
-
-/* ---------- win / lose ---------- */
-function onWin(){ended=true;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);haptic('ok');soundWin();confettiRain();
-  const stars=starsForWin();
-  const praise=L(["Awesome!","Brilliant!","Quacktastic!","Well done!"][stars-1]||"Awesome!",["Отлично!","Блестяще!","Кряк-класс!","Молодец!"][stars-1]||"Отлично!");
-  if(mode==='levels'){save.levelsDone=Math.max(save.levelsDone,levelIdx+1);save.stars[levelIdx]=Math.max(save.stars[levelIdx]||0,stars);grantFreeBooster(levelIdx+1);persist();}
-  else if(mode==='daily'){const d=new Date();save.lastDailyYMD=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();persist();}
-  else {save.zenSolved=(save.zenSolved||0)+1;save.zenBest=Math.max(save.zenBest||0,N);persist();}
-  $('winTitle').textContent=praise;$('winStars').innerHTML=starsHtml(stars);
-  $('winSub').textContent=L("You solved it. The duck is delighted.","Ты решил. Утка в восторге.");
-  $('btnNext').textContent= mode==='zen'?L("Next puzzle","Дальше"):t('next');
-  openScrim('scrimWin');}
-function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
-function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
-function onLose(){ended=true;haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");$('loseSub').textContent=L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");openScrim('scrimLose');}
-
-/* ---------- boosters ---------- */
-function useUndo(){if(ended)return;if(save.boosters.undo<=0){outOf('undo');return;}if(!history.length){toast(L("Nothing to undo","Нечего отменять"));return;}save.boosters.undo--;boostersUsed++;const h=history.pop();gstate=h.g;hearts=h.hearts;duckCount=h.duckCount;persist();renderAll();haptic('light');}
-function useHint(){if(ended)return;if(save.boosters.hint<=0){outOf('hint');return;}const mv=computeHint();if(!mv){toast(L("Looks good so far","Пока всё верно"));return;}save.boosters.hint--;boostersUsed++;persist();pulseCell(mv.r,mv.c);renderBoosters();haptic('med');toast(mv.msg);}
-function usePlaceDuck(){if(ended)return;if(save.boosters.placeduck<=0){outOf('placeduck');return;}const cell=placeOneCorrect();if(!cell){toast(L("All ducks placed","Все утки на месте"));return;}save.boosters.placeduck--;boostersUsed++;persist();renderBoosters();haptic('ok');soundPlace();if(duckCount===N)onWin();}
-function outOf(w){toast(L("Out of "+w,"Бустеры закончились"));openShop();}
-function grantBoosters(g){if(!g||!g.boosters)return;for(const k in g.boosters)save.boosters[k]=(save.boosters[k]||0)+g.boosters[k];persist();renderBoosters();}
-function grantFreeBooster(lvl){if(lvl%3===0){const order=['hint','undo','placeduck'];const pick=order[(lvl/3-1)%3];save.boosters[pick]=(save.boosters[pick]||0)+1;toast(L("+1 "+pick+" booster","+1 бустер"));}}
-function computeHint(){for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]===DUCK&&puzzle.solCols[r]!==c)return {r,c,msg:L("This duck looks misplaced","Эта утка стоит не там")};}
-  for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK)return {r,c,msg:L("A duck belongs around here","Утка где-то здесь")};}return null;}
-function placeOneCorrect(){for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK){snapshot();conflictingCells(r,c).forEach(([rr,cc])=>{if(gstate[rr][cc]===DUCK){gstate[rr][cc]=EMPTY;duckCount--;renderCell(rr,cc);}});gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);pulseCell(r,c);return {r,c};}}return null;}
-function snapshot(){history.push({g:gstate.map(row=>row.slice()),hearts,duckCount});if(history.length>40)history.shift();}
-
-/* ---------- DOM + render ---------- */
-function $(id){return document.getElementById(id);}
-function show(scr){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===scr));}
-let cellEls=[];
-function buildGrid(){const g=$('grid');g.style.gridTemplateColumns='repeat('+N+',1fr)';g.style.gridTemplateRows='repeat('+N+',1fr)';
-  g.style.gap=(N>=8?'4px':N>=7?'5px':'6px');g.innerHTML='';cellEls=[];
-  for(let r=0;r<N;r++){const row=[];for(let c=0;c<N;c++){const d=document.createElement('div');d.className='qcell';d.style.background=regionVar(puzzle.region[r][c]);d.dataset.r=r;d.dataset.c=c;d.addEventListener('click',()=>onCellTap(r,c));g.appendChild(d);row.push(d);}cellEls.push(row);}}
-function cellEl(r,c){return cellEls[r]&&cellEls[r][c];}
-function renderCell(r,c){const el=cellEl(r,c);if(!el)return;const v=gstate[r][c];
-  if(v===DUCK)el.innerHTML=faceVideosReady?'<canvas class="duckface" width="100" height="100"></canvas>':DUCK_SVG;
-  else el.innerHTML=v===MARK?X_SVG:'';}
-function renderBoard(){for(let r=0;r<N;r++)for(let c=0;c<N;c++)renderCell(r,c);}
-function renderHearts(){const h=$('hearts');if(!heartsEnabled){h.parentElement.style.display='none';return;}h.parentElement.style.display='';let s='';for(let i=0;i<3;i++)s+=heartSvg(i<hearts);h.innerHTML=s;}
-function updateCount(){$('countVal').textContent=duckCount+'/'+N;}
-function renderHud(){$('toptitle').textContent= mode==='levels'?L("Level ","Уровень ")+(levelIdx+1):mode==='daily'?L("Daily","Ежедневный"):L("Zen ","Дзен ")+N+'x'+N;$('duckMini').innerHTML=DUCK_MINI;updateCount();renderHearts();renderChips();}
-function renderChips(){const c=$('chips');c.innerHTML=[L("1 duck per color","1 утка на цвет"),L("1 per row and column","1 на ряд и столбец"),L("Ducks cannot touch","Утки не касаются")].map(x=>'<div class="chip">'+x+'</div>').join('');}
-function renderBoosters(){[['undo','cntUndo'],['hint','cntHint'],['placeduck','cntDuck']].forEach(([k,id])=>{const n=save.boosters[k],el=$(id);el.classList.toggle('zero',n<=0);el.textContent=n<=0?'+':n;});}
-function renderAll(){renderBoard();renderHud();renderBoosters();}
-function pulseCell(r,c){const el=cellEl(r,c);if(!el)return;el.classList.add('spot');setTimeout(()=>el.classList.remove('spot'),1800);}
-
-/* ---------- fx ---------- */
-function shakeBoard(){const b=$('qboard');b.classList.add('shake');setTimeout(()=>b.classList.remove('shake'),300);}
-function confettiRain(){const cols=['#FFD23F','#E8942F','#4BB6A7','#B773E8','#EF94B6','#6FA9E4'];for(let i=0;i<60;i++){const cf=document.createElement('div');cf.className='confetti';cf.style.position='fixed';cf.style.left=(Math.random()*100)+'vw';cf.style.top='-20px';cf.style.background=cols[i%cols.length];cf.style.zIndex=92;cf.style.transition='transform '+(1.5+Math.random()*1.5)+'s linear, opacity .5s '+(1.2+Math.random())+'s';document.body.appendChild(cf);requestAnimationFrame(()=>{cf.style.transform='translateY('+(innerHeight+60)+'px) rotate('+(Math.random()*720)+'deg)';cf.style.opacity='0';});setTimeout(()=>cf.remove(),3200);}}
-let toastTimer=null;
-function toast(m){if(!m)return;const el=$('toast');el.textContent=m;el.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('on'),1900);}
-
-/* ---------- sound ---------- */
-let actx=null,audioOn=save.sound;
-function ac(){if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}return actx;}
-function blip(f,d,type,v){if(!audioOn)return;const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.value=v||0.05;o.connect(g);g.connect(a.destination);const n=a.currentTime;g.gain.exponentialRampToValueAtTime(0.0001,n+d);o.start(n);o.stop(n+d);}
-function soundTick(){blip(300,0.05,'sine',0.035);}
-function soundPlace(){blip(523,0.1,'triangle',0.06);setTimeout(()=>blip(784,0.08,'triangle',0.05),70);}
-function soundBad(){blip(170,0.18,'sawtooth',0.05);}
-function soundWin(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>blip(f,0.18,'triangle',0.07),i*110));}
-function soundLose(){[392,330,262].forEach((f,i)=>setTimeout(()=>blip(f,0.22,'sine',0.06),i*130));}
-
-/* ---------- duck videos ---------- */
-let audioUnlocked=false;
-function unlockAudio(){audioUnlocked=true;const a=ac();if(a&&a.state==='suspended')a.resume();document.removeEventListener('pointerdown',unlockAudio);}
-document.addEventListener('pointerdown',unlockAudio);
-function playDuck(id,forceMute){const v=$(id);if(!v)return;try{v.currentTime=0;v.muted=forceMute?true:!(audioOn&&audioUnlocked);const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(()=>{});});}catch(e){}}
-
-/* ---------- scrims ---------- */
-function openScrim(id){$(id).classList.add('on');}
-function closeScrim(id){$(id).classList.remove('on');}
-function closeAll(){document.querySelectorAll('.scrim').forEach(s=>s.classList.remove('on'));}
-
-/* ---------- shop + IAP ---------- */
-let SKUS_CACHE=null,iapEnabled=false;
-async function loadSkus(){try{const r=await fetch(API_BASE+'/api/skus');const j=await r.json();SKUS_CACHE=j.skus||[];iapEnabled=!!j.enabled;}catch(e){SKUS_CACHE=[];}}
-function boosterIcon(k){if(k==='hint')return '<svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/><path d="M9 18h6"/></svg>';if(k==='undo')return '<svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.4" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>';return '<svg viewBox="0 0 24 24" fill="#FFD23F" stroke="#6E4F44" stroke-width="2"><path d="M14 8.5a3 3 0 1 0-3.6 2.94C9.5 14 7 15 5 15c2.5 3 6 4 9 3 3.5-1.2 5-4 5-7 0-1-.3-2-1-2.8L21 7l-3 .2A3 3 0 0 0 14 8.5z"/></svg>';}
-function skuMainBooster(g){if(!g||!g.boosters)return 'placeduck';const ks=Object.keys(g.boosters);return ks.length>1?'placeduck':ks[0];}
-function renderShop(){const list=$('skuList');list.innerHTML='';if(!SKUS_CACHE||!SKUS_CACHE.length){list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>';return;}
-  const star='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';
-  SKUS_CACHE.forEach(s=>{const row=document.createElement('div');row.className='sku';row.innerHTML='<div class="sicon">'+boosterIcon(skuMainBooster(s.grant))+'</div><div class="smeta"><div class="stitle">'+s.title+'</div><div class="sdesc">'+s.description+'</div></div><button class="sbuy">'+s.price+' '+star+'</button>';row.querySelector('.sbuy').onclick=()=>buy(s.id);list.appendChild(row);});}
-function openShop(){closeAll();renderShop();openScrim('scrimShop');if(!SKUS_CACHE)loadSkus().then(renderShop);}
-async function buy(sku){if(!iapEnabled||!initData){toast(L("Open in Telegram to buy","Покупки в Telegram"));return;}
-  try{const r=await fetch(API_BASE+'/api/create-invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sku,initData})});const j=await r.json();if(!j.link){toast("Could not start payment");return;}
-    TG.openInvoice(j.link,async(st)=>{if(st==='paid'){await pollPurchases();toast(L("Thank you!","Спасибо!"));haptic('ok');}});}catch(e){toast("Payment error");}}
-async function pollPurchases(){if(!initData)return;try{const r=await fetch(API_BASE+'/api/poll-purchases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})});const j=await r.json();(j.purchases||[]).forEach(p=>grantBoosters(p.grant));}catch(e){}}
-
-/* ================= FTUE (scripted first-run, matches Meowdoku) ================= */
-const FT={
-  s0:{en:"Double-tap a cell to place a duck.",ru:"Дважды нажми на клетку, чтобы поставить утку.",hl:["duck","утку"]},
-  s1a:{en:"Nice! Ducks can't share a row or column.",ru:"Отлично! Утки не могут быть в одном ряду или столбце.",hl:["row or column","ряду или столбце"]},
-  s1b:{en:"Tap empty cells to exclude them.",ru:"Нажимай на пустые клетки, чтобы исключить их.",hl:["exclude","исключить"]},
-  s2:{en:"Well done! Only one duck per color.",ru:"Молодец! Только одна утка на каждый цвет.",hl:["color","цвет"]},
-  s3:{en:"Find the last ducks!",ru:"Найди оставшихся уток!",hl:["last ducks","оставшихся уток"]},
-  s3b:{en:"Tap here for a hint.",ru:"Нажми сюда для подсказки.",hl:[]},
-};
-function bub(spec){let s=spec[LANG]||spec.en;(spec.hl||[]).forEach(h=>{if(s.indexOf(h)>=0)s=s.replace(h,'<span class="hl">'+h+'</span>');});return s;}
-function startFTUE(){
-  mode='levels';levelIdx=0;ended=false;boostersUsed=0;heartsLost=0;history=[];faceFx.clear();
-  N=4;puzzle=generatePuzzle(4,4242);heartsEnabled=true;
-  gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
-  buildGrid();renderAll();show('game');
-  ftue={active:true,step:0};
-  ftueStep0();
-}
-function ftueDim(on){$('app').classList.toggle('tutdim',on);$('qboard').classList.toggle('dim',on);}
-function ftueSpot(cells){cellEls.forEach(row=>row.forEach(el=>el.classList.remove('spot')));ftue.allowOnly=new Set();cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el)el.classList.add('spot');ftue.allowOnly.add(r*100+c);});}
-function showCoach(which,spec,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=bub(spec)+(withLamp?' '+LAMP_SVG:'');(which==='top'?$('coachTop'):$('coachBot')).classList.add('on');}
-function hideCoach(which){(which==='top'?$('coachTop'):$('coachBot')).classList.remove('on');}
-function handOver(r,c){const el=cellEl(r,c);if(!el){return;}const b=el.getBoundingClientRect();const h=$('handhint');h.style.display='block';h.style.left=(b.left+b.width*0.55)+'px';h.style.top=(b.top+b.height*0.55)+'px';}
-function handHide(){$('handhint').style.display='none';}
-function ftueStep0(){ // place the first duck (most-constrained region's solution cell)
-  ftue.step=0;ftueDim(true);
-  // pick solution cell in the smallest region
-  const sizes={};for(let r=0;r<N;r++)for(let c=0;c<N;c++)sizes[puzzle.region[r][c]]=(sizes[puzzle.region[r][c]]||0)+1;
-  let best=0,bestSz=99;for(let r=0;r<N;r++){const reg=puzzle.region[r][puzzle.solCols[r]];if(sizes[reg]<bestSz){bestSz=sizes[reg];best=r;}}
-  ftue.target=[best,puzzle.solCols[best]];
-  ftueSpot([ftue.target]);showCoach('top',FT.s0);handOver(ftue.target[0],ftue.target[1]);hideCoach('bot');
-}
-function ftueStep1(){ // teach X exclusion along the placed duck's row+col
-  ftue.step=1;ftueDim(true);handHide();
-  const [dr,dc]=ftue.lastDuck;const cells=[];
-  for(let c=0;c<N;c++)if(c!==dc&&gstate[dr][c]===EMPTY)cells.push([dr,c]);
-  for(let r=0;r<N;r++)if(r!==dr&&gstate[r][dc]===EMPTY)cells.push([r,dc]);
-  ftueSpot(cells.length?cells:[[dr,(dc+1)%N]]);
-  showCoach('top',FT.s1a);showCoach('bot',FT.s1b);if(cells[0])handOver(cells[0][0],cells[0][1]);
-}
-function ftueStep2(){ // region rule, then free finish
-  ftue.step=2;ftueDim(false);handHide();cellEls.forEach(row=>row.forEach(el=>el.classList.remove('spot')));ftue.allowOnly=null;
-  showCoach('top',FT.s2);hideCoach('bot');
-  const b=$('coachTopB');b.innerHTML=bub(FT.s2)+'<button class="btn play gotit" id="ftueGotit" style="margin-left:10px;padding:8px 16px;font-size:3.6vw">'+t('gotit')+'</button>';
-  $('ftueGotit').onclick=ftueStep3;
-}
-function ftueStep3(){ // free finish with hint card
-  ftue.step=3;hideCoach('top');showCoach('bot',FT.s3b,true);$('coachBot').style.pointerEvents='auto';
-  $('coachBotB').onclick=()=>{const mv=computeHint();if(mv)pulseCell(mv.r,mv.c);};
-}
-function onFtueAction(kind,r,c){
-  if(!ftue||!ftue.active)return;
-  if(ftue.step===0&&kind==='duck'){ftue.lastDuck=[r,c];setTimeout(ftueStep1,260);}
-  else if(ftue.step===1&&kind==='mark'){setTimeout(ftueStep2,260);}
-}
-function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();$('coachBotB').onclick=null;
-  for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);
-  save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);if(save.stars[0]==null)save.stars[0]=3;persist();
-  ended=true;haptic('ok');soundWin();confettiRain();
-  $('winTitle').textContent=L("Awesome!","Отлично!");$('winStars').innerHTML=starsHtml(3);$('winSub').textContent=L("You learned to play. Now the real puzzles begin.","Ты научился играть. Теперь начинаются настоящие головоломки.");
-  $('btnNext').textContent=t('next');openScrim('scrimWin');}
-
-/* ---------- levels map ---------- */
-function renderLevelsMap(){const g=$('lvlgrid');g.innerHTML='';const unlocked=save.levelsDone;
-  for(let i=0;i<TOTAL_LEVELS;i++){const locked=i>unlocked;const node=document.createElement('div');node.className='lvlnode'+(locked?' locked':'')+(i<unlocked?' done':'')+(i===unlocked?' cur':'');
-    let inner='<div>'+(i+1)+'</div>';if(i<unlocked){const st=save.stars[i]||1;let s='';for(let k=0;k<3;k++)s+=starSvg(k<st);inner+='<div class="stars">'+s+'</div>';}
-    inner+='<div class="sz">'+levelSize(i)+'x'+levelSize(i)+'</div>';node.innerHTML=inner;if(!locked)node.onclick=()=>{closeAll();startLevel('levels',i);};g.appendChild(node);}}
-function openLevels(){renderLevelsMap();show('levels');}
-
-/* ---------- home + misc ---------- */
-function refreshHome(){try{const v=$('heroVid');v.play&&v.play().catch(()=>{});}catch(e){}const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';}
-function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
-function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;const y=new Date(Date.now()-86400000);const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1;save.lastPlayYMD=today;persist();}
-function startAdventure(){touchStreak();if(!save.tutorialDone){startFTUE();}else{openLevels();}}
-function fillHow(){const en=["Place one duck in every colored area.","No two ducks can share a row or a column.","Ducks cannot touch each other, not even diagonally.","Single-tap a cell for an X note. Double-tap to place a duck.","You have 3 hearts. A duck that breaks a rule costs one heart.","Stuck? Use Hint, Undo, or Place a Duck. No ads, boosters are Telegram Stars only."];
-  const ru=["Поставь по одной утке в каждой цветной зоне.","Две утки не могут быть в одном ряду или столбце.","Утки не должны соприкасаться, даже по диагонали.","Одно нажатие на клетку ставит метку X. Двойное ставит утку.","У тебя 3 сердца. Утка, нарушившая правило, стоит одно сердце.","Застрял? Подсказка, Назад или Утка. Без рекламы, бустеры только за Telegram Stars."];
-  $('howBody').innerHTML=(LANG==='ru'?ru:en).map(x=>"<p style='margin:8px 0'>"+x+"</p>").join('');}
-function setSoundIcon(){$('setSoundIcon').style.opacity=audioOn?1:0.35;}
-
-/* ---------- wire up ---------- */
-function bind(){
-  $('btnPlay').onclick=startAdventure;
-  $('btnZen').onclick=()=>{touchStreak();startLevel('zen',0);};
-  $('btnDaily').onclick=()=>{touchStreak();startLevel('daily',0);};
-  $('btnShop').onclick=openShop;
-  $('btnHowHome').onclick=()=>{fillHow();openScrim('scrimHow');};
-  $('btnBack').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
-  $('btnLvlBack').onclick=()=>{show('home');refreshHome();};
-  $('btnGear').onclick=()=>{setSoundIcon();openScrim('scrimSet');};
-  $('bsUndo').onclick=useUndo;$('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
-  $('btnNext').onclick=()=>{closeScrim('scrimWin');if(mode==='levels'){const nx=levelIdx+1;if(nx<TOTAL_LEVELS)startLevel('levels',nx);else{show('home');refreshHome();}}else if(mode==='zen'){startLevel('zen',0);}else{show('home');refreshHome();}};
-  $('btnWinHome').onclick=()=>{closeScrim('scrimWin');show('home');refreshHome();};
-  $('btnRetry').onclick=()=>{closeScrim('scrimLose');startLevel(mode,levelIdx);};
-  $('btnLoseHome').onclick=()=>{closeScrim('scrimLose');show('home');refreshHome();};
-  $('btnLuOk').onclick=()=>closeScrim('scrimLevelUp');
-  $('shopClose').onclick=()=>closeScrim('scrimShop');
-  $('howClose').onclick=()=>closeScrim('scrimHow');$('howOk').onclick=()=>closeScrim('scrimHow');
-  $('setClose').onclick=()=>closeScrim('scrimSet');
-  $('setSound').onclick=()=>{audioOn=!audioOn;save.sound=audioOn;persist();setSoundIcon();};
-  $('setRestart').onclick=()=>{closeScrim('scrimSet');startLevel(mode,levelIdx);};
-  $('setHome').onclick=()=>{closeScrim('scrimSet');show('home');refreshHome();};
-}
-
-/* ---------- boot ---------- */
-function boot(){applyI18n();$('tagline').textContent=t('tagline');bind();fillHow();refreshHome();initFaces();
-  loadSkus();pollPurchases();cloudLoad();
-  if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})}).catch(()=>{});}catch(e){}}
-}
-boot();
+(function(){ var f=document.getElementById('dd-game'); if(f) f.src='game.html'+(location.search||'')+(location.hash||''); })();
 </script>
 </body>
 </html>

@@ -36,7 +36,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 /* ---------- HOME ---------- */
 #home{justify-content:flex-start;text-align:center;background:#FBF3E2;padding-top:calc(var(--safe-top) + 6vh);}
 .logo{font-size:13vw;letter-spacing:.5px;margin:3vh 0 0;line-height:1;color:var(--ink);text-shadow:0 3px 0 #fff,0 5px 0 var(--orange-d);}
-.logo-img{display:block;width:min(80vw,380px);height:auto;margin:3.5vh auto 0;filter:drop-shadow(0 5px 7px rgba(120,90,40,.22));}
+.logo-img{display:block;width:min(80vw,380px);height:auto;margin:3.5vh auto 0;}
 .logo b{color:var(--orange);}
 .tag{color:var(--ink-soft);font-size:4.2vw;margin:8px 0 0;}
 .hero-wrap{width:min(40vw,180px);aspect-ratio:1;margin:2vh auto 1vh;}
@@ -58,7 +58,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 #home .menu .btn.play{font-size:6vw;padding:20px;}
 
 /* ---------- TOP BAR ---------- */
-.topbar{width:100%;max-width:460px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.topbar{width:100%;max-width:460px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;position:relative;}
 .iconbtn{width:44px;height:44px;border-radius:50%;background:var(--card);box-shadow:0 3px 0 var(--shadow);display:flex;align-items:center;justify-content:center;flex:none;}
 .iconbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--shadow);}
 .iconbtn svg{width:22px;height:22px;}
@@ -69,6 +69,8 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .alblock svg{width:9px;height:9px;}
 #btnAlbum.locked .alblock{display:flex;}
 .toptitle{font-size:5.4vw;color:var(--ink);}
+/* game level title: centered to the page + vertically to the top-bar icons */
+#toptitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;white-space:nowrap;font-size:4.8vw;}
 
 /* status row: count pill + hearts pill */
 .statusrow{width:100%;max-width:460px;display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px;}

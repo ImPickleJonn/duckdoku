@@ -632,7 +632,8 @@ async function notifyLoop() {
     if (sent >= NOTIF_MAX_PER_PASS) break;
     try {
       const k = pickTrigger(s); if (!k) continue;
-      const pool = itemsForTrig(k); if (!pool.length) continue;
+      let pool = itemsForTrig(k); if (!pool.length) continue;
+      const gp = pool.filter(it => /^g_/.test(it.id)); if (gp.length) pool = gp; // prioritize the real gameplay + hero clips
       const salt = (Number(uid) || 0) + Math.floor(Date.now() / 86400000);
       const item = pool[Math.abs(salt | 0) % pool.length];
       s.uid = s.uid || uid;
@@ -776,6 +777,36 @@ app.post('/api/preview', async (req, res) => {
       await tg('sendMessage', { chat_id: id, text: 'Preview' + (only ? ' (' + only + ')' : '') + ': ' + items.length + ' notifications.' });
       for (const item of items) { await sendNotifItem({ chatId: id, lang: 'en' }, item); await new Promise(r => setTimeout(r, 500)); }
     }
+  })().catch(() => {});
+});
+
+// Secret-guarded one-off BROADCAST to all users. Recipients = durable Postgres players +
+// in-memory users (deduped, in-memory opt-outs skipped). Body: { id } to send a catalog item,
+// or { media, kind, cap:{en,ru} } for a custom one; { dry:true } to just count.
+app.post('/api/broadcast', async (req, res) => {
+  const secret = process.env.SHIP_SECRET || '';
+  if (!secret || req.headers['x-ship-key'] !== secret) return res.status(403).json({ error: 'forbidden' });
+  const b = req.body || {};
+  let item = b.id ? (NOTIF_ITEMS.find(it => it.id === b.id) || null) : null;
+  if (b.cap && item) item = Object.assign({}, item, { en: b.cap.en || item.en, ru: b.cap.ru || item.ru });
+  if (!item && b.media) item = { id: 'broadcast', kind: b.kind || 'animation', media: b.media, en: (b.cap && b.cap.en) || '', ru: (b.cap && b.cap.ru) || (b.cap && b.cap.en) || '' };
+  if (!item) return res.status(400).json({ error: 'pass id, or media + cap' });
+  const opt = new Set(); const recip = new Map(); // chatId -> lang
+  for (const [uid, s] of users) { if (s.optOut) { opt.add(String(uid)); continue; } if (s.chatId) recip.set(String(s.chatId), s.lang === 'ru' ? 'ru' : 'en'); }
+  if (dbReady && dbPool) {
+    try { const q = await dbPool.query('SELECT tg_id, lang FROM players'); for (const r of q.rows) { const id = String(r.tg_id); if (opt.has(id) || recip.has(id)) continue; recip.set(id, r.lang === 'ru' ? 'ru' : 'en'); } } catch (e) {}
+  }
+  const all = [...recip.entries()];
+  if (b.dry) return res.json({ ok: true, dry: true, recipients: all.length, item: item.id });
+  res.json({ ok: true, recipients: all.length, item: item.id });
+  (async () => {
+    let sent = 0, failed = 0;
+    for (const [cid, lang] of all) {
+      const r = await sendNotifItem({ chatId: cid, lang }, item);
+      if (r && r.ok) sent++; else { failed++; if (r && r.error_code === 403) { const s = users.get(Number(cid)) || users.get(cid); if (s) s.optOut = true; } }
+      await new Promise(rr => setTimeout(rr, 45));
+    }
+    for (const id of parseAdminIds()) await tg('sendMessage', { chat_id: id, text: 'Broadcast ' + item.id + ' done. Sent ' + sent + ', failed ' + failed + ' of ' + all.length + '.' });
   })().catch(() => {});
 });
 

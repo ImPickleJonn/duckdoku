@@ -253,8 +253,6 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .goldpill .cicon{width:22px;height:22px;flex:none;display:flex;}.goldpill .cicon svg{width:100%;height:100%;}
 .topright{display:flex;align-items:center;gap:9px;}
 .coins-line .goldpill{font-size:4.6vw;padding:8px 16px 8px 10px;}
-.homeava{width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid #fff;box-shadow:0 2px 0 var(--shadow);flex:none;}
-.homeava img{width:100%;height:100%;object-fit:cover;display:block;}
 .booster .bcount.price{background:#F4B731;color:#7A4F12;}
 .wingold{display:inline-flex;align-items:center;gap:6px;background:#3b2f25;color:#FFD867;border-radius:16px;padding:6px 15px;font-size:4.6vw;font-weight:900;margin:4px auto 8px;}
 .wingold svg{width:22px;height:22px;}
@@ -294,8 +292,6 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .stslot .stfallback{width:60%;height:60%;}.stslot .stfallback svg{width:100%;height:100%;}
 .stslot.locked .stfallback{opacity:.38;filter:grayscale(1);}
 .stslot .qmark{position:absolute;font-size:7vw;color:var(--ink-soft);opacity:.55;font-weight:900;}
-.stslot .avabadge{position:absolute;top:3px;right:3px;width:18px;height:18px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 0 rgba(0,0,0,.15);}
-.stslot .avabadge svg{width:11px;height:11px;}
 .stslot .dupn{position:absolute;bottom:2px;right:4px;font-size:2.8vw;color:#fff;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,.5);}
 .claimbtn{width:100%;margin-top:11px;background:var(--green);color:#fff;border-radius:16px;padding:13px;font-size:4.3vw;font-weight:900;box-shadow:0 4px 0 #2f8f57;display:flex;align-items:center;justify-content:center;gap:7px;}
 .claimbtn:active{transform:translateY(2px);box-shadow:0 2px 0 #2f8f57;}
@@ -358,6 +354,23 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .grandbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #C9781E;}
 @keyframes grandPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
 .granddone{width:100%;margin:0 0 16px;text-align:center;color:#E8942F;font-size:4.4vw;font-weight:900;}
+/* grand-prize header card (top of album) + per-set reward strip */
+.grandcard{background:linear-gradient(135deg,#FFF4D6,#FFE6B4);border:2px solid #F1C457;border-radius:20px;padding:14px 14px 12px;margin:0 0 16px;box-shadow:0 4px 0 var(--shadow);}
+.grandcard .grandttl{display:flex;align-items:center;gap:7px;font-size:4.6vw;font-weight:900;color:#9A6212;}
+.grandcard .grandttl svg{width:22px;height:22px;stroke:#9A6212;}
+.grandprize{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:9px 2px 11px;}
+.grandbar{height:14px;border-radius:8px;background:#EAD6A8;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.14);}
+.grandfill{height:100%;border-radius:8px;background:linear-gradient(90deg,#FFD23F,#E8942F);transition:width .55s cubic-bezier(.34,1.4,.64,1);}
+.grandprog{text-align:center;font-size:3.4vw;font-weight:800;color:#9A6212;margin:7px 0 0;}
+.grandhint{text-align:center;font-size:3.4vw;font-weight:800;color:#B98A3C;margin:9px 0 2px;}
+.grandcard .grandbtn{margin:11px 0 2px;}
+.grandcard .granddone{margin:10px 0 2px;}
+.setreward{display:flex;align-items:center;gap:8px;margin:0 2px 9px;padding:7px 12px;background:var(--card);border-radius:13px;box-shadow:0 2px 0 var(--shadow);}
+.setreward.done{opacity:.5;}
+.srlabel{font-size:3vw;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.3px;flex:none;}
+.srprize{display:flex;align-items:center;gap:13px;margin-left:auto;}
+.srp{display:inline-flex;align-items:center;gap:3px;font-size:3.9vw;font-weight:900;color:var(--ink);}
+.srpic{display:inline-flex;width:20px;height:20px;}.srpic svg{width:100%;height:100%;}
 </style>
 </head>
 <body>
@@ -369,7 +382,6 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
       <button class="iconbtn" id="btnHomeLB" aria-label="leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" fill="#FFD23F"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg></button>
       <div class="hb-right">
         <button class="goldpill" id="homeGold"><span class="cicon"></span><span class="goldval">0</span></button>
-        <span class="homeava hidden" id="homeAvaWrap"><img id="homeAvaImg" alt=""></span>
         <button class="iconbtn" id="btnHomeGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44"><path d="M12 2.4c.95 0 1.78.62 2.04 1.5.66-.72 1.72-.92 2.6-.41.86.5 1.22 1.5.92 2.42.94-.22 1.92.27 2.27 1.18.34.9-.05 1.9-.9 2.36.85.46 1.24 1.46.9 2.36-.35.91-1.33 1.4-2.27 1.18.3.92-.06 1.92-.92 2.42-.88.51-1.94.31-2.6-.41-.26.88-1.09 1.5-2.04 1.5s-1.78-.62-2.04-1.5c-.66.72-1.72.92-2.6.41-.86-.5-1.22-1.5-.92-2.42-.94.22-1.92-.27-2.27-1.18-.34-.9.05-1.9.9-2.36-.85-.46-1.24-1.46-.9-2.36.35-.91 1.33-1.4 2.27-1.18-.3-.92.06-1.92.92-2.42.88-.51 1.94-.31 2.6.41.26-.88 1.09-1.5 2.04-1.5z"/><circle cx="12" cy="12" r="3.5" fill="#fff"/></svg></button>
       </div>
     </div>
@@ -427,6 +439,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
       <div class="topright"><button class="goldpill" id="albumGold"><span class="cicon"></span><span class="goldval">0</span></button></div>
     </div>
     <div class="album-scroll">
+      <div id="albumGrand"></div>
       <div class="packrow" id="packRow"></div>
       <div id="albumSets"></div>
     </div>
@@ -1124,7 +1137,7 @@ function revealPack(kind,wasFree){const results=doOpenPack(kind);MX.track('Pack 
   setTimeout(()=>{$('packTitle').textContent=L("New stickers!","Новые наклейки!");if(best>=2)soundWin();},700+results.length*500);
   renderAlbum();}
 
-function setAvatar(id){save.avatarSticker=id;persist();renderHomeAvatar();toast(L("Set as your album badge","Установлено как значок"));haptic('light');renderAlbum();}
+function prizeStrip(prize){let h='';if(prize.gold)h+='<span class="srp"><span class="srpic">'+COIN_SVG+'</span>'+prize.gold+'</span>';if(prize.boosters)['placeduck','hint','undo'].forEach(k=>{if(prize.boosters[k])h+='<span class="srp"><span class="srpic">'+boosterIcon(k)+'</span>x'+prize.boosters[k]+'</span>';});return h;}
 function rewardItemsHtml(prize){const p=[];const names={hint:L("Hint","Подсказка"),undo:L("Undo","Назад"),placeduck:L("Place a Duck","Утка")};
   if(prize.boosters)['placeduck','hint','undo'].forEach(k=>{if(prize.boosters[k])p.push('<div class="rwd-item">'+boosterIcon(k)+'<span>x'+prize.boosters[k]+' '+names[k]+'</span></div>');});
   if(prize.gold)p.push('<div class="rwd-item"><span class="rwd-ic">'+COIN_SVG+'</span><span>+'+prize.gold+'</span></div>');
@@ -1148,25 +1161,31 @@ function renderAlbumPacks(){const row=$('packRow');if(!row)return;const fp=save.
     return '<button class="packbtn" data-pack="'+kind+'"><div class="pkart">'+svg+'</div><div class="pktitle">'+title+'</div>'+cost+'</button>';};
   row.innerHTML=pk('basic',PACK_SVG)+pk('golden',GOLD_PACK_SVG);}
 
-function renderAlbum(){renderAlbumPacks();updateGoldHud();const wrap=$('albumSets');if(!wrap)return;
-  const allDone=STICKER_SETS.every(s=>setComplete(s.id));let grand='';
-  if(allDone&&!save.grandClaimed)grand='<button class="grandbtn" data-grand="1">'+TROPHY_MINI+L("Claim Grand Prize!","Забрать Гранд-приз!")+'</button>';
-  else if(allDone&&save.grandClaimed)grand='<div class="granddone">'+TROPHY_MINI+L("Master Collector","Мастер-коллекционер")+'</div>';
-  wrap.innerHTML=grand+STICKER_SETS.map(set=>{
+function renderAlbumGrand(){const el=$('albumGrand');if(!el)return;
+  const ownedU=STICKERS.filter(s=>ownedCount(s.id)>0).length,totalU=STICKERS.length,pct=Math.round(ownedU/totalU*100),allDone=ownedU>=totalU;
+  let foot;
+  if(allDone&&!save.grandClaimed)foot='<button class="grandbtn" data-grand="1">'+TROPHY_MINI+L("Claim Grand Prize!","Забрать Гранд-приз!")+'</button>';
+  else if(save.grandClaimed)foot='<div class="granddone">'+TROPHY_MINI+L("Master Collector","Мастер-коллекционер")+'</div>';
+  else foot='<div class="grandhint">'+L("Collect every duck to win","Собери всех уток, чтобы выиграть")+'</div>';
+  el.innerHTML='<div class="grandcard"><div class="grandttl">'+TROPHY_MINI+L("Grand Prize","Гранд-приз")+'</div>'
+    +'<div class="grandprize">'+prizeStrip(GRAND_PRIZE)+'</div>'
+    +'<div class="grandbar"><div class="grandfill" style="width:'+pct+'%"></div></div>'
+    +'<div class="grandprog">'+ownedU+' / '+totalU+' '+L("ducks collected","уток собрано")+'</div>'+foot+'</div>';}
+function renderAlbum(){renderAlbumPacks();renderAlbumGrand();updateGoldHud();const wrap=$('albumSets');if(!wrap)return;
+  wrap.innerHTML=STICKER_SETS.map(set=>{
     const items=STICKERS.filter(s=>s.set===set.id);
     const slots=items.map(s=>{const n=ownedCount(s.id);
       if(n<=0)return '<div class="stslot locked"><div class="stfallback">'+DUCK_MINI+'</div><span class="qmark">?</span></div>';
-      const ava=save.avatarSticker===s.id?'<span class="avabadge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>':'';
       const dn=n>1?'<span class="dupn">x'+n+'</span>':'';
-      return '<div class="stslot owned r-'+s.rarity+'" data-ava="'+s.id+'"><div class="stfallback">'+DUCK_MINI+'</div>'+stickerImg(s.id)+ava+dn+'</div>';}).join('');
-    const done=setOwnedN(set.id),total=setTotalN(set.id);
+      return '<div class="stslot owned r-'+s.rarity+'"><div class="stfallback">'+DUCK_MINI+'</div>'+stickerImg(s.id)+dn+'</div>';}).join('');
+    const done=setOwnedN(set.id),total=setTotalN(set.id),claimed=!!(save.setsClaimed&&save.setsClaimed[set.id]);
+    const reward='<div class="setreward'+(claimed?' done':'')+'"><span class="srlabel">'+(claimed?L("Reward claimed","Приз получен"):L("Set reward","Награда"))+'</span><span class="srprize">'+prizeStrip(SET_PRIZE)+'</span></div>';
     let foot='';
-    if(setComplete(set.id))foot=(save.setsClaimed&&save.setsClaimed[set.id])?'<div class="claimdone">'+L("Set complete","Набор собран")+'</div>':'<button class="claimbtn" data-claim="'+set.id+'">'+TROPHY_MINI+L("Claim prize","Забрать приз")+'</button>';
-    return '<div class="setblock"><div class="sethdr"><span class="settitle">'+L(set.en,set.ru)+'</span><span class="setprog">'+done+'/'+total+'</span></div><div class="setgrid">'+slots+'</div>'+foot+'</div>';
+    if(setComplete(set.id))foot=claimed?'<div class="claimdone">'+L("Set complete","Набор собран")+'</div>':'<button class="claimbtn" data-claim="'+set.id+'">'+TROPHY_MINI+L("Claim prize","Забрать приз")+'</button>';
+    return '<div class="setblock"><div class="sethdr"><span class="settitle">'+L(set.en,set.ru)+'</span><span class="setprog">'+done+'/'+total+'</span></div>'+reward+'<div class="setgrid">'+slots+'</div>'+foot+'</div>';
   }).join('');}
 
-function openAlbum(){show('album');renderAlbum();renderHomeAvatar();MX.track('Album Opened');}
-function renderHomeAvatar(){const wrap=$('homeAvaWrap'),img=$('homeAvaImg');if(!wrap||!img)return;if(save.avatarSticker){img.onerror=()=>wrap.classList.add('hidden');img.src='assets/stickers/'+save.avatarSticker+'.png?v='+DD_VERSION;wrap.classList.remove('hidden');}else wrap.classList.add('hidden');}
+function openAlbum(){show('album');renderAlbum();MX.track('Album Opened');}
 
 /* ================= FTUE (scripted first-run, matches Meowdoku) ================= */
 const FT={
@@ -1230,7 +1249,7 @@ function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach
   $('btnNext').textContent=t('next');openScrim('scrimWin');}
 
 /* ---------- home + misc ---------- */
-function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderHomeAvatar();}
+function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();}
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;const y=new Date(Date.now()-86400000);const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1;save.lastPlayYMD=today;persist();}
 function startPlay(){touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
@@ -1298,7 +1317,8 @@ function bind(){
   $('packOk').onclick=()=>{closeScrim('scrimPack');renderAlbum();};
   $('rwdOk').onclick=()=>closeScrim('scrimReward');
   $('packRow').addEventListener('click',e=>{const p=e.target.closest('[data-pack]');if(p)buyPack(p.getAttribute('data-pack'));});
-  $('albumSets').addEventListener('click',e=>{const g=e.target.closest('[data-grand]');if(g){claimGrand();return;}const a=e.target.closest('[data-ava]');if(a){setAvatar(a.getAttribute('data-ava'));return;}const c=e.target.closest('[data-claim]');if(c)claimSet(c.getAttribute('data-claim'));});
+  $('albumSets').addEventListener('click',e=>{const c=e.target.closest('[data-claim]');if(c)claimSet(c.getAttribute('data-claim'));});
+  $('albumGrand').addEventListener('click',e=>{if(e.target.closest('[data-grand]'))claimGrand();});
 }
 
 /* ---------- boot ---------- */

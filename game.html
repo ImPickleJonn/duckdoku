@@ -666,9 +666,8 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
     <canvas id="loseCele" class="wincele" width="640" height="640"></canvas>
     <h2 id="loseTitle">Out of hearts</h2>
     <p id="loseSub">No worries. Try the puzzle again.</p>
-    <button class="btn play" id="btnContinue" style="background:var(--green);box-shadow:0 5px 0 #2f8f57">Continue</button>
     <button class="btn play" id="btnRetry" data-i="retry">Try again</button>
-    <button class="btn ghost" id="btnLoseHome" data-i="home">Home</button>
+    <button class="btn play" id="btnLoseHome" data-i="home" style="background:var(--blue);box-shadow:0 5px 0 var(--blue-d)">Home</button>
   </div>
 </div>
 
@@ -867,7 +866,6 @@ function applyI18n(){document.querySelectorAll('[data-i]').forEach(el=>{el.textC
 const BOOSTER_COST={undo:40,hint:100,placeduck:200};
 const BOOSTER_PACK_QTY=3;                              // boosters are bought x3 with gold (no per-use price shown in-game)
 const BOOSTER_PACK_COST={hint:250,placeduck:500};     // 0 inventory + tap booster -> confirm-buy modal; not enough gold -> shop
-const CONTINUE_COST=150;
 const PACK_COST={basic:150,golden:400};
 const PACK_SIZE={basic:3,golden:5};
 const PACK_WEIGHTS={basic:{common:70,rare:23,epic:6,legendary:1},golden:{common:45,rare:38,epic:14,legendary:3}};
@@ -1276,9 +1274,7 @@ function onWin(){ended=true;gameLive=false;nextWinVariant();allDucksReact('happy
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
 function onLose(){ended=true;gameLive=false;nextLoseVariant();allDucksReact('sad',LOSE_MODAL_DELAY+800);MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
-  const canCont=!ftue&&(save.gold||0)>=CONTINUE_COST;const cb=$('btnContinue');cb.style.display=canCont?'':'none';
-  if(canCont)cb.innerHTML=L("Continue","Продолжить")+' '+costChip(CONTINUE_COST);
-  $('loseSub').textContent=canCont?L("Keep your ducks. Refill hearts and finish.","Сохрани уток. Пополни сердца и закончи."):L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");
+  $('loseSub').textContent=L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");
   showModalSoon('scrimLose',LOSE_MODAL_DELAY);} // let the board ducks cry first, then the loss popup
 
 /* ---------- gold helpers ---------- */
@@ -1303,7 +1299,6 @@ function usePlaceDuck(){if(ended||hintActive)return;let avail=false;for(let r=0;
 let _buyKey=null;
 function openBoosterBuy(k){const cost=BOOSTER_PACK_COST[k];if((save.gold||0)<cost){needGold();return;}_buyKey=k;const nm=k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Подставить утку');$('bbIcon').innerHTML=boosterIcon(k);$('bbTitle').textContent=L('Get ','Получить ')+BOOSTER_PACK_QTY+' '+nm;$('bbSub').textContent=L('Stock up to keep solving.','Запасись, чтобы решать дальше.');$('bbBuy').innerHTML=L('Buy for ','Купить за ')+costChip(cost);openScrim('scrimBuy');haptic('light');}
 function confirmBoosterBuy(){const k=_buyKey;if(!k)return;const cost=BOOSTER_PACK_COST[k];if(!spendGold(cost)){closeScrim('scrimBuy');needGold();return;}grantFreeBoosters({[k]:BOOSTER_PACK_QTY});persist();renderBoosters();closeScrim('scrimBuy');MX.track('Booster Pack Bought',{type:k,qty:BOOSTER_PACK_QTY,cost});haptic('ok');soundPop();toast('+'+BOOSTER_PACK_QTY+' '+(k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Утка')));if(k==='hint')useHint();else usePlaceDuck();}
-function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}boostersUsed++;hearts=3;ended=false;gameLive=true;clearTimeout(_modalTimer);renderHearts();closeScrim('scrimLose');MX.track('Continue Used',{level:levelIdx+1});haptic('ok');}
 // Apply a purchase grant from the server: gold and/or free sticker packs.
 function grantReward(g){if(!g)return;const msgs=[];
   if(g.gold){save.gold=(save.gold||0)+g.gold;msgs.push('+'+g.gold+' '+L("gold","золота"));}
@@ -1903,7 +1898,6 @@ function bind(){
   $('homeGold').onclick=openShopScreen;$('gameGold').onclick=openShop;$('albumGold').onclick=openShopScreen;$('shopGold').onclick=openShopScreen;
   // buy delegation for both shop surfaces (rows carry data-buy)
   ['skuList','shopGoldBox','shopBundleBox'].forEach(id=>{const el=$(id);if(el)el.addEventListener('click',e=>{const b=e.target.closest('[data-buy]');if(b)buy(b.getAttribute('data-buy'));});});
-  $('btnContinue').onclick=continueLevel;
   $('packOk').onclick=()=>{closeScrim('scrimPack');renderAlbum();};
   $('rwdOk').onclick=()=>closeScrim('scrimReward');
   $('brClose').onclick=closeBuyResult;$('brContinue').onclick=closeBuyResult;

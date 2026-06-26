@@ -94,6 +94,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 
 /* ---------- BOARD ---------- */
 .boardspacer{height:clamp(6px,2vh,28px);flex:0 1 auto;min-height:4px;}
+.gspace{flex:1 1 0;min-height:0;} /* flexible top/bottom spacers: lower the play area for thumb reach */
 /* square board that fits BOTH width and the remaining height, so the boosters below
    never get cut off (was width-only -> too tall on Telegram Desktop's short window). */
 .boardwrap{width:min(92vw,440px,max(180px,calc(var(--app-h) - var(--board-reserve))));aspect-ratio:1;position:relative;margin:0 auto;}
@@ -248,9 +249,10 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .navStart.active .navlbl{color:#fff;}
 .navStart .navico:active{transform:translateY(3px);box-shadow:0 0 0 var(--orange-d);}
 /* locked album tab: padlock badge + greyed icon (tooltip shows only on tap) */
-.navtab.navAlbum .navLk{display:none;position:absolute;top:6px;left:calc(50% + 7px);width:18px;height:18px;}
-.navtab.navAlbum.locked .navico svg{filter:grayscale(.55);opacity:.55;}
-.navtab.navAlbum.locked .navLk{display:block;}
+.navtab.navAlbum .navLk{display:none;position:absolute;top:5px;left:calc(50% + 6px);width:21px;height:21px;border-radius:50%;background:#6E4F44;border:2px solid #FFFBF2;box-shadow:0 1px 3px rgba(110,79,68,.5);align-items:center;justify-content:center;}
+.navtab.navAlbum .navLk svg{width:12px;height:12px;}
+.navtab.navAlbum.locked .navico svg{filter:grayscale(.55);opacity:.5;}
+.navtab.navAlbum.locked .navLk{display:flex;}
 /* locked DAILY button (homebar): greyed out; tooltip on tap */
 #btnHomeDaily.locked svg,#btnHomeLB.locked svg{filter:grayscale(1);opacity:.5;}
 /* tap tooltip ("Unlocks at level N") for locked nav/daily buttons */
@@ -279,6 +281,15 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .bcn{font-size:3.7vw;color:var(--ink);font-weight:900;}
 .bbuy{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--orange);color:#fff;border-radius:14px;padding:11px;font-size:4.2vw;box-shadow:0 3px 0 var(--orange-d);}
 .bbuy .star{width:16px;height:16px;flex:none;}
+/* in-level popup: compact titleless bundle row (contents left, price right) + extra space under the title */
+#scrimShop #skuList{margin-top:16px;}
+.bundlerow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;background:var(--card);border-radius:18px;padding:9px 13px;margin-top:11px;box-shadow:0 3px 0 var(--shadow);}
+.bundlerow:active{transform:translateY(2px);box-shadow:0 1px 0 var(--shadow);}
+.bundlerow .brcontents{display:flex;align-items:center;gap:13px;}
+.bundlerow .bcitem{gap:3px;}
+.bundlerow .bcico{width:30px;height:30px;}
+.bundlerow .bcn{font-size:3.2vw;}
+.bundlerow .bbuy{flex:none;padding:10px 15px;font-size:3.9vw;}
 /* IAP loader (dim + spinner) shown from the Buy tap until the native store / Telegram payment sheet appears */
 .iapload{position:fixed;inset:0;z-index:97;background:rgba(40,28,24,.55);display:none;align-items:center;justify-content:center;}
 .iapload.on{display:flex;}
@@ -550,6 +561,8 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
       </div>
     </div>
 
+    <div class="gspace"></div>
+
     <div class="chips" id="chips"></div>
 
     <div class="statusrow" id="statusrow">
@@ -568,6 +581,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
       <button class="booster" id="bsDuck"><canvas class="bface" width="128" height="128"></canvas><span class="bowned" id="ownDuck">0</span><span class="bprice" id="cntDuck"></span><span class="blabel" data-i="placeduck">Place</span></button>
       <button class="booster" id="bsHint"><canvas class="bface" width="128" height="128"></canvas><span class="bowned" id="ownHint">0</span><span class="bprice" id="cntHint"></span><span class="blabel" data-i="hint">Hint</span></button>
     </div>
+    <div class="gspace"></div>
     <div id="hintPill"></div>
     <button class="btn play" id="hintApply">Apply</button>
   </section>
@@ -614,7 +628,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   </button>
   <button class="navtab navAlbum locked" id="navAlbum" aria-label="Album">
     <span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/></svg></span>
-    <i class="navLk"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" fill="#A98F84"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></i>
+    <i class="navLk"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4" fill="#fff"/><path d="M7.6 10.5V7.6a4.4 4.4 0 0 1 8.8 0v2.9" fill="none" stroke="#fff" stroke-width="2.6"/></svg></i>
     <span class="navlbl" data-i="navalbum">Album</span>
   </button>
 </nav>
@@ -667,7 +681,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 
 <div class="scrim" id="scrimShop"><div class="modal modal-rel">
   <button class="closex" id="shopClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  <h2 data-i="shop">Shop</h2>
+  <h2 data-i="buygold">Buy Gold!</h2>
   <div id="skuList"></div>
 </div></div>
 
@@ -835,12 +849,12 @@ const I18N={
     next:"Next level",home:"Home",retry:"Try again",levelup:"Level up!",keepgoing:"Keep going",gotit:"Got it",
     adventure:"Adventure",shopsub:"Gold for boosters, sticker packs and more. No ads, ever.",album:"Duck Album",newstickers:"New stickers!",tagline:"A cozy duck logic puzzle",
     settings:"Settings",sound:"Sound",restart:"Restart level",leaderboard:"Leaderboard",lbsub:"Who reached the highest level.",
-    navshop:"Shop",navstart:"Start",navalbum:"Album",navsoon:"Reach level",haptics:"Vibration",restore:"Restore purchases",privacy:"Privacy Policy",contact:"Contact us",goldpacks:"Gold",bundles:"Bundles"},
+    navshop:"Shop",navstart:"Start",navalbum:"Album",navsoon:"Reach level",haptics:"Vibration",restore:"Restore purchases",privacy:"Privacy Policy",contact:"Contact us",goldpacks:"Gold",bundles:"Bundles",buygold:"Buy Gold!"},
   ru:{play:"Играть",zen:"Дзен",daily:"Ежедневный",shop:"Магазин",howto:"Как играть",undo:"Назад",hint:"Подсказка",placeduck:"Утка",
     next:"Дальше",home:"Домой",retry:"Заново",levelup:"Новый уровень!",keepgoing:"Играть",gotit:"Понятно",
     adventure:"Кампания",shopsub:"Золото для бустеров и наборов наклеек. Без рекламы.",album:"Альбом уток",newstickers:"Новые наклейки!",tagline:"Уютный пазл с уткой",
     settings:"Настройки",sound:"Звук",restart:"Заново",leaderboard:"Таблица лидеров",lbsub:"Кто дошёл до самого высокого уровня.",
-    navshop:"Магазин",navstart:"Старт",navalbum:"Альбом",navsoon:"Дойди до уровня",haptics:"Вибрация",restore:"Восстановить покупки",privacy:"Конфиденциальность",contact:"Связаться",goldpacks:"Золото",bundles:"Наборы"},
+    navshop:"Магазин",navstart:"Старт",navalbum:"Альбом",navsoon:"Дойди до уровня",haptics:"Вибрация",restore:"Восстановить покупки",privacy:"Конфиденциальность",contact:"Связаться",goldpacks:"Золото",bundles:"Наборы",buygold:"Купить золото!"},
 };
 let LANG=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.language_code||navigator.language||'en').slice(0,2);
 if(!I18N[LANG])LANG='en';
@@ -1105,6 +1119,7 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const shopEl=document.getElementById('shop'),shopOn=!!(shopEl&&shopEl.classList.contains('on'));
   const navOn=document.body.classList.contains('nav-on'); // nav Start duck + shop bundle booster icons are live keyed faces, never SVG
   const brEl=document.getElementById('scrimBuyResult'),brOn=!!(brEl&&brEl.classList.contains('on')); // purchase-result hero duck (happy/sad) + reward-chip faces
+  const smEl=document.getElementById('scrimShop'),smOn=!!(smEl&&smEl.classList.contains('on')); // in-level shop popup: the Starter Bundle row's keyed booster icons
   if(!gameOn&&!winOn&&!loseOn&&!homeOn&&!albumOn&&!shopOn&&!brOn){if(_playing.size)reconcileClips(new Set());return;}
   const now=Date.now();
   if(now-lastFaceTs<33)return; lastFaceTs=now;
@@ -1116,13 +1131,14 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const hintCv=gameOn?document.querySelector('#bsHint canvas.bface'):null;if(hintCv&&boosterActive)used.add('bsthint');
   if(winOn)used.add('win');if(loseOn)used.add('sad');if(albumOn){used.add('idle');used.add('bsthint');}
   if(navOn)used.add('idle');if(shopOn)used.add('bsthint'); // nav Start duck (idle) + shop bundle hint icons (bsthint)
+  if(smOn){used.add('idle');used.add('bsthint');} // in-level popup bundle row (Place=idle, Hint=bsthint)
   if(brOn){used.add('idle');used.add('bsthint');const _hf=$('brFace');if(_hf)used.add(_hf.getAttribute('data-bk')||'happy');} // result chips (idle/bsthint) + hero (happy/sad)
   // keep exactly the on-screen clips decoding (the home draws its mode in its own tick)
-  const want=new Set(used);if(homeOn)want.add(_homeMode||'idle');if(navOn)want.add('idle');if(shopOn)want.add('bsthint');if(brOn){want.add('idle');const _hf=$('brFace');if(_hf)want.add(_hf.getAttribute('data-bk')||'happy');}reconcileClips(want);
+  const want=new Set(used);if(homeOn)want.add(_homeMode||'idle');if(navOn)want.add('idle');if(shopOn)want.add('bsthint');if(smOn){want.add('idle');want.add('bsthint');}if(brOn){want.add('idle');const _hf=$('brFace');if(_hf)want.add(_hf.getAttribute('data-bk')||'happy');}reconcileClips(want);
   used.forEach(s=>keyInto(s));
   if(gameOn&&gstate)for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]!==DUCK)continue;const el=cellEls[r]&&cellEls[r][c];if(!el)continue;const cv=el.querySelector('canvas.duckface');if(!cv)continue;const fx=faceFx.get(r*100+c);drawFace(cv,fx?fx.state:'idle');}
   if(boosterActive){if(boosterCv)drawFace(boosterCv,'idle');if(hintCv)drawFace(hintCv,'bsthint');} // draw only during the loop window; freezes static otherwise
-  if(albumOn||navOn||brOn)document.querySelectorAll('.bicon').forEach(cv=>{const k=cv.getAttribute('data-bk');if(k)drawFace(cv,k);}); // album/reward + nav Start duck + shop bundle + purchase-result hero = the in-game keyed faces
+  if(albumOn||navOn||brOn||smOn)document.querySelectorAll('.bicon').forEach(cv=>{const k=cv.getAttribute('data-bk');if(k)drawFace(cv,k);}); // album/reward + nav Start duck + shop bundle + purchase-result hero + in-level popup bundle = the in-game keyed faces
   if(gameOn&&gstate){const pf=document.querySelector('.pface canvas');if(pf)drawFace(pf,'idle');}
   if(winOn)drawFace($('winCele'),'win');
   if(loseOn)drawFace($('loseFace'),'sad');}
@@ -1480,9 +1496,16 @@ function bundleCardHtml(s){const g=s.grant||{};
   let items='<div class="bcitem"><span class="bcico">'+COIN_SVG+'</span><span class="bcn">'+((g.gold||0).toLocaleString('en-US'))+'</span></div>';
   if(g.boosters)['placeduck','hint','undo'].forEach(k=>{if(g.boosters[k])items+='<div class="bcitem"><span class="bcico">'+boosterIcon(k)+'</span><span class="bcn">x'+g.boosters[k]+'</span></div>';});
   return '<button class="bundle" data-buy="'+s.id+'"><div class="btitle">'+s.title+'</div><div class="bcontents">'+items+'</div><div class="bbuy">'+priceTag(s)+'</div></button>';}
-// MODAL shop (in-game quick top-up): just the 3 GOLD-PACK cards, same as the shop tab (no bundles).
+// Compact bundle ROW (in-level popup): contents (gold + boosters icons + amounts) on the left, price on the right, NO title.
+function bundleRowHtml(s){const g=s.grant||{};
+  let items='<span class="bcitem"><span class="bcico">'+COIN_SVG+'</span><span class="bcn">'+((g.gold||0).toLocaleString('en-US'))+'</span></span>';
+  if(g.boosters)['placeduck','hint','undo'].forEach(k=>{if(g.boosters[k])items+='<span class="bcitem"><span class="bcico">'+boosterIcon(k)+'</span><span class="bcn">x'+g.boosters[k]+'</span></span>';});
+  return '<button class="bundlerow" data-buy="'+s.id+'"><span class="brcontents">'+items+'</span><span class="bbuy">'+priceTag(s)+'</span></button>';}
+// MODAL shop (in-level quick top-up): the 3 GOLD-PACK cards (like the shop tab) + the Starter Bundle as a titleless row.
 function renderShop(){const list=$('skuList');if(!list)return;if(!SKUS_CACHE||!SKUS_CACHE.length){list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>';return;}
-  list.innerHTML='<div class="gpGrid">'+SKUS_CACHE.filter(s=>!isBundleSku(s)).map(goldCardHtml).join('')+'</div>';}
+  const gold='<div class="gpGrid">'+SKUS_CACHE.filter(s=>!isBundleSku(s)).map(goldCardHtml).join('')+'</div>';
+  const starter=SKUS_CACHE.find(s=>s.id==='starter_bundle');
+  list.innerHTML=gold+(starter?bundleRowHtml(starter):'');}
 // FULL-SCREEN shop (bottom nav): gold packs (3 cards) + bundles (gold + boosters).
 function renderShopScreen(){const gb=$('shopGoldBox'),bb=$('shopBundleBox');if(!gb||!bb)return;
   if(!SKUS_CACHE||!SKUS_CACHE.length){gb.innerHTML='<p style="color:var(--ink-soft);text-align:center">'+L("Shop opens soon","Магазин скоро")+'</p>';bb.innerHTML='';return;}

@@ -775,7 +775,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   <video id="fvsad" loop muted playsinline preload="auto"><source src="assets/ducks/face-sad.mp4?v=042" type="video/mp4"></video>
   <video id="fvbsthint" loop muted playsinline preload="auto"><source src="assets/ducks/bst-hint.mp4?v=042" type="video/mp4"></video>
   <video id="fvbstundo" loop muted playsinline preload="auto"><source src="assets/ducks/bst-undo.mp4?v=042" type="video/mp4"></video>
-  <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/win-duck.mp4?v=043" type="video/mp4"></video>
+  <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/victory-1.mp4" type="video/mp4"></video>
 </div>
 
 <div class="fx" id="fx"></div>
@@ -931,7 +931,7 @@ const SAVE_KEY='duckdoku.save.v2';
 const DEFAULT_SAVE={levelsDone:0,stars:{},boosters:{},gold:120,stickers:{},freePacks:{basic:0,golden:0},
   freeBoosters:{undo:0,hint:3,placeduck:3},grandClaimed:false, // new players start with 3 free Hint + 3 free Place boosters
   setsClaimed:{},avatarSticker:null,zenBest:0,zenSolved:0,tutorialDone:false,sound:true,
-  streak:0,lastPlayYMD:null,lastDailyYMD:null,lastGoldYMD:null,_goldMigrated:false};
+  streak:0,lastPlayYMD:null,lastDailyYMD:null,lastGoldYMD:null,_goldMigrated:false,winVariant:0};
 let save=loadSave();
 function loadSave(){let s=null;try{s=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){}
   const out=s?Object.assign({},DEFAULT_SAVE,s,{boosters:Object.assign({},s.boosters),stickers:Object.assign({},s.stickers),freePacks:Object.assign({},DEFAULT_SAVE.freePacks,s.freePacks),freeBoosters:Object.assign({},DEFAULT_SAVE.freeBoosters,s.freeBoosters),setsClaimed:Object.assign({},s.setsClaimed)}):JSON.parse(JSON.stringify(DEFAULT_SAVE));
@@ -1080,6 +1080,7 @@ function initFaces(){
   // kick idle so a frame decodes and faceVideosReady can flip
   if(faceVid.idle){try{const p=faceVid.idle.play&&faceVid.idle.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}_playing.add('idle');}
   setTimeout(faceCheck,700);setTimeout(faceCheck,2200);setTimeout(faceCheck,5000);
+  setTimeout(preloadWins,3000); // lazily cache the 5 victory clips so each win swaps instantly
   requestAnimationFrame(faceLoop);
 }
 function faceCheck(){if(faceVid.idle&&faceVid.idle.readyState>=2&&!faceVideosReady){faceVideosReady=true;if(gstate&&$('game').classList.contains('on'))renderBoard();}}
@@ -1109,6 +1110,14 @@ function blobLoadFaces(){
     }).catch(()=>{});
   });
 }
+// VICTORY rotation: 5 win clips (assets/ducks/victory-1..5.mp4), a DIFFERENT one each win.
+const WIN_VARIANTS=5; let _winBlobs=[];
+function preloadWins(){for(let n=0;n<WIN_VARIANTS;n++){if(_winBlobs[n])continue;fetch('assets/ducks/victory-'+(n+1)+'.mp4').then(r=>r.ok?r.blob():Promise.reject()).then(b=>{_winBlobs[n]=URL.createObjectURL(b);}).catch(()=>{});}}
+function setWinVariant(n){const v=faceVid.win;if(!v)return;const apply=(src)=>{if(v.src===src)return;v.src=src;try{v.load();}catch(e){}if(_playing.has('win')){try{const p=v.play&&v.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}};
+  if(_winBlobs[n]){apply(_winBlobs[n]);return;}
+  fetch('assets/ducks/victory-'+(n+1)+'.mp4').then(r=>r.ok?r.blob():Promise.reject()).then(b=>{_winBlobs[n]=URL.createObjectURL(b);apply(_winBlobs[n]);}).catch(()=>{apply('assets/ducks/victory-'+(n+1)+'.mp4');});}
+// pick the next variant (persisted so it keeps cycling across sessions), load it for the win screen
+function nextWinVariant(){const v=((save.winVariant||0)%WIN_VARIANTS+WIN_VARIANTS)%WIN_VARIANTS;save.winVariant=(v+1)%WIN_VARIANTS;persist();setWinVariant(v);return v;}
 function faceLoop(){requestAnimationFrame(faceLoop);
   if(!faceVideosReady)return;
   if(document.hidden){if(_playing.size)reconcileClips(new Set());return;} // pause all decoders when backgrounded
@@ -1238,7 +1247,7 @@ function tryGuess(r,c){
 function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),460);}if(gstate[r]&&gstate[r][c]===DUCK)duckReact(r,c,'oops',1000);});shakeBoard();}
 
 /* ---------- win / lose ---------- */
-function onWin(){ended=true;gameLive=false;allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;haptic('ok');soundWin();confettiRain();
+function onWin(){ended=true;gameLive=false;nextWinVariant();allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;haptic('ok');soundWin();confettiRain();
   const stars=starsForWin();
   const praise=L(["Awesome!","Brilliant!","Quacktastic!","Well done!"][stars-1]||"Awesome!",["Отлично!","Блестяще!","Кряк-класс!","Молодец!"][stars-1]||"Отлично!");
   let goldGain=goldForWin(N);const tdy=ymd();if(save.lastGoldYMD!==tdy){goldGain+=dailyWinBonus();save.lastGoldYMD=tdy;}
@@ -1743,7 +1752,7 @@ function onFtueAction(kind,r,c){
   else if(ftue.step===2&&kind==='mark'){if(ftueAllMarked()){ftue.step=-1;handHide();setTimeout(ftueStep3,420);}else ftueNextHand();}
   else if(ftue.step===3){handHide();if(kind==='duck'){ftue.step=-1;setTimeout(ftueStep4,420);}}
 }
-function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();$('coachBotB').onclick=null;MX.track('Tutorial Won');
+function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();$('coachBotB').onclick=null;MX.track('Tutorial Won');nextWinVariant();
   allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;
   save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);persist();
   ended=true;haptic('ok');soundWin();confettiRain();

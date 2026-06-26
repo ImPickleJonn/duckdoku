@@ -40,9 +40,9 @@ const fails = []; const ok = []; function check(name, cond){ (cond?ok:fails).pus
   }));
   check('album screen shows', alb.on);
   check('2 pack buttons', alb.packs === 2);
-  check('3 sets rendered', alb.sets === 3);
-  check('24 sticker slots', alb.slots === 24);
-  check('all slots locked initially', alb.locked === 24);
+  check('5 sets rendered', alb.sets === 5);
+  check('40 sticker slots', alb.slots === 40);
+  check('all slots locked initially', alb.locked === 40);
   await page.screenshot({ path: path.join(OUT,'2-album-empty.png') });
 
   // --- give gold, open a basic pack ---

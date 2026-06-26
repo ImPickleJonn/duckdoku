@@ -23,6 +23,8 @@ const STYLE = `RENDER STYLE: soft matte CLAYMATION / cute-Pixar 3D toy. Smooth r
 const BASE = `ONE adorable chubby cartoon DUCKLING, FULL BODY, buttery-yellow body, soft orange beak and feet, two LARGE round expressive eyes (white eyeball, big black pupil, bright catchlight), rosy pink cheeks. Friendly and joyful.`;
 const FRAMING = `FRAMING (critical): the WHOLE duckling and its props are FULLY visible and CENTERED with generous empty margin on every side; nothing is cropped at any edge. Subject fills ~64 percent of the frame. Square 1:1.`;
 const CARD = `BACKGROUND: a soft pastel RADIAL gradient card (gentle, low-saturation), with a clean subtle WHITE rounded die-cut sticker border framing the scene. No text, no logos, no watermark, no extra characters.`;
+// Push humor + a clear readable emotion so the collection is fun, not just cute.
+const EXPRESS = `The pose and the BIG expressive face are FUNNY and bursting with personality, clearly reading the emotion of the moment (pure joy, wide-eyed surprise, comic panic, smug pride, sleepy bliss). Exaggerated wholesome cartoon charm, the kind of reaction sticker people love to collect. Keep it adorable, never scary.`;
 
 // rarity only affects the in-app frame; we still hint richness for higher tiers.
 const RARITY_HINT = { common: '', rare: '', epic: ' A few small sparkles around it.', legendary: ' Radiant golden glow and shimmering star sparkles, clearly the rarest prize.' };
@@ -55,10 +57,28 @@ const STICKERS = [
   { id:'dream6', rarity:'rare',      art:'wearing a cozy green dragon onesie with tiny felt wings.' },
   { id:'dream7', rarity:'epic',      art:'a unicorn duck with a pastel spiral horn and a soft rainbow mane.' },
   { id:'dream8', rarity:'legendary', art:'a celestial STAR duckling glowing with starlight and a galaxy aura, the rarest of all.' },
+  // ---- Snack Attack (food comedy + big reactions) ----
+  { id:'snack1', rarity:'common',    art:'hugging a giant slice of pizza bigger than itself with a blissful dreamy face, cheese strand stretching.' },
+  { id:'snack2', rarity:'common',    art:'getting brain freeze from a giant ice cream cone, one eye squeezed shut, tiny snowflakes, comically wincing.' },
+  { id:'snack3', rarity:'common',    art:'happily tangled in a plate of spaghetti, one noodle draped over its head, a little tomato sauce on its cheeks.' },
+  { id:'snack4', rarity:'common',    art:'wildly over-caffeinated, wide jittery eyes, clutching a steaming coffee cup with both wings, tiny shake lines.' },
+  { id:'snack5', rarity:'rare',      art:'lounging like on vacation inside a giant pink sprinkled donut pool-ring, tiny sunglasses, very smug.' },
+  { id:'snack6', rarity:'rare',      art:'after one bite of a tiny red chili pepper: red face, watery eyes, a small puff of steam from the top of its head.' },
+  { id:'snack7', rarity:'epic',      art:'nervously balancing a wobbly enormous triple cheeseburger on its head, one sweat drop, panicked grin.' },
+  { id:'snack8', rarity:'legendary', art:'proudly perched on top of a giant glowing GOLDEN cupcake with a tiny gold crown, sparkles raining down.' },
+  // ---- Oops Duck (slapstick + silly) ----
+  { id:'oops1', rarity:'common',    art:'mid-slip on a banana peel, little wings flailing, eyes wide with comic surprise, a motion swoosh.' },
+  { id:'oops2', rarity:'common',    art:'dizzy after a bonk, swirly spiral eyes, a little bump on its head, tiny cartoon stars circling.' },
+  { id:'oops3', rarity:'common',    art:'buried in a mountain of bath bubbles, only its beak and two wide eyes peeking out, a tiny rubber duck balanced on top.' },
+  { id:'oops4', rarity:'common',    art:'completely wrapped up in a tangled ball of pastel yarn like a kitten, sheepish embarrassed smile.' },
+  { id:'oops5', rarity:'rare',      art:'a cool surfer riding a slice of golden toast like a surfboard on a butter wave, tiny sunglasses, confident grin.' },
+  { id:'oops6', rarity:'rare',      art:'peeking out of a cardboard box like a sneaky periscope, only eyes and the top of its head showing, mischievous look.' },
+  { id:'oops7', rarity:'epic',      art:'a tiny DJ wearing big headphones at little turntables, one wing thrown up, colorful disco lights around it.' },
+  { id:'oops8', rarity:'legendary', art:'a glowing superstar on a tiny spotlit stage holding a GOLDEN microphone, tiny sunglasses, confetti bursting around it.' },
 ];
 
 async function gen(s){
-  const prompt = `A single clean collectible sticker, square 1:1, full-bleed. ${STYLE}\n${BASE} The duckling is ${s.art}${RARITY_HINT[s.rarity]||''}\n${FRAMING}\n${CARD}`;
+  const prompt = `A single clean collectible sticker, square 1:1, full-bleed. ${STYLE}\n${BASE} The duckling is ${s.art}${RARITY_HINT[s.rarity]||''}\n${EXPRESS}\n${FRAMING}\n${CARD}`;
   const body = { contents:[{parts:[{text:prompt}]}], generationConfig:{ responseModalities:['IMAGE'], imageConfig:{ aspectRatio:'1:1', imageSize:'1K' } } };
   for (let a=1; a<=4; a++) { try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GMODEL}:generateContent`, { method:'POST', headers:{'x-goog-api-key':GKEY,'Content-Type':'application/json'}, body:JSON.stringify(body) });

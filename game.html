@@ -543,7 +543,9 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
    place a duck. Light theme, no ads, 3 Stars boosters.
    ================================================================= */
 const TG=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
-try{ if(TG){ TG.ready();TG.expand();TG.setHeaderColor&&TG.setHeaderColor('#F3ECEC');TG.disableVerticalSwipes&&TG.disableVerticalSwipes(); } }catch(e){}
+try{ if(TG){ TG.ready();TG.expand();TG.setHeaderColor&&TG.setHeaderColor('#F3ECEC');TG.disableVerticalSwipes&&TG.disableVerticalSwipes();TG.lockOrientation&&TG.lockOrientation(); } }catch(e){}
+// Keep the app portrait everywhere: Telegram lockOrientation above, web screen lock here (native is locked in the Android manifest via patch-android.js).
+try{ if(window.screen&&screen.orientation&&screen.orientation.lock)screen.orientation.lock('portrait').catch(function(){}); }catch(e){}
 // Bind the app to Telegram's STABLE viewport height so content never runs under the
 // desktop footer / chrome and the board fits (Telegram Desktop opens a short window).
 function syncAppHeight(){try{const h=TG&&(TG.viewportStableHeight||TG.viewportHeight);if(h&&h>200)document.documentElement.style.setProperty('--app-h',h+'px');}catch(e){}}

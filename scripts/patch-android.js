@@ -20,6 +20,7 @@ const maSrc = `package ${appId};
 
 import android.os.Build;
 import android.os.Bundle;
+import android.content.pm.ActivityInfo;
 import android.view.WindowManager;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -32,6 +33,7 @@ public class MainActivity extends BridgeActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
       getWindow().getAttributes().layoutInDisplayCutoutMode =
         WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;

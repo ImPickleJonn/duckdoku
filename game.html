@@ -127,6 +127,17 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .qcell.spot{z-index:10!important;outline:3px solid var(--gold);box-shadow:0 0 16px 3px rgba(255,210,63,.85);pointer-events:auto!important;}
 #app.tutdim{background:#241B19;}
 #app.tutdim .topbar,#app.tutdim .statusrow,#app.tutdim .chips,#app.tutdim .boosters{opacity:.22;pointer-events:none;}
+/* ---- hint overlay (Meowdoku-style: darken, pill, spotlight, Apply) ---- */
+#app.hintmode{background:#241B19;}
+#app.hintmode .topbar,#app.hintmode .statusrow,#app.hintmode .chips,#app.hintmode .boosters{opacity:.22;pointer-events:none;}
+.qcell.hintx{z-index:10!important;outline:3px solid var(--heart);box-shadow:0 0 12px 2px rgba(240,84,76,.7);pointer-events:none;}
+.qcell.hintx svg{opacity:.9;}
+#hintPill{position:fixed;left:50%;top:calc(var(--safe-top) + 124px);transform:translateX(-50%);width:min(90vw,420px);background:#FFFDF8;color:var(--ink);border-radius:18px;padding:15px 18px;font-size:4vw;font-weight:800;text-align:left;line-height:1.36;box-shadow:0 10px 30px rgba(0,0,0,.42);z-index:88;display:none;}
+#hintPill.on{display:block;}
+#hintApply{position:fixed;left:50%;bottom:calc(var(--safe-bot) + 52px);transform:translateX(-50%);width:min(86vw,420px);z-index:88;display:none;}
+#hintApply.on{display:flex;align-items:center;justify-content:center;}
+#bbIcon{width:88px;height:88px;margin:2px auto 4px;display:flex;align-items:center;justify-content:center;}
+#bbIcon .bicon{width:100%;height:100%;display:block;}
 
 /* ---------- BOOSTERS ---------- */
 .boosters{width:100%;max-width:460px;display:flex;gap:26px;margin-top:16px;justify-content:center;flex:none;}
@@ -258,6 +269,16 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .bcn{font-size:3.7vw;color:var(--ink);font-weight:900;}
 .bbuy{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--orange);color:#fff;border-radius:14px;padding:11px;font-size:4.2vw;box-shadow:0 3px 0 var(--orange-d);}
 .bbuy .star{width:16px;height:16px;flex:none;}
+/* IAP loader (dim + spinner) shown from the Buy tap until the native store / Telegram payment sheet appears */
+.iapload{position:fixed;inset:0;z-index:97;background:rgba(40,28,24,.55);display:none;align-items:center;justify-content:center;}
+.iapload.on{display:flex;}
+.iapbox{display:flex;flex-direction:column;align-items:center;gap:15px;background:var(--bg);padding:26px 36px;border-radius:24px;box-shadow:0 12px 0 var(--shadow);}
+.iapspin{width:46px;height:46px;border-radius:50%;border:5px solid #EFE3DF;border-top-color:var(--orange);animation:iapspin .8s linear infinite;}
+@keyframes iapspin{to{transform:rotate(360deg)}}
+.iaplbl{font-size:4vw;color:var(--ink);font-weight:900;}
+/* purchase result modal: live duck hero (happy on success, sad on cancel) */
+.br-result .br-hero{width:96px;height:96px;margin:2px auto 4px;animation:rwdPop .5s cubic-bezier(.34,1.6,.5,1) both;}
+.br-result .br-hero .bicon{width:100%;height:100%;display:block;}
 #lbList{max-height:60vh;overflow-y:auto;text-align:left;}
 .lbrow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:11px 14px;margin:7px 0;box-shadow:0 3px 0 var(--shadow);}
 .lbrank{width:30px;height:30px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:4vw;color:#6b4a2a;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);}
@@ -537,6 +558,8 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
       <button class="booster" id="bsDuck"><canvas class="bface" width="128" height="128"></canvas><span class="bowned" id="ownDuck">0</span><span class="bprice" id="cntDuck"></span><span class="blabel" data-i="placeduck">Place</span></button>
       <button class="booster" id="bsHint"><canvas class="bface" width="128" height="128"></canvas><span class="bowned" id="ownHint">0</span><span class="bprice" id="cntHint"></span><span class="blabel" data-i="hint">Hint</span></button>
     </div>
+    <div id="hintPill"></div>
+    <button class="btn play" id="hintApply">Apply</button>
   </section>
 
   <!-- ============ ALBUM ============ -->
@@ -592,6 +615,19 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 <div class="coach" id="coachBot"><div class="bubble" id="coachBotB"></div></div>
 <div id="handhint"><img src="assets/ui/finger.png" alt=""></div>
 
+<!-- IAP loader: dim + spinner from the Buy tap until the native store / Telegram payment sheet appears -->
+<div class="iapload" id="iapLoad"><div class="iapbox"><div class="iapspin"></div><div class="iaplbl" id="iapLoadLbl"></div></div></div>
+
+<!-- Purchase result: Success (live duck + reward chips + confetti) / Canceled -->
+<div class="scrim" id="scrimBuyResult"><div class="modal modal-rel br-result">
+  <button class="closex" id="brClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div class="br-hero"><canvas class="bicon" id="brFace" data-bk="happy" width="160" height="160"></canvas></div>
+  <h2 id="brTitle"></h2>
+  <p id="brMsg"></p>
+  <div class="rwd-items" id="brChips"></div>
+  <button class="btn play" id="brContinue"></button>
+</div></div>
+
 <!-- ============ SCRIMS ============ -->
 <div class="scrim winscrim" id="scrimWin">
   <div class="wincol">
@@ -624,6 +660,15 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   <button class="closex" id="shopClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <h2 data-i="shop">Shop</h2><p data-i="shopsub">Boosters to help you. No ads, ever.</p>
   <div id="skuList"></div>
+</div></div>
+
+<div class="scrim" id="scrimBuy"><div class="modal modal-rel">
+  <button class="closex" id="bbClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div id="bbIcon"></div>
+  <h2 id="bbTitle">Get boosters</h2>
+  <p id="bbSub">Stock up to keep solving.</p>
+  <button class="btn play" id="bbBuy">Buy</button>
+  <button class="btn ghost" id="bbCancel">Maybe later</button>
 </div></div>
 
 <div class="scrim" id="scrimHow"><div class="modal modal-rel">
@@ -799,6 +844,8 @@ function applyI18n(){document.querySelectorAll('[data-i]').forEach(el=>{el.textC
 
 /* ---------- gold economy + sticker catalog ---------- */
 const BOOSTER_COST={undo:40,hint:100,placeduck:200};
+const BOOSTER_PACK_QTY=3;                              // boosters are bought x3 with gold (no per-use price shown in-game)
+const BOOSTER_PACK_COST={hint:250,placeduck:500};     // 0 inventory + tap booster -> confirm-buy modal; not enough gold -> shop
 const CONTINUE_COST=150;
 const PACK_COST={basic:150,golden:400};
 const PACK_SIZE={basic:3,golden:5};
@@ -999,10 +1046,11 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const gameOn=$('game').classList.contains('on');
   const winOn=$('scrimWin').classList.contains('on'),loseOn=$('scrimLose').classList.contains('on');
   const homeEl=document.getElementById('home'),homeOn=!!(homeEl&&homeEl.classList.contains('on'));
-  const albumEl=document.getElementById('album'),albumOn=!!(albumEl&&albumEl.classList.contains('on'))||$('scrimReward').classList.contains('on')||$('scrimDaily').classList.contains('on'); // album/reward/daily prize icons reuse the SAME keyed booster faces
+  const albumEl=document.getElementById('album'),albumOn=!!(albumEl&&albumEl.classList.contains('on'))||$('scrimReward').classList.contains('on')||$('scrimDaily').classList.contains('on')||$('scrimBuy').classList.contains('on'); // album/reward/daily/buy prize icons reuse the SAME keyed booster faces
   const shopEl=document.getElementById('shop'),shopOn=!!(shopEl&&shopEl.classList.contains('on'));
   const navOn=document.body.classList.contains('nav-on'); // nav Start duck + shop bundle booster icons are live keyed faces, never SVG
-  if(!gameOn&&!winOn&&!loseOn&&!homeOn&&!albumOn&&!shopOn){if(_playing.size)reconcileClips(new Set());return;}
+  const brEl=document.getElementById('scrimBuyResult'),brOn=!!(brEl&&brEl.classList.contains('on')); // purchase-result hero duck (happy/sad) + reward-chip faces
+  if(!gameOn&&!winOn&&!loseOn&&!homeOn&&!albumOn&&!shopOn&&!brOn){if(_playing.size)reconcileClips(new Set());return;}
   const now=Date.now();
   if(now-lastFaceTs<33)return; lastFaceTs=now;
   const used=new Set();
@@ -1013,12 +1061,13 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const hintCv=gameOn?document.querySelector('#bsHint canvas.bface'):null;if(hintCv&&boosterActive)used.add('bsthint');
   if(winOn)used.add('win');if(loseOn)used.add('sad');if(albumOn){used.add('idle');used.add('bsthint');}
   if(navOn)used.add('idle');if(shopOn)used.add('bsthint'); // nav Start duck (idle) + shop bundle hint icons (bsthint)
+  if(brOn){used.add('idle');used.add('bsthint');const _hf=$('brFace');if(_hf)used.add(_hf.getAttribute('data-bk')||'happy');} // result chips (idle/bsthint) + hero (happy/sad)
   // keep exactly the on-screen clips decoding (the home draws its mode in its own tick)
-  const want=new Set(used);if(homeOn)want.add(_homeMode||'idle');if(navOn)want.add('idle');if(shopOn)want.add('bsthint');reconcileClips(want);
+  const want=new Set(used);if(homeOn)want.add(_homeMode||'idle');if(navOn)want.add('idle');if(shopOn)want.add('bsthint');if(brOn){want.add('idle');const _hf=$('brFace');if(_hf)want.add(_hf.getAttribute('data-bk')||'happy');}reconcileClips(want);
   used.forEach(s=>keyInto(s));
   if(gameOn&&gstate)for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]!==DUCK)continue;const el=cellEls[r]&&cellEls[r][c];if(!el)continue;const cv=el.querySelector('canvas.duckface');if(!cv)continue;const fx=faceFx.get(r*100+c);drawFace(cv,fx?fx.state:'idle');}
   if(boosterActive){if(boosterCv)drawFace(boosterCv,'idle');if(hintCv)drawFace(hintCv,'bsthint');} // draw only during the loop window; freezes static otherwise
-  if(albumOn||navOn)document.querySelectorAll('.bicon').forEach(cv=>{const k=cv.getAttribute('data-bk');if(k)drawFace(cv,k);}); // album/reward prize icons + nav Start duck + shop bundle icons = the in-game keyed booster faces
+  if(albumOn||navOn||brOn)document.querySelectorAll('.bicon').forEach(cv=>{const k=cv.getAttribute('data-bk');if(k)drawFace(cv,k);}); // album/reward + nav Start duck + shop bundle + purchase-result hero = the in-game keyed faces
   if(gameOn&&gstate){const pf=document.querySelector('.pface canvas');if(pf)drawFace(pf,'idle');}
   if(winOn)drawFace($('winCele'),'win');
   if(loseOn)drawFace($('loseFace'),'sad');}
@@ -1032,7 +1081,8 @@ let ftue=null; // {active, step, target:[r,c], allowOnly:set}
 
 function startLevel(m,idx){
   mode=m;levelIdx=idx||0;ended=false;boostersUsed=0;heartsLost=0;history=[];ftue=null;faceFx.clear();_boosterClock=Date.now();
-  document.getElementById('app').classList.remove('tutdim');document.getElementById('qboard').classList.remove('dim');
+  document.getElementById('app').classList.remove('tutdim','hintmode');document.getElementById('qboard').classList.remove('dim');
+  hintActive=false;_hint=null;$('hintPill').classList.remove('on');$('hintApply').classList.remove('on');
   $('coachTop').classList.remove('on');$('coachBot').classList.remove('on');$('handhint').style.display='none';
   // Fresh random puzzle each time the level is started (so a retry is never memorized);
   // the level number only sets the size/difficulty via levelSize.
@@ -1058,7 +1108,7 @@ let paintMode=null,paintMoved=false,paintTouched=null,paintStart=null,suppressCl
 function gridCellAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest?el.closest('.qcell'):null;}
 function paintApply(r,c){if(ftue&&ftue.active&&ftue.allowOnly&&!ftue.allowOnly.has(r*100+c))return;if(gstate[r][c]===DUCK||gstate[r][c]===RED)return;if(paintMode==='mark'){if(gstate[r][c]===EMPTY){gstate[r][c]=MARK;renderCell(r,c);pressTile(r,c);haptic('light');onFtueAction('mark',r,c);}}else{if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);haptic('light');}}}
 function bindPaint(){const g=$('grid');let usingTouch=false;
-  function startAt(r,c){ if(ended)return; if(gstate[r][c]===DUCK){paintMode=null;return;} paintMode=(gstate[r][c]===MARK)?'erase':'mark'; paintMoved=false; paintStart=[r,c]; paintTouched=new Set([r*100+c]); }
+  function startAt(r,c){ if(ended||hintActive)return; if(gstate[r][c]===DUCK){paintMode=null;return;} paintMode=(gstate[r][c]===MARK)?'erase':'mark'; paintMoved=false; paintStart=[r,c]; paintTouched=new Set([r*100+c]); }
   function moveAt(x,y){ if(!paintMode)return; const cell=gridCellAt(x,y); if(!cell)return; const r=+cell.dataset.r,c=+cell.dataset.c,key=r*100+c; if(!paintMoved){ if(r===paintStart[0]&&c===paintStart[1])return; paintMoved=true; snapshot(); paintApply(paintStart[0],paintStart[1]); } if(paintTouched.has(key))return; paintTouched.add(key); paintApply(r,c); soundTick(); } /* paintApply haptics per marked tile, so swipe buzzes each X */
   const end=()=>{ if(paintMode&&paintMoved){ suppressClick=true; setTimeout(()=>{suppressClick=false;},80); } paintMode=null; };
   // TOUCH devices: drive painting from touch events. The Android WebView delivers
@@ -1074,7 +1124,7 @@ function bindPaint(){const g=$('grid');let usingTouch=false;
   g.addEventListener('pointerleave',e=>{ if(e.pointerType!=='touch')end(); });
 }
 function onCellTap(r,c){
-  if(ended)return;
+  if(ended||hintActive)return;
   if(suppressClick){suppressClick=false;return;}
   if(ftue&&ftue.active&&ftue.allowOnly&&!ftue.allowOnly.has(r*100+c))return;
   const cur=gstate[r][c];
@@ -1141,8 +1191,12 @@ function useUndo(){if(ended)return;if(!history.length){toast(L("Nothing to undo"
   // Undo only reverts the player's X notes. Found ducks and red X stay locked; hearts are not refunded.
   for(let r=0;r<N;r++)for(let c=0;c<N;c++){ if(gstate[r][c]===DUCK||gstate[r][c]===RED)continue; const v=h.g[r][c]; gstate[r][c]=(v===DUCK||v===RED)?EMPTY:v; }
   renderAll();haptic('light');}
-function useHint(){if(ended)return;const mv=computeHint();if(!mv){toast(L("Look for a color with only one open cell","Ищи цвет с одной свободной клеткой"));haptic('light');return;}if(!payBooster('hint')){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'hint',cost:BOOSTER_COST.hint});pulseCell(mv.r,mv.c);renderBoosters();haptic('med');toast(mv.msg);}
-function usePlaceDuck(){if(ended)return;let avail=false;for(let r=0;r<N;r++){if(gstate[r][puzzle.solCols[r]]!==DUCK){avail=true;break;}}if(!avail){toast(L("All ducks placed","Все утки на месте"));return;}if(!payBooster('placeduck')){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'placeduck',cost:BOOSTER_COST.placeduck});placeOneCorrect();renderBoosters();haptic('ok');playSfx('duckfound');if(duckCount===N)onWin();}
+function useHint(){if(ended||hintActive)return;const free=(save.freeBoosters&&save.freeBoosters.hint)||0;if(free<=0){openBoosterBuy('hint');return;}const h=computeHint();if(!h){toast(L("No hint available right now","Подсказок пока нет"));haptic('light');return;}save.freeBoosters.hint--;persist();renderBoosters();boostersUsed++;MX.track('Booster Used',{type:'hint'});try{if(window.DuckAdjust)DuckAdjust.fire('boosterUsed');}catch(e){}showHint(h);}
+function usePlaceDuck(){if(ended||hintActive)return;let avail=false;for(let r=0;r<N;r++){if(gstate[r][puzzle.solCols[r]]!==DUCK){avail=true;break;}}if(!avail){toast(L("All ducks placed","Все утки на месте"));return;}const free=(save.freeBoosters&&save.freeBoosters.placeduck)||0;if(free<=0){openBoosterBuy('placeduck');return;}save.freeBoosters.placeduck--;persist();renderBoosters();boostersUsed++;MX.track('Booster Used',{type:'placeduck'});try{if(window.DuckAdjust)DuckAdjust.fire('boosterUsed');}catch(e){}placeOneCorrect();haptic('ok');playSfx('duckfound');if(duckCount===N)onWin();}
+// 0 inventory + tap booster -> confirm-buy x3 with gold (not bought until confirm). Not enough gold -> shop.
+let _buyKey=null;
+function openBoosterBuy(k){const cost=BOOSTER_PACK_COST[k];if((save.gold||0)<cost){needGold();return;}_buyKey=k;const nm=k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Подставить утку');$('bbIcon').innerHTML=boosterIcon(k);$('bbTitle').textContent=L('Get ','Получить ')+BOOSTER_PACK_QTY+' '+nm;$('bbSub').textContent=L('Stock up to keep solving.','Запасись, чтобы решать дальше.');$('bbBuy').innerHTML=L('Buy for ','Купить за ')+costChip(cost);$('bbCancel').textContent=L('Maybe later','Может позже');openScrim('scrimBuy');haptic('light');}
+function confirmBoosterBuy(){const k=_buyKey;if(!k)return;const cost=BOOSTER_PACK_COST[k];if(!spendGold(cost)){closeScrim('scrimBuy');needGold();return;}grantFreeBoosters({[k]:BOOSTER_PACK_QTY});persist();renderBoosters();closeScrim('scrimBuy');MX.track('Booster Pack Bought',{type:k,qty:BOOSTER_PACK_QTY,cost});haptic('ok');soundPop();toast('+'+BOOSTER_PACK_QTY+' '+(k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Утка')));if(k==='hint')useHint();else usePlaceDuck();}
 function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}boostersUsed++;hearts=3;ended=false;renderHearts();closeScrim('scrimLose');MX.track('Continue Used',{level:levelIdx+1});haptic('ok');}
 // Apply a purchase grant from the server: gold and/or free sticker packs.
 function grantReward(g){if(!g)return;const msgs=[];
@@ -1150,11 +1204,61 @@ function grantReward(g){if(!g)return;const msgs=[];
   if(g.packs){save.freePacks=save.freePacks||{basic:0,golden:0};for(const k in g.packs)save.freePacks[k]=(save.freePacks[k]||0)+(g.packs[k]||0);}
   if(g.boosters){grantFreeBoosters(g.boosters);const nm={hint:L('Hint','Подсказка'),placeduck:L('Place a Duck','Утка'),undo:L('Undo','Назад')};for(const k in g.boosters){if(g.boosters[k])msgs.push('+'+g.boosters[k]+' '+nm[k]);}} // bundles grant FREE boosters (save.freeBoosters, spent before gold)
   persist();updateGoldHud();renderBoosters();if($('album').classList.contains('on'))renderAlbum();
-  if(msgs.length)toast(msgs.join('   '));}
+  if(msgs.length&&!_suppressGrantToast)toast(msgs.join('   '));} // the purchase-result modal shows the reward chips, so skip the toast during a popup buy
 function ftExcludedByDucks(r,c){for(let i=0;i<N;i++){if(gstate[r][i]===DUCK||gstate[i][c]===DUCK)return true;}const reg=puzzle.region[r][c];for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++)if(gstate[rr][cc]===DUCK&&puzzle.region[rr][cc]===reg)return true;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const rr=r+dr,cc=c+dc;if(rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===DUCK)return true;}return false;}
-function computeHint(){ // non-revealing: point at a cell that can be safely RULED OUT (marked X), never where a duck belongs
-  for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]===EMPTY&&ftExcludedByDucks(r,c))return {r,c,msg:L("You can rule this cell out","Эту клетку можно исключить")};}
-  return null;}
+const REGION_NAMES_EN=['Coral','Purple','Teal','Yellow','Blue','Green','Pink','Orange','Lavender','Cyan'];
+const REGION_NAMES_RU=['Коралловый','Фиолетовый','Бирюзовый','Жёлтый','Синий','Зелёный','Розовый','Оранжевый','Лавандовый','Голубой'];
+function colorName(g){const i=g%10;return L(REGION_NAMES_EN[i],REGION_NAMES_RU[i]);}
+function colorPill(g){return '<span style="color:var(--r'+(g%10)+');font-weight:900">'+colorName(g)+'</span>';}
+function regionCells(g){const out=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(puzzle.region[r][c]===g)out.push([r,c]);return out;}
+function hasDuckIn(cells){return cells.some(([r,c])=>gstate[r][c]===DUCK);}
+function isOpenCell(r,c){return gstate[r][c]===EMPTY;}
+// Deductive, Meowdoku-style hint. Returns {kind:'remove'|'place'|'mark', cells, marks, target, text} or null.
+function computeHint(){
+  // 1) a wrong X sitting on the real solution cell -> remove it first
+  for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]===MARK)return {kind:'remove',target:[r,c],cells:[[r,c]],text:L("You've incorrectly marked this cell. Tap Apply to remove the X mark.","Эта клетка отмечена неверно. Нажми Применить, чтобы убрать X.")};}
+  // 2) a color region with only one open cell left -> place the duck
+  for(let g=0;g<N;g++){const cs=regionCells(g);if(hasDuckIn(cs))continue;const open=cs.filter(([r,c])=>isOpenCell(r,c));if(open.length===1){const [r,c]=open[0];if(puzzle.solCols[r]===c)return {kind:'place',target:[r,c],cells:[[r,c]],text:colorPill(g)+L(', only one cell left for a duck',', осталась одна клетка для утки')};}}
+  // 3) a row with only one open cell left
+  for(let r=0;r<N;r++){let duck=false;const open=[];for(let c=0;c<N;c++){if(gstate[r][c]===DUCK)duck=true;else if(isOpenCell(r,c))open.push(c);}if(!duck&&open.length===1&&puzzle.solCols[r]===open[0])return {kind:'place',target:[r,open[0]],cells:[[r,open[0]]],text:L('Only one cell left in Row ','Осталась одна клетка в ряду ')+(r+1)+L(' for a duck',' для утки')};}
+  // 4) a column with only one open cell left
+  for(let c=0;c<N;c++){let duck=false;const open=[];for(let r=0;r<N;r++){if(gstate[r][c]===DUCK)duck=true;else if(isOpenCell(r,c))open.push(r);}if(!duck&&open.length===1&&puzzle.solCols[open[0]]===c)return {kind:'place',target:[open[0],c],cells:[[open[0],c]],text:L('Only one cell left in Column ','Осталась одна клетка в столбце ')+(c+1)+L(' for a duck',' для утки')};}
+  // 5) a color whose open candidates all lie in one row/column -> exclude other colors there
+  for(let g=0;g<N;g++){const cs=regionCells(g);if(hasDuckIn(cs))continue;const open=cs.filter(([r,c])=>isOpenCell(r,c));if(open.length<2)continue;
+    if(open.every(([r,c])=>r===open[0][0])){const rr=open[0][0],marks=[];for(let c=0;c<N;c++)if(isOpenCell(rr,c)&&puzzle.region[rr][c]!==g)marks.push([rr,c]);if(marks.length)return {kind:'mark',cells:open,marks,text:colorPill(g)+L(' candidates are all in Row ',' кандидаты все в ряду ')+(rr+1)+L('. Exclude the other colors.','. Исключи другие цвета.')};}
+    if(open.every(([r,c])=>c===open[0][1])){const cc=open[0][1],marks=[];for(let r=0;r<N;r++)if(isOpenCell(r,cc)&&puzzle.region[r][cc]!==g)marks.push([r,cc]);if(marks.length)return {kind:'mark',cells:open,marks,text:colorPill(g)+L(' candidates are all in Column ',' кандидаты все в столбце ')+(cc+1)+L('. Exclude the other colors.','. Исключи другие цвета.')};}
+  }
+  // 6) a cell forced out by an already-placed duck (shared row/col/color/touching) -> rule it out
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(isOpenCell(r,c)&&puzzle.solCols[r]!==c&&ftExcludedByDucks(r,c))return {kind:'mark',cells:[[r,c]],marks:[[r,c]],text:L('This cell can be ruled out. Tap Apply to mark it.','Эту клетку можно исключить. Нажми Применить.')};}
+  // 7) fallback: place the duck in the most-constrained open color (always correct)
+  let best=-1,bestN=1e9;for(let g=0;g<N;g++){const cs=regionCells(g);if(hasDuckIn(cs))continue;const n=cs.filter(([r,c])=>isOpenCell(r,c)).length;if(n>0&&n<bestN){bestN=n;best=g;}}
+  if(best>=0){const sol=regionCells(best).find(([r,c])=>puzzle.solCols[r]===c&&gstate[r][c]!==DUCK);if(sol)return {kind:'place',target:sol,cells:[sol],text:colorPill(best)+L(', the duck goes here',', утка ставится сюда')};}
+  return null;
+}
+let hintActive=false,_hint=null;
+function showHint(h){
+  _hint=h;hintActive=true;
+  $('app').classList.add('hintmode');$('qboard').classList.add('dim');
+  (h.cells||[]).forEach(([r,c])=>{const el=cellEl(r,c);if(el)el.classList.add('spot');});
+  (h.marks||[]).forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('hintx');if(gstate[r][c]===EMPTY)el.innerHTML=X_SVG;}});
+  $('hintPill').innerHTML=h.text;$('hintPill').classList.add('on');
+  const ap=$('hintApply');ap.textContent=L('Apply','Применить');ap.classList.add('on');
+  haptic('med');
+}
+function hideHint(){
+  hintActive=false;_hint=null;
+  $('app').classList.remove('hintmode');$('qboard').classList.remove('dim');
+  document.querySelectorAll('.qcell.spot,.qcell.hintx').forEach(el=>el.classList.remove('spot','hintx'));
+  $('hintPill').classList.remove('on');$('hintApply').classList.remove('on');
+  renderBoard();
+}
+function applyHint(){
+  const h=_hint;if(!h){hideHint();return;}
+  if(h.kind==='remove'){snapshot();const [r,c]=h.target;if(gstate[r][c]===MARK)gstate[r][c]=EMPTY;hideHint();playSfx('xremove');haptic('ok');return;}
+  if(h.kind==='mark'){snapshot();(h.marks||[]).forEach(([r,c])=>{if(gstate[r][c]===EMPTY)gstate[r][c]=MARK;});hideHint();playSfx('xremove');haptic('ok');return;}
+  if(h.kind==='place'){const [r,c]=h.target;let won=false;if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;won=(duckCount===N);}hideHint();duckReact(r,c,'happy',1100);pulseCell(r,c);updateCount();playSfx('duckfound');haptic('ok');if(won)onWin();return;}
+  hideHint();
+}
 function placeOneCorrect(){for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);pulseCell(r,c);return {r,c};}}return null;}
 function snapshot(){history.push({g:gstate.map(row=>row.slice()),hearts,duckCount});if(history.length>40)history.shift();}
 
@@ -1208,7 +1312,7 @@ function renderChips(){const c=$('chips');const items=[
     {g:[['d','x','x'],['x','',''],['x','','']],t:L("1 Duck per column and row","1 на столбец и ряд")},
     {g:[['x','x','x'],['x','d','x'],['x','x','x']],t:L("Ducks cannot touch","Утки не касаются")}];
   c.innerHTML=items.map(it=>'<div class="chip">'+miniGrid(it.g)+'<span class="chiptxt">'+it.t+'</span></div>').join('');}
-function renderBoosters(){[['hint','cntHint','ownHint'],['placeduck','cntDuck','ownDuck']].forEach(([k,priceId,ownId])=>{const free=(save.freeBoosters&&save.freeBoosters[k])||0;const oe=$(ownId);if(oe){oe.textContent=free;oe.classList.toggle('out',free<=0);}const pe=$(priceId);if(pe){pe.innerHTML=COIN_SVG+'<span>'+BOOSTER_COST[k]+'</span>';pe.style.display=free>0?'none':'';}});}
+function renderBoosters(){[['hint','cntHint','ownHint'],['placeduck','cntDuck','ownDuck']].forEach(([k,priceId,ownId])=>{const free=(save.freeBoosters&&save.freeBoosters[k])||0;const oe=$(ownId);if(oe){oe.textContent=free;oe.classList.toggle('out',free<=0);}const pe=$(priceId);if(pe)pe.style.display='none';/* no per-use gold price on the booster; cost lives only in the buy modal */});}
 function renderAll(){renderBoard();renderHud();renderBoosters();updateGoldHud();}
 function pulseCell(r,c){const el=cellEl(r,c);if(!el)return;el.classList.add('spot');setTimeout(()=>el.classList.remove('spot'),1800);}
 
@@ -1337,12 +1441,46 @@ function openLeaderboard(){closeAll();openScrim('scrimLB');MX.track('Leaderboard
 function renderLB(rows){const el=$('lbList');if(!rows.length){el.innerHTML='<p style="color:var(--ink-soft)">'+L("No players yet. Be the first!","Пока никого. Будь первым!")+'</p>';return;}
   el.innerHTML=rows.map((r,i)=>{const medal=i===0?'#FFD23F':i===1?'#CFD2D8':i===2?'#E0925A':'var(--bg2)';
     return '<div class="lbrow"><div class="lbrank" style="background:'+medal+'">'+(i+1)+'</div><div class="lbname">'+escapeHtml(r.name||'Duck')+'</div><div class="lblvl">'+L("Level ","Ур. ")+(r.level||0)+'</div></div>';}).join('');}
+/* ---- IAP loader + purchase result (mirrors RTW) ---- */
+let _suppressGrantToast=false;
+function showIapLoad(label){const o=$('iapLoad');if(!o)return;const l=$('iapLoadLbl');if(l)l.textContent=label||L('Opening payment...','Открываем оплату...');o.classList.add('on');}
+function hideIapLoad(){const o=$('iapLoad');if(o)o.classList.remove('on');}
+function buyGrantOf(sku){const s=(SKUS_CACHE||[]).find(x=>x.id===sku);return s&&s.grant;}
+// Post-purchase result: success (live happy duck + reward chips + confetti) or canceled (sad duck, no charge).
+function showBuyResult(ok,sku){const m=$('scrimBuyResult');if(!m)return;
+  const hf=$('brFace');if(hf)hf.setAttribute('data-bk',ok?'happy':'sad');
+  $('brTitle').textContent=ok?L('Thank you!','Спасибо!'):L('Purchase canceled','Покупка отменена');
+  $('brMsg').textContent=ok?L('Your purchase is complete.','Покупка завершена.'):L('No charge was made. Come back anytime.','Оплата не списана. Возвращайся в любое время.');
+  $('brContinue').textContent=L('Continue','Продолжить');
+  const g=ok?buyGrantOf(sku):null;const chips=$('brChips');
+  chips.innerHTML=g?rewardItemsHtml(g):'';chips.style.display=g?'':'none';
+  closeAll();openScrim('scrimBuyResult');
+  if(ok){haptic('ok');try{soundWin();}catch(e){}try{confettiRain();}catch(e){}}else{haptic('err');}}
+function closeBuyResult(){closeScrim('scrimBuyResult');}
 async function buy(sku){
-  if(IAP.isNative()){const res=await IAP.purchase(sku);if(res&&res.error&&res.error!=='web'&&!res.cancelled){toast(res.error==='no_product_for_sku'?L("Not available yet","Пока недоступно"):L("Purchase did not complete","Покупка не завершена"));}return;}
+  // NATIVE (Google Play): loader -> store sheet -> grant (in IAP approved) -> result modal
+  if(IAP.isNative()){
+    showIapLoad(L('Opening store...','Открываем магазин...'));
+    _suppressGrantToast=true;let res;try{res=await IAP.purchase(sku);}catch(e){res={error:(e&&e.message)||'threw'};}
+    _suppressGrantToast=false;hideIapLoad();
+    if(res&&res.ok){showBuyResult(true,sku);return;}
+    if(res&&res.cancelled){MX.track('IAP Cancelled',{sku});showBuyResult(false,sku);return;}
+    if(res&&res.error&&res.error!=='web'){toast(res.error==='no_product_for_sku'?L("Not available yet","Пока недоступно"):L("Purchase did not complete","Покупка не завершена"));haptic('err');}
+    return;
+  }
   if(!iapEnabled||!initData){toast(L("Open in Telegram to buy","Покупки в Telegram"));return;}
-  try{const r=await fetch(API_BASE+'/api/create-invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sku,initData})});const j=await r.json();if(!j.link){toast("Could not start payment");return;}
+  // TELEGRAM Stars: loader -> invoice -> Telegram payment sheet -> result modal
+  try{
+    showIapLoad(L('Opening Telegram...','Открываем Telegram...'));
+    const r=await fetch(API_BASE+'/api/create-invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sku,initData})});const j=await r.json();
+    if(!j.link){hideIapLoad();toast(L("Could not start payment","Не удалось начать оплату"));return;}
     MX.track('IAP Invoice Opened',{sku});
-    TG.openInvoice(j.link,async(st)=>{MX.track('IAP '+(st==='paid'?'Success':st==='cancelled'?'Cancelled':'Failed'),{sku});if(st==='paid'){try{if(window.DuckAdjust)DuckAdjust.fire('purchaseCompleted');}catch(e){}await pollPurchases();toast(L("Thank you!","Спасибо!"));haptic('ok');}});}catch(e){toast("Payment error");}}
+    setTimeout(hideIapLoad,1200); // safety: clear if openInvoice never fires its callback
+    TG.openInvoice(j.link,async(st)=>{hideIapLoad();MX.track('IAP '+(st==='paid'?'Success':st==='cancelled'?'Cancelled':'Failed'),{sku});
+      if(st==='paid'){try{if(window.DuckAdjust)DuckAdjust.fire('purchaseCompleted');}catch(e){}_suppressGrantToast=true;await pollPurchases();_suppressGrantToast=false;showBuyResult(true,sku);}
+      else if(st!=='pending'){showBuyResult(false,sku);} // cancelled / failed -> no charge
+    });
+  }catch(e){hideIapLoad();toast(L("Payment error","Ошибка оплаты"));}}
 async function pollPurchases(){if(!initData)return;try{const r=await fetch(API_BASE+'/api/poll-purchases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})});const j=await r.json();(j.purchases||[]).forEach(p=>grantReward(p.grant));}catch(e){}}
 
 /* ================= Duck Album: sticker collection + gold packs ================= */
@@ -1579,6 +1717,8 @@ function bind(){
   $('btnBack').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
   $('btnGear').onclick=()=>openSettings(true);
   $('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
+  $('hintApply').onclick=applyHint;
+  $('bbBuy').onclick=confirmBoosterBuy;$('bbClose').onclick=()=>closeScrim('scrimBuy');$('bbCancel').onclick=()=>closeScrim('scrimBuy');
   $('btnNext').onclick=()=>{closeScrim('scrimWin');startLevel('levels',levelIdx+1);};
   $('btnWinHome').onclick=()=>{closeScrim('scrimWin');show('home');refreshHome();};
   $('btnRetry').onclick=()=>{closeScrim('scrimLose');if(!save.tutorialDone){startFTUE();}else{startLevel('levels',levelIdx);}};
@@ -1622,6 +1762,8 @@ function bind(){
   $('btnContinue').onclick=continueLevel;
   $('packOk').onclick=()=>{closeScrim('scrimPack');renderAlbum();};
   $('rwdOk').onclick=()=>closeScrim('scrimReward');
+  $('brClose').onclick=closeBuyResult;$('brContinue').onclick=closeBuyResult;
+  $('scrimBuyResult').addEventListener('click',e=>{if(e.target===$('scrimBuyResult'))closeBuyResult();});
   $('packRow').addEventListener('click',e=>{const p=e.target.closest('[data-pack]');if(p)buyPack(p.getAttribute('data-pack'));});
   $('albumSets').addEventListener('click',e=>{const c=e.target.closest('[data-claim]');if(c)claimSet(c.getAttribute('data-claim'));});
   $('albumGrand').addEventListener('click',e=>{if(e.target.closest('[data-grand]'))claimGrand();});

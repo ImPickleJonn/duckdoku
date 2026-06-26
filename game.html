@@ -48,6 +48,10 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .btn.alt{background:var(--r2);color:#fff;}
 .btn.row{display:flex;gap:11px;}
 .btn.ghost{background:var(--card);color:var(--ink);font-size:4.2vw;flex:1;box-shadow:0 4px 0 var(--shadow);}
+.btn.alt.locked{background:#C9BDB8;color:#fff;box-shadow:0 5px 0 rgba(150,110,90,.28);line-height:1.15;}
+.btn.alt.locked .albmain{display:inline-flex;align-items:center;justify-content:center;gap:7px;}
+.btn.alt.locked .albmain svg{width:20px;height:20px;}
+.btn.alt.locked .albsub{display:block;font-size:3vw;font-weight:800;opacity:.92;margin-top:1px;}
 .coins-line{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--ink-soft);font-size:3.6vw;margin-top:10px;min-height:18px;}
 .homegear{position:absolute;top:calc(var(--safe-top) + 5vh);right:16px;z-index:2;}
 .homelb{position:absolute;top:calc(var(--safe-top) + 5vh);left:16px;z-index:2;}
@@ -136,9 +140,12 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .admgrid .btn,.admgrid3 .btn{margin:0;padding:11px 4px;font-size:13px;}
 .admnote{margin:6px 0;color:var(--ink-soft);}
 .admmsg{color:var(--red);font-size:13px;min-height:16px;margin-top:6px;}
-.booster .bcount{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 5px;background:var(--heart);color:#fff;border-radius:11px;font-size:3.1vw;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 var(--shadow);}
-.booster .bcount.zero{background:var(--green);}
-.blabel{position:absolute;bottom:-18px;font-size:2.7vw;color:var(--ink-soft);white-space:nowrap;}
+/* gold price pill at the BOTTOM of the booster circle (coin icon left of amount) */
+.booster .bprice{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:2px;background:var(--card);color:var(--orange-d);border-radius:11px;padding:1px 7px 1px 4px;font-size:2.9vw;font-weight:900;line-height:1;white-space:nowrap;box-shadow:0 2px 0 var(--shadow);}
+.booster .bprice svg{width:14px;height:14px;flex:none;}
+/* red badge top-right = how many of this booster the user owns (free uses) */
+.booster .bowned{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;background:var(--heart);color:#fff;border-radius:10px;font-size:2.9vw;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 var(--shadow);}
+.blabel{position:absolute;bottom:-30px;font-size:2.7vw;color:var(--ink-soft);white-space:nowrap;}
 
 /* ---------- COACH (FTUE) ---------- */
 .coach{position:fixed;left:0;right:0;z-index:84;display:none;justify-content:center;padding:0 18px;pointer-events:none;}
@@ -395,7 +402,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
     </div>
     <div class="menu">
       <button class="btn play" id="btnPlay" data-i="play">Level 1</button>
-      <button class="btn alt" id="btnAlbum" data-i="album">Duck Album</button>
+      <button class="btn alt" id="btnAlbum">Duck Album</button>
     </div>
     <div class="fill"></div>
   </section>
@@ -426,8 +433,8 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
     <div class="boardwrap"><div class="qboard" id="qboard"><div class="qgrid" id="grid"></div></div></div>
 
     <div class="boosters" id="boosters">
-      <button class="booster" id="bsDuck"><canvas class="bface" width="128" height="128"></canvas><span class="bcount price" id="cntDuck">0</span><span class="blabel" data-i="placeduck">Place</span></button>
-      <button class="booster" id="bsHint"><canvas class="bface" width="128" height="128"></canvas><span class="bcount price" id="cntHint">0</span><span class="blabel" data-i="hint">Hint</span></button>
+      <button class="booster" id="bsDuck"><canvas class="bface" width="128" height="128"></canvas><span class="bowned" id="ownDuck">0</span><span class="bprice" id="cntDuck"></span><span class="blabel" data-i="placeduck">Place</span></button>
+      <button class="booster" id="bsHint"><canvas class="bface" width="128" height="128"></canvas><span class="bowned" id="ownHint">0</span><span class="bprice" id="cntHint"></span><span class="blabel" data-i="hint">Hint</span></button>
     </div>
   </section>
 
@@ -750,6 +757,8 @@ function regionVar(i){return 'var(--r'+(i%10)+')';}
 const DUCK_SVG='<svg class="duckface" viewBox="0 0 64 64"><path d="M30 6c2-3 7-2 7 2 0 2-1 3-3 4" fill="#F2913C"/><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><ellipse cx="14" cy="40" rx="7" ry="9" fill="#FBC02D"/><circle cx="24" cy="32" r="5" fill="#fff"/><circle cx="25" cy="33" r="2.7" fill="#3A2A20"/><circle cx="41" cy="32" r="5" fill="#fff"/><circle cx="42" cy="33" r="2.7" fill="#3A2A20"/><path d="M24 43 q8 8 17 0 q-3 8 -8.5 8 q-5.5 0 -8.5 -8z" fill="#F2913C" stroke="#D9762A" stroke-width="1"/><ellipse cx="17" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/><ellipse cx="47" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/></svg>';
 const DUCK_MINI='<svg viewBox="0 0 64 64"><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><circle cx="25" cy="32" r="4" fill="#3A2A20"/><circle cx="40" cy="32" r="4" fill="#3A2A20"/><path d="M25 43 q7 7 15 0 q-2 7 -7.5 7 q-5.5 0 -7.5 -7z" fill="#F2913C"/></svg>';
 const COIN_SVG='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#F4B731" stroke="#D9971F" stroke-width="1.6"/><circle cx="12" cy="12" r="6.6" fill="#FFD867" stroke="#D9971F" stroke-width="1.1"/><ellipse cx="9.3" cy="9" rx="2.1" ry="1.3" fill="#fff" opacity=".75"/></svg>';
+const LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const ALBUM_UNLOCK_LEVEL=7; // Duck Album stays locked until the player reaches this level
 const PACK_SVG='<svg viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="16" rx="3" fill="#E8942F" stroke="#C9781E" stroke-width="1.4"/><path d="M4.5 9h15" stroke="#C9781E" stroke-width="1.3"/><path d="M12 4v16" stroke="#fff" stroke-width="1.1" opacity=".45"/><path d="M12 2.6l1.6 2.4H10.4z" fill="#FFD867"/></svg>';
 const X_SVG='<svg class="xmark" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46"/><path d="M46 18 L18 46"/></svg>';
 const REDX_SVG='<svg class="xmark" viewBox="0 0 64 64" fill="none" stroke="#E0433A" stroke-width="13" stroke-linecap="round"><path d="M18 18 L46 46"/><path d="M46 18 L18 46"/></svg>';
@@ -1007,7 +1016,7 @@ function renderChips(){const c=$('chips');const items=[
     {g:[['d','x','x'],['x','',''],['x','','']],t:L("1 Duck per column and row","1 на столбец и ряд")},
     {g:[['x','x','x'],['x','d','x'],['x','x','x']],t:L("Ducks cannot touch","Утки не касаются")}];
   c.innerHTML=items.map(it=>'<div class="chip">'+miniGrid(it.g)+'<span class="chiptxt">'+it.t+'</span></div>').join('');}
-function renderBoosters(){[['hint','cntHint'],['placeduck','cntDuck']].forEach(([k,id])=>{const el=$(id);if(!el)return;const free=(save.freeBoosters&&save.freeBoosters[k])||0;el.classList.remove('zero');el.classList.toggle('free',free>0);el.classList.toggle('price',free<=0);el.textContent=free>0?free:BOOSTER_COST[k];});}
+function renderBoosters(){[['hint','cntHint','ownHint'],['placeduck','cntDuck','ownDuck']].forEach(([k,priceId,ownId])=>{const pe=$(priceId);if(pe)pe.innerHTML=COIN_SVG+'<span>'+BOOSTER_COST[k]+'</span>';const oe=$(ownId);if(oe){const free=(save.freeBoosters&&save.freeBoosters[k])||0;oe.textContent=free;oe.style.display=free>0?'':'none';}});}
 function renderAll(){renderBoard();renderHud();renderBoosters();updateGoldHud();}
 function pulseCell(r,c){const el=cellEl(r,c);if(!el)return;el.classList.add('spot');setTimeout(()=>el.classList.remove('spot'),1800);}
 
@@ -1249,7 +1258,9 @@ function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach
   $('btnNext').textContent=t('next');openScrim('scrimWin');}
 
 /* ---------- home + misc ---------- */
-function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();}
+function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();}
+function albumUnlocked(){return (save.levelsDone||0)>=ALBUM_UNLOCK_LEVEL-1;}
+function renderAlbumBtn(){const b=$('btnAlbum');if(!b)return;const lk=!albumUnlocked();b.classList.toggle('locked',lk);if(lk)b.innerHTML='<span class="albmain">'+LOCK_SVG+'<span>'+L("Duck Album","Альбом")+'</span></span><span class="albsub">'+L("Level ","Уровень ")+ALBUM_UNLOCK_LEVEL+'</span>';else b.textContent=L("Duck Album","Альбом");}
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;const y=new Date(Date.now()-86400000);const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1;save.lastPlayYMD=today;persist();}
 function startPlay(){touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
@@ -1310,7 +1321,7 @@ function bind(){
   $('setShop').onclick=()=>{closeScrim('scrimSet');openShop();};
   $('setRestart').onclick=()=>{closeScrim('scrimSet');startLevel('levels',levelIdx);};
   $('setHome').onclick=()=>{closeScrim('scrimSet');show('home');refreshHome();};
-  $('btnAlbum').onclick=openAlbum;
+  $('btnAlbum').onclick=()=>{if(!albumUnlocked()){toast(L("Reach Level ","Дойди до уровня ")+ALBUM_UNLOCK_LEVEL+L(" to unlock the Duck Album",", чтобы открыть Альбом"));haptic('err');return;}openAlbum();};
   $('albumBack').onclick=()=>{show('home');refreshHome();};
   $('homeGold').onclick=openShop;$('gameGold').onclick=openShop;$('albumGold').onclick=openShop;
   $('btnContinue').onclick=continueLevel;

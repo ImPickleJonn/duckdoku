@@ -15,13 +15,19 @@
   --r0:#E58A77; --r1:#B773E8; --r2:#4BB6A7; --r3:#E8B24C; --r4:#6FA9E4;
   --r5:#8BCB6E; --r6:#EF94B6; --r7:#E0925A; --r8:#9E8BE6; --r9:#56C7BD;
   --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
+  --app-h:100dvh;            /* real usable height; set from Telegram viewportStableHeight on TG (desktop footer-safe) */
+  --board-reserve:344px;     /* vertical space the board must leave for top bar + chips + status + boosters + padding */
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
-html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+/* the board is a drag-paint surface: every descendant must disable browser touch
+   gestures, else the native Android WebView hijacks a swipe as a scroll/pan and
+   cancels the pointer (works on Telegram, silently fails on native otherwise). */
+#grid,#grid *{touch-action:none;}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--ink);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Nunito",sans-serif;font-weight:800;}
-#app{position:fixed;inset:0;background:var(--bg);transition:background .3s;}
+#app{position:fixed;left:0;top:0;width:100%;height:var(--app-h);background:var(--bg);transition:background .3s;}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
-  padding:calc(var(--safe-top) + 10px) 14px calc(var(--safe-bot) + 12px);}
+  padding:calc(var(--safe-top) + 10px) 14px calc(var(--safe-bot) + 16px);}
 .screen.on{display:flex;}
 .fill{flex:1;}
 button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(--ink);}
@@ -73,8 +79,10 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .chiptxt{flex:1;}
 
 /* ---------- BOARD ---------- */
-.boardspacer{height:clamp(10px,5vh,52px);flex:none;}
-.boardwrap{width:100%;max-width:min(92vw,440px);aspect-ratio:1;position:relative;margin:0 auto;}
+.boardspacer{height:clamp(6px,2vh,28px);flex:0 1 auto;min-height:4px;}
+/* square board that fits BOTH width and the remaining height, so the boosters below
+   never get cut off (was width-only -> too tall on Telegram Desktop's short window). */
+.boardwrap{width:min(92vw,440px,max(180px,calc(var(--app-h) - var(--board-reserve))));aspect-ratio:1;position:relative;margin:0 auto;}
 .qboard{position:absolute;inset:0;background:var(--card);border-radius:22px;padding:12px;box-shadow:0 6px 0 var(--shadow);}
 .qgrid{position:relative;width:100%;height:100%;display:grid;gap:6px;touch-action:none;}
 @keyframes cellReveal{0%{transform:scale(0);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:1}}
@@ -93,7 +101,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 #app.tutdim .topbar,#app.tutdim .statusrow,#app.tutdim .chips,#app.tutdim .boosters{opacity:.22;pointer-events:none;}
 
 /* ---------- BOOSTERS ---------- */
-.boosters{width:100%;max-width:460px;display:flex;gap:26px;margin-top:26px;justify-content:center;}
+.boosters{width:100%;max-width:460px;display:flex;gap:26px;margin-top:16px;justify-content:center;flex:none;}
 .booster{width:62px;height:62px;border-radius:50%;background:var(--card);box-shadow:0 4px 0 var(--shadow);display:flex;align-items:center;justify-content:center;position:relative;}
 .booster:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow);}
 .booster.active{outline:3px solid var(--orange);}
@@ -266,16 +274,62 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .claimbtn svg{width:20px;height:20px;}
 .claimdone{width:100%;margin-top:11px;text-align:center;color:var(--green);font-size:3.9vw;font-weight:900;}
 
-#packReveal{display:flex;flex-wrap:wrap;gap:11px;justify-content:center;margin:12px 0 4px;}
-.revcard{width:84px;aspect-ratio:.82;border-radius:14px;background:var(--card);box-shadow:0 4px 0 var(--shadow);overflow:hidden;position:relative;border:3px solid #EADFDB;opacity:0;transform:scale(.6);animation:revIn .42s cubic-bezier(.34,1.56,.64,1) forwards;}
-.revcard.r-common{border-color:#B9C4CF;}.revcard.r-rare{border-color:#5BA9E8;}.revcard.r-epic{border-color:#B773E8;}.revcard.r-legendary{border-color:#FFC23C;box-shadow:0 4px 0 var(--shadow),0 0 16px 2px rgba(255,194,60,.6);}
-@keyframes revIn{to{opacity:1;transform:scale(1);}}
-.revcard .stimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-.revcard .stimg.noimg{display:none;}
-.revcard .stfallback{position:absolute;inset:13%;}
-.revtag{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:2.7vw;font-weight:900;padding:2px 0;color:#fff;}
+/* ----- juicy pack reveal: face-down cards flip one by one with rarity bursts ----- */
+#packReveal{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin:18px 0 8px;min-height:118px;}
+.revcard{width:88px;aspect-ratio:.78;position:relative;perspective:760px;}
+.rc-inner{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(180deg);opacity:0;animation:rcReveal .62s cubic-bezier(.2,.85,.3,1.25) forwards;animation-delay:calc(.5s + var(--d));}
+@keyframes rcReveal{0%{transform:rotateY(180deg) scale(.55);opacity:0;}45%{opacity:1;}100%{transform:rotateY(0deg) scale(1);opacity:1;}}
+.rc-face{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;border:3px solid #EADFDB;box-shadow:0 4px 0 var(--shadow);display:flex;align-items:center;justify-content:center;background:var(--card);}
+.rc-back{transform:rotateY(180deg);background:linear-gradient(140deg,#FBB44C,#E8942F);color:#fff;font-size:40px;font-weight:900;text-shadow:0 2px 0 var(--orange-d);}
+.rc-front .stimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.rc-front .stimg.noimg{display:none;}
+.rc-front .stfallback{position:absolute;inset:13%;}
+.revcard.r-common .rc-face{border-color:#B9C4CF;}
+.revcard.r-rare .rc-face{border-color:#5BA9E8;}
+.revcard.r-epic .rc-face{border-color:#B773E8;}
+.revcard.r-legendary .rc-face{border-color:#FFC23C;}
+.revcard.r-legendary .rc-front{box-shadow:inset 0 0 10px rgba(255,194,60,.55);}
+.rc-burst{position:absolute;inset:-25%;border-radius:50%;opacity:0;pointer-events:none;z-index:-1;animation:rcBurst .8s ease-out forwards;animation-delay:calc(.7s + var(--d));}
+@keyframes rcBurst{0%{opacity:0;transform:scale(.3);}45%{opacity:.95;}100%{opacity:0;transform:scale(1.5);}}
+.revcard.r-common .rc-burst{background:radial-gradient(circle,rgba(185,196,207,.5),transparent 65%);}
+.revcard.r-rare .rc-burst{background:radial-gradient(circle,rgba(91,169,232,.6),transparent 65%);}
+.revcard.r-epic .rc-burst{background:radial-gradient(circle,rgba(183,115,232,.7),transparent 65%);}
+.revcard.r-legendary .rc-burst{background:radial-gradient(circle,rgba(255,194,60,.9),rgba(255,194,60,.25) 45%,transparent 70%);}
+.revcard.r-legendary::before{content:"";position:absolute;inset:-45%;z-index:-2;opacity:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,214,90,.6),transparent 11%,rgba(255,214,90,.6) 22%,transparent 33%,rgba(255,214,90,.6) 44%,transparent 55%,rgba(255,214,90,.6) 66%,transparent 77%,rgba(255,214,90,.6) 88%,transparent);animation:rcRays 3s linear infinite,rcBurst 1s ease-out forwards;animation-delay:0s,calc(.7s + var(--d));}
+@keyframes rcRays{to{transform:rotate(360deg);}}
+.revtag{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:2.7vw;font-weight:900;padding:3px 0;color:#fff;z-index:2;opacity:0;animation:tagPop .3s ease forwards;animation-delay:calc(.95s + var(--d));}
+@keyframes tagPop{0%{opacity:0;transform:translateY(6px) scale(.8);}100%{opacity:1;transform:translateY(0) scale(1);}}
 .revtag.new{background:var(--green);}
 .revtag.dup{background:#C9781E;}
+
+/* ----- home top bar (gold/avatar up top, like in-game) ----- */
+.homebar{position:absolute;top:calc(var(--safe-top) + 12px);left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:3;}
+.hb-right{display:flex;align-items:center;gap:9px;}
+.homebar .goldpill{font-size:4.4vw;}
+
+/* ----- free booster credit badge (prizes) ----- */
+.booster .bcount.free{background:var(--green);color:#fff;}
+
+/* ----- reward modal (set prize + grand prize) ----- */
+#scrimReward .modal{text-align:center;}
+.rwd-trophy{width:92px;height:92px;margin:2px auto 2px;animation:rwdPop .5s cubic-bezier(.34,1.6,.5,1) both;}
+.rwd-trophy svg{width:100%;height:100%;}
+@keyframes rwdPop{0%{transform:scale(.3) rotate(-12deg);opacity:0;}100%{transform:scale(1) rotate(0);opacity:1;}}
+.rwd-items{display:flex;flex-direction:column;gap:9px;margin:8px 0 14px;align-items:center;}
+.rwd-item{display:inline-flex;align-items:center;gap:9px;background:var(--card);border-radius:14px;padding:9px 18px;box-shadow:0 3px 0 var(--shadow);font-size:4.4vw;font-weight:900;color:var(--ink);min-width:150px;justify-content:center;}
+.rwd-item svg,.rwd-ic svg{width:26px;height:26px;}
+.rwd-ic{display:inline-flex;width:26px;height:26px;}
+#scrimReward.grand .modal{background:#2A2018;color:#fff;}
+#scrimReward.grand h2{color:#FFD23F;text-shadow:0 2px 0 var(--orange-d);}
+#scrimReward.grand p{color:#E9D9C9;}
+#scrimReward.grand .rwd-item{background:#3b2f25;color:#FFE08A;}
+
+/* ----- grand prize button / done ----- */
+.grandbtn{width:100%;margin:0 0 16px;background:linear-gradient(135deg,#FFD23F,#E8942F);color:#7A4F12;border-radius:18px;padding:15px;font-size:4.6vw;font-weight:900;box-shadow:0 5px 0 #C9781E;display:flex;align-items:center;justify-content:center;gap:8px;animation:grandPulse 1.6s ease-in-out infinite;}
+.grandbtn svg{width:24px;height:24px;}
+.grandbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #C9781E;}
+@keyframes grandPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
+.granddone{width:100%;margin:0 0 16px;text-align:center;color:#E8942F;font-size:4.4vw;font-weight:900;}
 </style>
 </head>
 <body>
@@ -283,10 +337,17 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 
   <!-- ============ HOME ============ -->
   <section id="home" class="screen on">
-    <button class="iconbtn homelb" id="btnHomeLB" aria-label="leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" fill="#FFD23F"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg></button>
-    <button class="iconbtn homegear" id="btnHomeGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44"><path d="M12 2.4c.95 0 1.78.62 2.04 1.5.66-.72 1.72-.92 2.6-.41.86.5 1.22 1.5.92 2.42.94-.22 1.92.27 2.27 1.18.34.9-.05 1.9-.9 2.36.85.46 1.24 1.46.9 2.36-.35.91-1.33 1.4-2.27 1.18.3.92-.06 1.92-.92 2.42-.88.51-1.94.31-2.6-.41-.26.88-1.09 1.5-2.04 1.5s-1.78-.62-2.04-1.5c-.66.72-1.72.92-2.6.41-.86-.5-1.22-1.5-.92-2.42-.94.22-1.92-.27-2.27-1.18-.34-.9.05-1.9.9-2.36-.85-.46-1.24-1.46-.9-2.36.35-.91 1.33-1.4 2.27-1.18-.3-.92.06-1.92.92-2.42.88-.51 1.94-.31 2.6.41.26-.88 1.09-1.5 2.04-1.5z"/><circle cx="12" cy="12" r="3.5" fill="#fff"/></svg></button>
+    <div class="homebar">
+      <button class="iconbtn" id="btnHomeLB" aria-label="leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" fill="#FFD23F"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg></button>
+      <div class="hb-right">
+        <button class="goldpill" id="homeGold"><span class="cicon"></span><span class="goldval">0</span></button>
+        <span class="homeava hidden" id="homeAvaWrap"><img id="homeAvaImg" alt=""></span>
+        <button class="iconbtn" id="btnHomeGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44"><path d="M12 2.4c.95 0 1.78.62 2.04 1.5.66-.72 1.72-.92 2.6-.41.86.5 1.22 1.5.92 2.42.94-.22 1.92.27 2.27 1.18.34.9-.05 1.9-.9 2.36.85.46 1.24 1.46.9 2.36-.35.91-1.33 1.4-2.27 1.18.3.92-.06 1.92-.92 2.42-.88.51-1.94.31-2.6-.41-.26.88-1.09 1.5-2.04 1.5s-1.78-.62-2.04-1.5c-.66.72-1.72.92-2.6.41-.86-.5-1.22-1.5-.92-2.42-.94.22-1.92-.27-2.27-1.18-.34-.9.05-1.9.9-2.36-.85-.46-1.24-1.46-.9-2.36.35-.91 1.33-1.4 2.27-1.18-.3-.92.06-1.92.92-2.42.88-.51 1.94-.31 2.6.41.26-.88 1.09-1.5 2.04-1.5z"/><circle cx="12" cy="12" r="3.5" fill="#fff"/></svg></button>
+      </div>
+    </div>
     <img class="logo-img" src="assets/ui/logo.png" alt="Duckdoku">
     <div class="tag" id="tagline">A cozy duck logic puzzle</div>
+    <div class="coins-line"><span id="streakLine"></span></div>
     <div class="fill"></div>
     <div class="ddh-rule" id="ddhRule"></div>
     <div class="hero-wrap">
@@ -295,11 +356,6 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
     <div class="menu">
       <button class="btn play" id="btnPlay" data-i="play">Level 1</button>
       <button class="btn alt" id="btnAlbum" data-i="album">Duck Album</button>
-    </div>
-    <div class="coins-line">
-      <button class="goldpill" id="homeGold"><span class="cicon"></span><span class="goldval">0</span></button>
-      <span class="homeava hidden" id="homeAvaWrap"><img id="homeAvaImg" alt=""></span>
-      <span id="streakLine"></span>
     </div>
     <div class="fill"></div>
   </section>
@@ -330,9 +386,9 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
     <div class="boardwrap"><div class="qboard" id="qboard"><div class="qgrid" id="grid"></div></div></div>
 
     <div class="boosters" id="boosters">
-      <button class="booster" id="bsDuck"><canvas class="bface" width="80" height="80"></canvas><span class="bcount price" id="cntDuck">0</span><span class="blabel" data-i="placeduck">Place</span></button>
-      <button class="booster" id="bsHint"><canvas class="bface" width="80" height="80"></canvas><span class="bcount price" id="cntHint">0</span><span class="blabel" data-i="hint">Hint</span></button>
-      <button class="booster" id="bsUndo"><canvas class="bface" width="80" height="80"></canvas><span class="bcount price" id="cntUndo">0</span><span class="blabel" data-i="undo">Undo</span></button>
+      <button class="booster" id="bsDuck"><canvas class="bface" width="128" height="128"></canvas><span class="bcount price" id="cntDuck">0</span><span class="blabel" data-i="placeduck">Place</span></button>
+      <button class="booster" id="bsHint"><canvas class="bface" width="128" height="128"></canvas><span class="bcount price" id="cntHint">0</span><span class="blabel" data-i="hint">Hint</span></button>
+      <button class="booster" id="bsUndo"><canvas class="bface" width="128" height="128"></canvas><span class="bcount price" id="cntUndo">0</span><span class="blabel" data-i="undo">Undo</span></button>
     </div>
   </section>
 
@@ -359,7 +415,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 <!-- ============ SCRIMS ============ -->
 <div class="scrim winscrim" id="scrimWin">
   <div class="wincol">
-    <canvas id="winCele" class="wincele" width="512" height="512"></canvas>
+    <canvas id="winCele" class="wincele" width="640" height="640"></canvas>
     <h2 id="winTitle">Awesome!</h2>
     <div class="wingold" id="winGold"></div>
     <p id="winSub">The duck plays a victory fanfare for you.</p>
@@ -369,7 +425,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 </div>
 
 <div class="scrim" id="scrimLose"><div class="modal modal-rel">
-  <div class="duckslot"><canvas id="loseFace" class="modalface" width="240" height="240"></canvas></div>
+  <div class="duckslot"><canvas id="loseFace" class="modalface" width="256" height="256"></canvas></div>
   <h2 id="loseTitle">Out of hearts</h2>
   <p id="loseSub">No worries. Try the puzzle again.</p>
   <button class="btn play" id="btnContinue" style="background:var(--green);box-shadow:0 5px 0 #2f8f57">Continue</button>
@@ -378,7 +434,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 </div></div>
 
 <div class="scrim" id="scrimLevelUp"><div class="modal dark modal-rel">
-  <div class="duckslot"><video id="luVid" autoplay loop muted playsinline poster="assets/ducks/levelup-frame.png"><source src="assets/ducks/levelup.mp4" type="video/mp4"></video></div>
+  <div class="duckslot"><video id="luVid" autoplay loop muted playsinline poster="assets/ducks/levelup-frame.png"><source src="assets/ducks/levelup.mp4?v=042" type="video/mp4"></video></div>
   <h2 data-i="levelup">Level up!</h2>
   <p id="luSub">The duck is proud of you.</p>
   <button class="btn play" id="btnLuOk" data-i="keepgoing">Keep going</button>
@@ -420,15 +476,23 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
   <button class="btn play" id="packOk" data-i="gotit">Got it</button>
 </div></div>
 
+<div class="scrim" id="scrimReward"><div class="modal modal-rel">
+  <div class="rwd-trophy"><svg viewBox="0 0 24 24" fill="#FFD23F" stroke="#E8942F" stroke-width="1.1" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H3.5v2A3.5 3.5 0 0 0 7 10.5M17 5h3.5v2A3.5 3.5 0 0 1 17 10.5" fill="none" stroke-width="1.5"/><path d="M9.5 13.5h5l-.6 4h-3.8z" fill="#E8942F" stroke="none"/><rect x="8" y="19" width="8" height="2.4" rx="1.2" fill="#E8942F" stroke="none"/></svg></div>
+  <h2 id="rwdTitle">Set Complete!</h2>
+  <p id="rwdSub"></p>
+  <div class="rwd-items" id="rwdItems"></div>
+  <button class="btn play" id="rwdOk" data-i="gotit">Got it</button>
+</div></div>
+
 <!-- hidden source clips for the live in-grid duck head (chroma-keyed onto cells) -->
 <div style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none">
-  <video id="fvidle" loop muted playsinline preload="auto"><source src="assets/ducks/face-idle.mp4" type="video/mp4"></video>
-  <video id="fvhappy" loop muted playsinline preload="auto"><source src="assets/ducks/face-happy.mp4" type="video/mp4"></video>
-  <video id="fvoops" loop muted playsinline preload="auto"><source src="assets/ducks/face-oops.mp4" type="video/mp4"></video>
-  <video id="fvsad" loop muted playsinline preload="auto"><source src="assets/ducks/face-sad.mp4" type="video/mp4"></video>
-  <video id="fvbsthint" loop muted playsinline preload="auto"><source src="assets/ducks/bst-hint.mp4" type="video/mp4"></video>
-  <video id="fvbstundo" loop muted playsinline preload="auto"><source src="assets/ducks/bst-undo.mp4" type="video/mp4"></video>
-  <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/win-duck.mp4" type="video/mp4"></video>
+  <video id="fvidle" loop muted playsinline preload="auto"><source src="assets/ducks/face-idle.mp4?v=042" type="video/mp4"></video>
+  <video id="fvhappy" loop muted playsinline preload="auto"><source src="assets/ducks/face-happy.mp4?v=042" type="video/mp4"></video>
+  <video id="fvoops" loop muted playsinline preload="auto"><source src="assets/ducks/face-oops.mp4?v=042" type="video/mp4"></video>
+  <video id="fvsad" loop muted playsinline preload="auto"><source src="assets/ducks/face-sad.mp4?v=042" type="video/mp4"></video>
+  <video id="fvbsthint" loop muted playsinline preload="auto"><source src="assets/ducks/bst-hint.mp4?v=042" type="video/mp4"></video>
+  <video id="fvbstundo" loop muted playsinline preload="auto"><source src="assets/ducks/bst-undo.mp4?v=042" type="video/mp4"></video>
+  <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/win-duck.mp4?v=042" type="video/mp4"></video>
 </div>
 
 <div class="fx" id="fx"></div>
@@ -444,6 +508,10 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
    ================================================================= */
 const TG=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
 try{ if(TG){ TG.ready();TG.expand();TG.setHeaderColor&&TG.setHeaderColor('#F3ECEC');TG.disableVerticalSwipes&&TG.disableVerticalSwipes(); } }catch(e){}
+// Bind the app to Telegram's STABLE viewport height so content never runs under the
+// desktop footer / chrome and the board fits (Telegram Desktop opens a short window).
+function syncAppHeight(){try{const h=TG&&(TG.viewportStableHeight||TG.viewportHeight);if(h&&h>200)document.documentElement.style.setProperty('--app-h',h+'px');}catch(e){}}
+if(TG){ syncAppHeight(); TG.onEvent&&TG.onEvent('viewportChanged',syncAppHeight); }
 const initData=TG&&TG.initData?TG.initData:'';
 const API_BASE=(function(){const h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h.endsWith('.onrender.com'))return '';return 'https://duckdoku.onrender.com';})();
 function haptic(k){try{if(!TG||!TG.HapticFeedback)return;const H=TG.HapticFeedback;
@@ -451,7 +519,7 @@ function haptic(k){try{if(!TG||!TG.HapticFeedback)return;const H=TG.HapticFeedba
   else if(k==='ok')H.notificationOccurred('success');else if(k==='err')H.notificationOccurred('error');}catch(e){}}
 
 /* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
-const DD_VERSION='0.4.2';
+const DD_VERSION='0.4.3';
 function _mxHost(){try{const tg=TG;if(tg&&typeof tg.initData==='string'&&tg.initData.length>0)return'telegram';return'web';}catch(e){return'web';}}
 const MX={ready:false,token:'',_did:'',_super:{},_pre:[],
   _enc(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}catch(_){try{return btoa(JSON.stringify(o));}catch(e){return'';}}},
@@ -508,7 +576,8 @@ const PACK_COST={basic:150,golden:400};
 const PACK_SIZE={basic:3,golden:5};
 const PACK_WEIGHTS={basic:{common:70,rare:23,epic:6,legendary:1},golden:{common:45,rare:38,epic:14,legendary:3}};
 const DUP_GOLD={common:5,rare:20,epic:60,legendary:150};
-const SET_CHEST=300; // gold for completing a sticker set
+const SET_PRIZE={gold:200,boosters:{hint:2,undo:2,placeduck:1}}; // prize for completing a sticker set
+const GRAND_PRIZE={gold:2000,boosters:{hint:10,undo:10,placeduck:10}}; // grand prize for completing ALL sets
 const RARITY_ORDER=['common','rare','epic','legendary'];
 function goldForWin(n){return n<=5?10:n<=6?15:n<=7?20:n<=8?30:40;}
 function dailyWinBonus(){return 25+Math.min((save&&save.streak)||0,7)*5;}
@@ -567,17 +636,18 @@ function stById(id){return STICKERS.find(s=>s.id===id);}
 /* ---------- save ---------- */
 const SAVE_KEY='duckdoku.save.v2';
 const DEFAULT_SAVE={levelsDone:0,stars:{},boosters:{},gold:120,stickers:{},freePacks:{basic:0,golden:0},
+  freeBoosters:{undo:0,hint:0,placeduck:0},grandClaimed:false,
   setsClaimed:{},avatarSticker:null,zenBest:0,zenSolved:0,tutorialDone:false,sound:true,
   streak:0,lastPlayYMD:null,lastDailyYMD:null,lastGoldYMD:null,_goldMigrated:false};
 let save=loadSave();
 function loadSave(){let s=null;try{s=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){}
-  const out=s?Object.assign({},DEFAULT_SAVE,s,{boosters:Object.assign({},s.boosters),stickers:Object.assign({},s.stickers),freePacks:Object.assign({},DEFAULT_SAVE.freePacks,s.freePacks),setsClaimed:Object.assign({},s.setsClaimed)}):JSON.parse(JSON.stringify(DEFAULT_SAVE));
+  const out=s?Object.assign({},DEFAULT_SAVE,s,{boosters:Object.assign({},s.boosters),stickers:Object.assign({},s.stickers),freePacks:Object.assign({},DEFAULT_SAVE.freePacks,s.freePacks),freeBoosters:Object.assign({},DEFAULT_SAVE.freeBoosters,s.freeBoosters),setsClaimed:Object.assign({},s.setsClaimed)}):JSON.parse(JSON.stringify(DEFAULT_SAVE));
   return migrateSave(out);}
 function migrateSave(s){ if(!s._goldMigrated){ const b=s.boosters||{}; s.gold=(s.gold||0)+(b.undo||0)*BOOSTER_COST.undo+(b.hint||0)*BOOSTER_COST.hint+(b.placeduck||0)*BOOSTER_COST.placeduck; s.boosters={}; s._goldMigrated=true; } return s; }
 let saveTimer=null;
 function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,1500);}
 function cloudSave(){if(!initData)return;try{fetch(API_BASE+'/api/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,save,lang:LANG})}).catch(()=>{});}catch(e){}}
-async function cloudLoad(){if(!initData)return;try{const r=await fetch(API_BASE+'/api/sync/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})});const j=await r.json();if(j&&j.save&&(j.save.levelsDone||0)>=(save.levelsDone||0)&&(j.save.levelsDone||j.save.zenSolved)){save=migrateSave(Object.assign({},DEFAULT_SAVE,j.save,{boosters:Object.assign({},j.save.boosters),stickers:Object.assign({},j.save.stickers),freePacks:Object.assign({},DEFAULT_SAVE.freePacks,j.save.freePacks),setsClaimed:Object.assign({},j.save.setsClaimed)}));refreshHome();updateGoldHud();}}catch(e){}}
+async function cloudLoad(){if(!initData)return;try{const r=await fetch(API_BASE+'/api/sync/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})});const j=await r.json();if(j&&j.save&&(j.save.levelsDone||0)>=(save.levelsDone||0)&&(j.save.levelsDone||j.save.zenSolved)){save=migrateSave(Object.assign({},DEFAULT_SAVE,j.save,{boosters:Object.assign({},j.save.boosters),stickers:Object.assign({},j.save.stickers),freePacks:Object.assign({},DEFAULT_SAVE.freePacks,j.save.freePacks),freeBoosters:Object.assign({},DEFAULT_SAVE.freeBoosters,j.save.freeBoosters),setsClaimed:Object.assign({},j.save.setsClaimed)}));refreshHome();updateGoldHud();renderBoosters();}}catch(e){}}
 
 /* ---------- seeded RNG + puzzle generation ---------- */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
@@ -625,12 +695,24 @@ const ALL_CLIPS=FACE_STATES.concat(ICON_CLIPS);
 let faceVideosReady=false,lastFaceTs=0;
 const faceVid={},faceKeyed={};
 let faceFx=new Map(); // r*100+c -> {state, until}
+let _homeMode='idle';        // the home rules-loop's current expression (faceLoop keeps it decoding)
+const _playing=new Set();    // clips currently un-paused; the rest are paused to save the GPU
+const ALL_VIDS=['idle','happy','oops','sad','bsthint','bstundo','win'];
+// Play exactly the clips in `want`, pause the rest. Android struggles with many
+// simultaneous <video> decoders, so we keep alive only what is on screen.
+function reconcileClips(want){ALL_VIDS.forEach(s=>{const v=faceVid[s];if(!v)return;const on=want.has(s);
+  if(on&&!_playing.has(s)){_playing.add(s);try{const p=v.play&&v.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}
+  else if(!on&&_playing.has(s)){_playing.delete(s);try{v.pause&&v.pause();}catch(e){}}});}
 function initFaces(){
-  ALL_CLIPS.forEach(s=>{faceVid[s]=document.getElementById('fv'+s);const cv=document.createElement('canvas');cv.width=cv.height=ICON_CLIPS.indexOf(s)>=0?96:256;faceKeyed[s]=cv;});
-  ALL_CLIPS.forEach(s=>{const v=faceVid[s];if(!v)return;v.play&&v.play().catch(()=>{});['loadeddata','canplay'].forEach(ev=>v.addEventListener(ev,faceCheck));v.addEventListener('error',()=>{});});
+  ALL_CLIPS.forEach(s=>{faceVid[s]=document.getElementById('fv'+s);const cv=document.createElement('canvas');cv.width=cv.height=ICON_CLIPS.indexOf(s)>=0?128:256;faceKeyed[s]=cv;});
   // full-body win celebration clip (its own bigger keyed canvas)
   faceVid.win=document.getElementById('fvwin');
-  if(faceVid.win){const wc=document.createElement('canvas');wc.width=wc.height=512;faceKeyed.win=wc;faceVid.win.play&&faceVid.win.play().catch(()=>{});['loadeddata','canplay'].forEach(ev=>faceVid.win.addEventListener(ev,faceCheck));}
+  if(faceVid.win){const wc=document.createElement('canvas');wc.width=wc.height=640;faceKeyed.win=wc;}
+  // attach readiness listeners to every clip but DO NOT autoplay them all;
+  // faceLoop/reconcileClips drives playback so only on-screen clips decode.
+  ALL_VIDS.forEach(s=>{const v=faceVid[s];if(!v)return;['loadeddata','canplay'].forEach(ev=>v.addEventListener(ev,faceCheck));v.addEventListener('error',()=>{});});
+  // kick idle so a frame decodes and faceVideosReady can flip
+  if(faceVid.idle){try{const p=faceVid.idle.play&&faceVid.idle.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}_playing.add('idle');}
   setTimeout(faceCheck,700);setTimeout(faceCheck,2200);setTimeout(faceCheck,5000);
   requestAnimationFrame(faceLoop);
 }
@@ -645,17 +727,21 @@ function keyInto(state){const v=faceVid[state],cv=faceKeyed[state];if(!v||v.read
 function drawFace(cv,st){if(!cv)return;const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(faceKeyed[st],0,0,cv.width,cv.height);}
 function faceLoop(){requestAnimationFrame(faceLoop);
   if(!faceVideosReady)return;
+  if(document.hidden){if(_playing.size)reconcileClips(new Set());return;} // pause all decoders when backgrounded
   const gameOn=$('game').classList.contains('on');
   const winOn=$('scrimWin').classList.contains('on'),loseOn=$('scrimLose').classList.contains('on');
-  if(!gameOn&&!winOn&&!loseOn)return;
+  const homeEl=document.getElementById('home'),homeOn=!!(homeEl&&homeEl.classList.contains('on'));
+  if(!gameOn&&!winOn&&!loseOn&&!homeOn){if(_playing.size)reconcileClips(new Set());return;}
   const now=Date.now();
-  if(now-lastFaceTs<32)return; lastFaceTs=now;
+  if(now-lastFaceTs<33)return; lastFaceTs=now;
   const used=new Set();
   if(gameOn&&gstate){used.add('idle');faceFx.forEach((fx,k)=>{if(now>fx.until)faceFx.delete(k);else used.add(fx.state);});}
   const boosterCv=gameOn?document.querySelector('#bsDuck canvas.bface'):null;if(boosterCv)used.add('happy');
   const hintCv=gameOn?document.querySelector('#bsHint canvas.bface'):null;if(hintCv)used.add('bsthint');
   const undoCv=gameOn?document.querySelector('#bsUndo canvas.bface'):null;if(undoCv)used.add('bstundo');
   if(winOn)used.add('win');if(loseOn)used.add('sad');
+  // keep exactly the on-screen clips decoding (the home draws its mode in its own tick)
+  const want=new Set(used);if(homeOn)want.add(_homeMode||'idle');reconcileClips(want);
   used.forEach(s=>keyInto(s));
   if(gameOn&&gstate)for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]!==DUCK)continue;const el=cellEls[r]&&cellEls[r][c];if(!el)continue;const cv=el.querySelector('canvas.duckface');if(!cv)continue;const fx=faceFx.get(r*100+c);drawFace(cv,fx?fx.state:'idle');}
   if(boosterCv)drawFace(boosterCv,'happy');
@@ -763,14 +849,17 @@ function addGold(n){save.gold=(save.gold||0)+n;persist();updateGoldHud();}
 function spendGold(n){if((save.gold||0)<n)return false;save.gold-=n;persist();updateGoldHud();return true;}
 function needGold(){toast(L("Not enough gold","Не хватает золота"));openShop();}
 function costChip(n){return '<span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle"><span style="width:18px;height:18px;display:inline-flex">'+COIN_SVG+'</span>'+n+'</span>';}
+// A booster use spends a FREE prize credit first, otherwise gold.
+function payBooster(k){if(save.freeBoosters&&save.freeBoosters[k]>0){save.freeBoosters[k]--;persist();updateGoldHud();renderBoosters();return true;}return spendGold(BOOSTER_COST[k]);}
+function grantFreeBoosters(obj){if(!obj)return;save.freeBoosters=save.freeBoosters||{undo:0,hint:0,placeduck:0};for(const k in obj)save.freeBoosters[k]=(save.freeBoosters[k]||0)+(obj[k]||0);}
 
 /* ---------- boosters (spend gold per use; Stars buy gold, not boosters) ---------- */
-function useUndo(){if(ended)return;if(!history.length){toast(L("Nothing to undo","Нечего отменять"));return;}if(!spendGold(BOOSTER_COST.undo)){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'undo',cost:BOOSTER_COST.undo});const h=history.pop();
+function useUndo(){if(ended)return;if(!history.length){toast(L("Nothing to undo","Нечего отменять"));return;}if(!payBooster('undo')){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'undo',cost:BOOSTER_COST.undo});const h=history.pop();
   // Undo only reverts the player's X notes. Found ducks and red X stay locked; hearts are not refunded.
   for(let r=0;r<N;r++)for(let c=0;c<N;c++){ if(gstate[r][c]===DUCK||gstate[r][c]===RED)continue; const v=h.g[r][c]; gstate[r][c]=(v===DUCK||v===RED)?EMPTY:v; }
   renderAll();haptic('light');}
-function useHint(){if(ended)return;const mv=computeHint();if(!mv){toast(L("Looks good so far","Пока всё верно"));return;}if(!spendGold(BOOSTER_COST.hint)){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'hint',cost:BOOSTER_COST.hint});pulseCell(mv.r,mv.c);renderBoosters();haptic('med');toast(mv.msg);}
-function usePlaceDuck(){if(ended)return;let avail=false;for(let r=0;r<N;r++){if(gstate[r][puzzle.solCols[r]]!==DUCK){avail=true;break;}}if(!avail){toast(L("All ducks placed","Все утки на месте"));return;}if(!spendGold(BOOSTER_COST.placeduck)){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'placeduck',cost:BOOSTER_COST.placeduck});placeOneCorrect();renderBoosters();haptic('ok');soundPlace();if(duckCount===N)onWin();}
+function useHint(){if(ended)return;const mv=computeHint();if(!mv){toast(L("Looks good so far","Пока всё верно"));return;}if(!payBooster('hint')){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'hint',cost:BOOSTER_COST.hint});pulseCell(mv.r,mv.c);renderBoosters();haptic('med');toast(mv.msg);}
+function usePlaceDuck(){if(ended)return;let avail=false;for(let r=0;r<N;r++){if(gstate[r][puzzle.solCols[r]]!==DUCK){avail=true;break;}}if(!avail){toast(L("All ducks placed","Все утки на месте"));return;}if(!payBooster('placeduck')){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'placeduck',cost:BOOSTER_COST.placeduck});placeOneCorrect();renderBoosters();haptic('ok');soundPlace();if(duckCount===N)onWin();}
 function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}boostersUsed++;hearts=3;ended=false;renderHearts();closeScrim('scrimLose');MX.track('Continue Used',{level:levelIdx+1});haptic('ok');}
 // Apply a purchase grant from the server: gold and/or free sticker packs.
 function grantReward(g){if(!g)return;const msgs=[];
@@ -795,7 +884,7 @@ function buildGrid(){const g=$('grid');g.style.gridTemplateColumns='repeat('+N+'
     d.addEventListener('click',()=>onCellTap(r,c));g.appendChild(d);row.push(d);}cellEls.push(row);}}
 function cellEl(r,c){return cellEls[r]&&cellEls[r][c];}
 function renderCell(r,c){const el=cellEl(r,c);if(!el)return;const v=gstate[r][c];
-  if(v===DUCK)el.innerHTML=faceVideosReady?'<canvas class="duckface" width="100" height="100"></canvas>':DUCK_SVG;
+  if(v===DUCK)el.innerHTML=faceVideosReady?'<canvas class="duckface" width="256" height="256"></canvas>':DUCK_SVG;
   else if(v===RED)el.innerHTML=REDX_SVG;
   else el.innerHTML=v===MARK?X_SVG:'';}
 function renderBoard(){for(let r=0;r<N;r++)for(let c=0;c<N;c++)renderCell(r,c);}
@@ -814,7 +903,7 @@ function renderChips(){const c=$('chips');const items=[
     {g:[['d','x','x'],['x','',''],['x','','']],t:L("1 Duck per column and row","1 на столбец и ряд")},
     {g:[['x','x','x'],['x','d','x'],['x','x','x']],t:L("Ducks cannot touch","Утки не касаются")}];
   c.innerHTML=items.map(it=>'<div class="chip">'+miniGrid(it.g)+'<span class="chiptxt">'+it.t+'</span></div>').join('');}
-function renderBoosters(){[['undo','cntUndo'],['hint','cntHint'],['placeduck','cntDuck']].forEach(([k,id])=>{const el=$(id);if(!el)return;el.classList.remove('zero');el.classList.add('price');el.textContent=BOOSTER_COST[k];});}
+function renderBoosters(){[['undo','cntUndo'],['hint','cntHint'],['placeduck','cntDuck']].forEach(([k,id])=>{const el=$(id);if(!el)return;const free=(save.freeBoosters&&save.freeBoosters[k])||0;el.classList.remove('zero');el.classList.toggle('free',free>0);el.classList.toggle('price',free<=0);el.textContent=free>0?free:BOOSTER_COST[k];});}
 function renderAll(){renderBoard();renderHud();renderBoosters();updateGoldHud();}
 function pulseCell(r,c){const el=cellEl(r,c);if(!el)return;el.classList.add('spot');setTimeout(()=>el.classList.remove('spot'),1800);}
 
@@ -833,6 +922,9 @@ function soundPlace(){blip(523,0.1,'triangle',0.06);setTimeout(()=>blip(784,0.08
 function soundBad(){blip(170,0.18,'sawtooth',0.05);}
 function soundWin(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>blip(f,0.18,'triangle',0.07),i*110));}
 function soundLose(){[392,330,262].forEach((f,i)=>setTimeout(()=>blip(f,0.22,'sine',0.06),i*130));}
+function soundWhoosh(){blip(170,0.18,'sawtooth',0.04);setTimeout(()=>blip(120,0.12,'sine',0.03),60);}
+function soundPop(){blip(440,0.08,'triangle',0.05);setTimeout(()=>blip(680,0.06,'triangle',0.04),55);}
+function soundSparkle(){[880,1175,1568].forEach((f,i)=>setTimeout(()=>blip(f,0.1,'triangle',0.045),i*55));}
 
 /* ---------- duck videos ---------- */
 let audioUnlocked=false;
@@ -929,14 +1021,35 @@ function buyPack(kind){
   if(!spendGold(PACK_COST[kind])){needGold();return;}
   revealPack(kind,false);}
 function revealPack(kind,wasFree){const results=doOpenPack(kind);MX.track('Pack Opened',{kind,free:!!wasFree});
+  const best=results.reduce((m,r)=>Math.max(m,RARITY_ORDER.indexOf(r.s.rarity)),0);
+  $('packTitle').textContent=L("Opening pack...","Открываем набор...");
   $('packReveal').innerHTML=results.map((r,i)=>{
-    const tag=r.had?('<div class="revtag dup">+'+r.dup+'</div>'):('<div class="revtag new">'+L('NEW','НОВОЕ')+'</div>');
-    return '<div class="revcard r-'+r.s.rarity+'" style="animation-delay:'+(i*0.12).toFixed(2)+'s"><div class="stfallback">'+DUCK_MINI+'</div>'+stickerImg(r.s.id)+tag+'</div>';
+    const tag=r.had?('<div class="revtag dup">+'+r.dup+'</div>'):('<div class="revtag new">'+L("NEW","НОВОЕ")+'!</div>');
+    return '<div class="revcard r-'+r.s.rarity+'" style="--d:'+(i*0.5).toFixed(2)+'s"><div class="rc-burst"></div><div class="rc-inner"><div class="rc-face rc-back">?</div><div class="rc-face rc-front"><div class="stfallback">'+DUCK_MINI+'</div>'+stickerImg(r.s.id)+tag+'</div></div></div>';
   }).join('');
-  haptic('ok');soundWin();openScrim('scrimPack');renderAlbum();}
+  openScrim('scrimPack');haptic('med');soundWhoosh();
+  // sequence sounds/haptics with each card flip; sparkle for rare+
+  results.forEach((r,i)=>{setTimeout(()=>{const hi=RARITY_ORDER.indexOf(r.s.rarity)>=2;if(hi){soundSparkle();haptic('ok');}else{soundPop();haptic('light');}},650+i*500);});
+  setTimeout(()=>{$('packTitle').textContent=L("New stickers!","Новые наклейки!");if(best>=2)soundWin();},700+results.length*500);
+  renderAlbum();}
 
 function setAvatar(id){save.avatarSticker=id;persist();renderHomeAvatar();toast(L("Set as your album badge","Установлено как значок"));haptic('light');renderAlbum();}
-function claimSet(setId){if(!setComplete(setId)||(save.setsClaimed&&save.setsClaimed[setId]))return;save.setsClaimed=save.setsClaimed||{};save.setsClaimed[setId]=true;addGold(SET_CHEST);MX.track('Set Completed',{set:setId});toast('+'+SET_CHEST+' '+L("gold","золота"));haptic('ok');soundWin();confettiRain();renderAlbum();}
+function rewardItemsHtml(prize){const p=[];const names={hint:L("Hint","Подсказка"),undo:L("Undo","Назад"),placeduck:L("Place a Duck","Утка")};
+  if(prize.boosters)['placeduck','hint','undo'].forEach(k=>{if(prize.boosters[k])p.push('<div class="rwd-item">'+boosterIcon(k)+'<span>x'+prize.boosters[k]+' '+names[k]+'</span></div>');});
+  if(prize.gold)p.push('<div class="rwd-item"><span class="rwd-ic">'+COIN_SVG+'</span><span>+'+prize.gold+'</span></div>');
+  return p.join('');}
+function showReward(title,sub,prize,grand){$('rwdTitle').textContent=title;$('rwdSub').textContent=sub;$('rwdItems').innerHTML=rewardItemsHtml(prize);$('scrimReward').classList.toggle('grand',!!grand);openScrim('scrimReward');haptic('ok');soundWin();confettiRain();}
+function claimSet(setId){if(!setComplete(setId)||(save.setsClaimed&&save.setsClaimed[setId]))return;save.setsClaimed=save.setsClaimed||{};save.setsClaimed[setId]=true;
+  grantFreeBoosters(SET_PRIZE.boosters);save.gold=(save.gold||0)+SET_PRIZE.gold;persist();updateGoldHud();renderBoosters();
+  MX.track('Set Completed',{set:setId});
+  const st=STICKER_SETS.find(x=>x.id===setId)||{en:'Set',ru:'Набор'};
+  showReward(L("Set Complete!","Набор собран!"),L(st.en,st.ru)+' '+L("done. Here is your prize:","собран. Вот твой приз:"),SET_PRIZE,false);
+  renderAlbum();}
+function claimGrand(){if(save.grandClaimed||!STICKER_SETS.every(s=>setComplete(s.id)))return;save.grandClaimed=true;
+  grantFreeBoosters(GRAND_PRIZE.boosters);save.gold=(save.gold||0)+GRAND_PRIZE.gold;persist();updateGoldHud();renderBoosters();
+  MX.track('Grand Prize Claimed');
+  showReward(L("GRAND PRIZE!","ГРАНД-ПРИЗ!"),L("You collected every single duck. Master Collector!","Ты собрал всех уток. Мастер-коллекционер!"),GRAND_PRIZE,true);
+  renderAlbum();}
 
 function renderAlbumPacks(){const row=$('packRow');if(!row)return;const fp=save.freePacks||{basic:0,golden:0};
   const pk=(kind,svg)=>{const free=(fp[kind]||0)>0;const title=kind==='golden'?L("Golden Pack","Золотой набор"):L("Basic Pack","Обычный набор");
@@ -945,7 +1058,10 @@ function renderAlbumPacks(){const row=$('packRow');if(!row)return;const fp=save.
   row.innerHTML=pk('basic',PACK_SVG)+pk('golden',GOLD_PACK_SVG);}
 
 function renderAlbum(){renderAlbumPacks();updateGoldHud();const wrap=$('albumSets');if(!wrap)return;
-  wrap.innerHTML=STICKER_SETS.map(set=>{
+  const allDone=STICKER_SETS.every(s=>setComplete(s.id));let grand='';
+  if(allDone&&!save.grandClaimed)grand='<button class="grandbtn" data-grand="1">'+TROPHY_MINI+L("Claim Grand Prize!","Забрать Гранд-приз!")+'</button>';
+  else if(allDone&&save.grandClaimed)grand='<div class="granddone">'+TROPHY_MINI+L("Master Collector","Мастер-коллекционер")+'</div>';
+  wrap.innerHTML=grand+STICKER_SETS.map(set=>{
     const items=STICKERS.filter(s=>s.set===set.id);
     const slots=items.map(s=>{const n=ownedCount(s.id);
       if(n<=0)return '<div class="stslot locked"><div class="stfallback">'+DUCK_MINI+'</div><span class="qmark">?</span></div>';
@@ -954,7 +1070,7 @@ function renderAlbum(){renderAlbumPacks();updateGoldHud();const wrap=$('albumSet
       return '<div class="stslot owned r-'+s.rarity+'" data-ava="'+s.id+'"><div class="stfallback">'+DUCK_MINI+'</div>'+stickerImg(s.id)+ava+dn+'</div>';}).join('');
     const done=setOwnedN(set.id),total=setTotalN(set.id);
     let foot='';
-    if(setComplete(set.id))foot=(save.setsClaimed&&save.setsClaimed[set.id])?'<div class="claimdone">'+L("Set complete","Набор собран")+'</div>':'<button class="claimbtn" data-claim="'+set.id+'">'+TROPHY_MINI+L("Claim ","Забрать ")+SET_CHEST+'</button>';
+    if(setComplete(set.id))foot=(save.setsClaimed&&save.setsClaimed[set.id])?'<div class="claimdone">'+L("Set complete","Набор собран")+'</div>':'<button class="claimbtn" data-claim="'+set.id+'">'+TROPHY_MINI+L("Claim prize","Забрать приз")+'</button>';
     return '<div class="setblock"><div class="sethdr"><span class="settitle">'+L(set.en,set.ru)+'</span><span class="setprog">'+done+'/'+total+'</span></div><div class="setgrid">'+slots+'</div>'+foot+'</div>';
   }).join('');}
 
@@ -1062,8 +1178,9 @@ function bind(){
   $('homeGold').onclick=openShop;$('gameGold').onclick=openShop;$('albumGold').onclick=openShop;
   $('btnContinue').onclick=continueLevel;
   $('packOk').onclick=()=>{closeScrim('scrimPack');renderAlbum();};
+  $('rwdOk').onclick=()=>closeScrim('scrimReward');
   $('packRow').addEventListener('click',e=>{const p=e.target.closest('[data-pack]');if(p)buyPack(p.getAttribute('data-pack'));});
-  $('albumSets').addEventListener('click',e=>{const a=e.target.closest('[data-ava]');if(a){setAvatar(a.getAttribute('data-ava'));return;}const c=e.target.closest('[data-claim]');if(c)claimSet(c.getAttribute('data-claim'));});
+  $('albumSets').addEventListener('click',e=>{const g=e.target.closest('[data-grand]');if(g){claimGrand();return;}const a=e.target.closest('[data-ava]');if(a){setAvatar(a.getAttribute('data-ava'));return;}const c=e.target.closest('[data-claim]');if(c)claimSet(c.getAttribute('data-claim'));});
 }
 
 /* ---------- boot ---------- */
@@ -1165,7 +1282,7 @@ function boot(){applyI18n();$('tagline').textContent=t('tagline');document.query
   // faceLoop only keys during the game, so on the home we key the playing video here.
   var faceReadyShown=false, curMode='idle';
   function showKeyed(){ if(!faceReadyShown){ faceReadyShown=true; face.classList.add('ready'); duck.classList.add('face-on'); } }
-  function paintDuck(mode){ curMode=mode; if(typeof faceVideosReady!=='undefined'&&faceVideosReady&&typeof keyInto==='function'&&typeof drawFace==='function'){ try{ if(keyInto(mode)){ drawFace(face,mode); showKeyed(); return; } }catch(e){} } }
+  function paintDuck(mode){ curMode=mode; try{_homeMode=mode;}catch(e){} if(typeof faceVideosReady!=='undefined'&&faceVideosReady&&typeof keyInto==='function'&&typeof drawFace==='function'){ try{ if(keyInto(mode)){ drawFace(face,mode); showKeyed(); return; } }catch(e){} } }
 
   var lastPaint=0;
   function homeOn(){ var h=document.getElementById('home'); return !document.hidden&&h&&h.classList.contains('on'); }

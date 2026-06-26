@@ -401,7 +401,6 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
     <div class="boosters" id="boosters">
       <button class="booster" id="bsDuck"><canvas class="bface" width="128" height="128"></canvas><span class="bcount price" id="cntDuck">0</span><span class="blabel" data-i="placeduck">Place</span></button>
       <button class="booster" id="bsHint"><canvas class="bface" width="128" height="128"></canvas><span class="bcount price" id="cntHint">0</span><span class="blabel" data-i="hint">Hint</span></button>
-      <button class="booster" id="bsUndo"><canvas class="bface" width="128" height="128"></canvas><span class="bcount price" id="cntUndo">0</span><span class="blabel" data-i="undo">Undo</span></button>
     </div>
   </section>
 
@@ -613,8 +612,8 @@ const PACK_COST={basic:150,golden:400};
 const PACK_SIZE={basic:3,golden:5};
 const PACK_WEIGHTS={basic:{common:70,rare:23,epic:6,legendary:1},golden:{common:45,rare:38,epic:14,legendary:3}};
 const DUP_GOLD={common:5,rare:20,epic:60,legendary:150};
-const SET_PRIZE={gold:200,boosters:{hint:2,undo:2,placeduck:1}}; // prize for completing a sticker set
-const GRAND_PRIZE={gold:2000,boosters:{hint:10,undo:10,placeduck:10}}; // grand prize for completing ALL sets
+const SET_PRIZE={gold:200,boosters:{hint:2,placeduck:1}}; // prize for completing a sticker set
+const GRAND_PRIZE={gold:2000,boosters:{hint:10,placeduck:10}}; // grand prize for completing ALL sets
 const RARITY_ORDER=['common','rare','epic','legendary'];
 function goldForWin(n){return n<=5?10:n<=6?15:n<=7?20:n<=8?30:40;}
 function dailyWinBonus(){return 25+Math.min((save&&save.streak)||0,7)*5;}
@@ -969,7 +968,7 @@ function renderChips(){const c=$('chips');const items=[
     {g:[['d','x','x'],['x','',''],['x','','']],t:L("1 Duck per column and row","1 на столбец и ряд")},
     {g:[['x','x','x'],['x','d','x'],['x','x','x']],t:L("Ducks cannot touch","Утки не касаются")}];
   c.innerHTML=items.map(it=>'<div class="chip">'+miniGrid(it.g)+'<span class="chiptxt">'+it.t+'</span></div>').join('');}
-function renderBoosters(){[['undo','cntUndo'],['hint','cntHint'],['placeduck','cntDuck']].forEach(([k,id])=>{const el=$(id);if(!el)return;const free=(save.freeBoosters&&save.freeBoosters[k])||0;el.classList.remove('zero');el.classList.toggle('free',free>0);el.classList.toggle('price',free<=0);el.textContent=free>0?free:BOOSTER_COST[k];});}
+function renderBoosters(){[['hint','cntHint'],['placeduck','cntDuck']].forEach(([k,id])=>{const el=$(id);if(!el)return;const free=(save.freeBoosters&&save.freeBoosters[k])||0;el.classList.remove('zero');el.classList.toggle('free',free>0);el.classList.toggle('price',free<=0);el.textContent=free>0?free:BOOSTER_COST[k];});}
 function renderAll(){renderBoard();renderHud();renderBoosters();updateGoldHud();}
 function pulseCell(r,c){const el=cellEl(r,c);if(!el)return;el.classList.add('spot');setTimeout(()=>el.classList.remove('spot'),1800);}
 
@@ -1184,11 +1183,9 @@ function ftueStep1(){ // teach X exclusion along the placed duck's row+col
   ftueSpot(cells.length?cells:[[dr,(dc+1)%N]]);
   showCoach('top',FT.s1a);showCoach('bot',FT.s1b);if(cells[0])handOver(cells[0][0],cells[0][1]);
 }
-function ftueStep2(){ // region rule, then free finish
+function ftueStep2(){ // free finish: no coach bubbles, just let the player play
   ftue.step=2;ftueDim(false);handHide();cellEls.forEach(row=>row.forEach(el=>el.classList.remove('spot')));ftue.allowOnly=null;
-  showCoach('top',FT.s2);hideCoach('bot');
-  const b=$('coachTopB');b.innerHTML=bub(FT.s2)+'<button class="btn play gotit" id="ftueGotit" style="margin-left:10px;padding:8px 16px;font-size:3.6vw">'+t('gotit')+'</button>';
-  $('ftueGotit').onclick=ftueStep3;
+  hideCoach('top');hideCoach('bot');
 }
 function ftueStep3(){ // free finish with hint card
   ftue.step=3;hideCoach('top');showCoach('bot',FT.s3b,true);$('coachBot').style.pointerEvents='auto';
@@ -1240,7 +1237,7 @@ function bind(){
   $('lbClose').onclick=()=>closeScrim('scrimLB');
   $('btnBack').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
   $('btnGear').onclick=()=>openSettings(true);
-  $('bsUndo').onclick=useUndo;$('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
+  $('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
   $('btnNext').onclick=()=>{closeScrim('scrimWin');startLevel('levels',levelIdx+1);};
   $('btnWinHome').onclick=()=>{closeScrim('scrimWin');show('home');refreshHome();};
   $('btnRetry').onclick=()=>{closeScrim('scrimLose');if(!save.tutorialDone){startFTUE();}else{startLevel('levels',levelIdx);}};

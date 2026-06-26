@@ -759,6 +759,26 @@ app.post('/api/ship-notify', async (req, res) => {
   res.json({ ok: true, sent });
 });
 
+// Secret-guarded: DM the owner a preview of push notifications. Body { only } filters by
+// 'play' (gameplay clips), 'photo', 'animation', or a trigger name; empty = all. Same as /preview in chat.
+app.post('/api/preview', async (req, res) => {
+  const secret = process.env.SHIP_SECRET || '';
+  if (!secret || req.headers['x-ship-key'] !== secret) return res.status(403).json({ error: 'forbidden' });
+  const only = String((req.body && req.body.only) || '').trim();
+  const ids = parseAdminIds(); if (!ids.length) return res.status(400).json({ error: 'no admin ids' });
+  let items = NOTIF_ITEMS;
+  if (only === 'play') items = NOTIF_ITEMS.filter(it => /^g_/.test(it.id));
+  else if (only === 'photo' || only === 'animation') items = NOTIF_ITEMS.filter(it => it.kind === only);
+  else if (only) items = NOTIF_ITEMS.filter(it => it.trig === only);
+  res.json({ ok: true, admins: ids.length, items: items.length });
+  (async () => {
+    for (const id of ids) {
+      await tg('sendMessage', { chat_id: id, text: 'Preview' + (only ? ' (' + only + ')' : '') + ': ' + items.length + ' notifications.' });
+      for (const item of items) { await sendNotifItem({ chatId: id, lang: 'en' }, item); await new Promise(r => setTimeout(r, 500)); }
+    }
+  })().catch(() => {});
+});
+
 app.get('/healthz', (req, res) => res.json({ ok: true, dbReady }));
 
 initSchema().finally(() => {

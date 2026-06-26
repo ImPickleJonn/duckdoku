@@ -376,12 +376,12 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .wingold{display:inline-flex;align-items:center;gap:6px;background:#3b2f25;color:#FFD867;border-radius:16px;padding:6px 15px;font-size:4.6vw;font-weight:900;margin:4px auto 8px;}
 .wingold svg{width:22px;height:22px;}
 /* full-screen dark level-win celebration (full-body trumpet duck) */
-.winscrim{background:rgba(16,11,9,.95);}
+.winscrim,.losescrim{background:rgba(16,11,9,.95);}
 .wincol{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:420px;padding:16px;text-align:center;}
 .wincele{width:min(80vw,360px);aspect-ratio:1;display:block;margin-bottom:-4px;}
-.winscrim h2{color:#fff;text-shadow:0 2px 0 var(--orange-d);font-size:9vw;margin:0;}
-.winscrim p{color:#E9D9C9;margin:2px 0 8px;}
-.winscrim .btn{width:100%;max-width:320px;}
+.winscrim h2,.losescrim h2{color:#fff;text-shadow:0 2px 0 var(--orange-d);font-size:9vw;margin:0;}
+.winscrim p,.losescrim p{color:#E9D9C9;margin:2px 0 8px;}
+.winscrim .btn,.losescrim .btn{width:100%;max-width:320px;}
 
 #album{background:var(--bg);justify-content:flex-start;padding-left:0;padding-right:0;}
 .album-scroll{width:100%;max-width:480px;margin:0 auto;flex:1;overflow-y:auto;padding:2px 14px calc(var(--safe-bot) + 24px);-webkit-overflow-scrolling:touch;}
@@ -661,14 +661,16 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   </div>
 </div>
 
-<div class="scrim" id="scrimLose"><div class="modal modal-rel">
-  <div class="duckslot"><canvas id="loseFace" class="modalface" width="256" height="256"></canvas></div>
-  <h2 id="loseTitle">Out of hearts</h2>
-  <p id="loseSub">No worries. Try the puzzle again.</p>
-  <button class="btn play" id="btnContinue" style="background:var(--green);box-shadow:0 5px 0 #2f8f57">Continue</button>
-  <button class="btn play" id="btnRetry" data-i="retry">Try again</button>
-  <button class="btn ghost" id="btnLoseHome" data-i="home">Home</button>
-</div></div>
+<div class="scrim losescrim" id="scrimLose">
+  <div class="wincol">
+    <canvas id="loseCele" class="wincele" width="640" height="640"></canvas>
+    <h2 id="loseTitle">Out of hearts</h2>
+    <p id="loseSub">No worries. Try the puzzle again.</p>
+    <button class="btn play" id="btnContinue" style="background:var(--green);box-shadow:0 5px 0 #2f8f57">Continue</button>
+    <button class="btn play" id="btnRetry" data-i="retry">Try again</button>
+    <button class="btn ghost" id="btnLoseHome" data-i="home">Home</button>
+  </div>
+</div>
 
 <div class="scrim" id="scrimLevelUp"><div class="modal dark modal-rel">
   <div class="duckslot"><video id="luVid" autoplay loop muted playsinline poster="assets/ducks/levelup-frame.png"><source src="assets/ducks/levelup.mp4?v=042" type="video/mp4"></video></div>
@@ -776,6 +778,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   <video id="fvbsthint" loop muted playsinline preload="auto"><source src="assets/ducks/bst-hint.mp4?v=042" type="video/mp4"></video>
   <video id="fvbstundo" loop muted playsinline preload="auto"><source src="assets/ducks/bst-undo.mp4?v=042" type="video/mp4"></video>
   <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/victory-1.mp4" type="video/mp4"></video>
+  <video id="fvlose" loop muted playsinline preload="auto"><source src="assets/ducks/defeat-1.mp4" type="video/mp4"></video>
 </div>
 
 <div class="fx" id="fx"></div>
@@ -931,7 +934,7 @@ const SAVE_KEY='duckdoku.save.v2';
 const DEFAULT_SAVE={levelsDone:0,stars:{},boosters:{},gold:120,stickers:{},freePacks:{basic:0,golden:0},
   freeBoosters:{undo:0,hint:3,placeduck:3},grandClaimed:false, // new players start with 3 free Hint + 3 free Place boosters
   setsClaimed:{},avatarSticker:null,zenBest:0,zenSolved:0,tutorialDone:false,sound:true,
-  streak:0,lastPlayYMD:null,lastDailyYMD:null,lastGoldYMD:null,_goldMigrated:false,winVariant:0};
+  streak:0,lastPlayYMD:null,lastDailyYMD:null,lastGoldYMD:null,_goldMigrated:false,winVariant:0,loseVariant:0};
 let save=loadSave();
 function loadSave(){let s=null;try{s=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){}
   const out=s?Object.assign({},DEFAULT_SAVE,s,{boosters:Object.assign({},s.boosters),stickers:Object.assign({},s.stickers),freePacks:Object.assign({},DEFAULT_SAVE.freePacks,s.freePacks),freeBoosters:Object.assign({},DEFAULT_SAVE.freeBoosters,s.freeBoosters),setsClaimed:Object.assign({},s.setsClaimed)}):JSON.parse(JSON.stringify(DEFAULT_SAVE));
@@ -1062,7 +1065,7 @@ const faceVid={},faceKeyed={};
 let faceFx=new Map(); // r*100+c -> {state, until}
 let _homeMode='idle';        // the home rules-loop's current expression (faceLoop keeps it decoding)
 const _playing=new Set();    // clips currently un-paused; the rest are paused to save the GPU
-const ALL_VIDS=['idle','happy','oops','sad','bsthint','bstundo','win'];
+const ALL_VIDS=['idle','happy','oops','sad','bsthint','bstundo','win','lose'];
 // Play exactly the clips in `want`, pause the rest. Android struggles with many
 // simultaneous <video> decoders, so we keep alive only what is on screen.
 function reconcileClips(want){ALL_VIDS.forEach(s=>{const v=faceVid[s];if(!v)return;const on=want.has(s);
@@ -1073,6 +1076,8 @@ function initFaces(){
   // full-body win celebration clip (its own bigger keyed canvas)
   faceVid.win=document.getElementById('fvwin');
   if(faceVid.win){const wc=document.createElement('canvas');wc.width=wc.height=640;faceKeyed.win=wc;}
+  faceVid.lose=document.getElementById('fvlose');
+  if(faceVid.lose){const lc=document.createElement('canvas');lc.width=lc.height=640;faceKeyed.lose=lc;}
   // attach readiness listeners to every clip but DO NOT autoplay them all;
   // faceLoop/reconcileClips drives playback so only on-screen clips decode.
   ALL_VIDS.forEach(s=>{const v=faceVid[s];if(!v)return;['loadeddata','canplay'].forEach(ev=>v.addEventListener(ev,faceCheck));v.addEventListener('error',()=>{});});
@@ -1110,14 +1115,22 @@ function blobLoadFaces(){
     }).catch(()=>{});
   });
 }
-// VICTORY rotation: 5 win clips (assets/ducks/victory-1..5.mp4), a DIFFERENT one each win.
-const WIN_VARIANTS=5; let _winBlobs=[];
-function preloadWins(){for(let n=0;n<WIN_VARIANTS;n++){if(_winBlobs[n])continue;fetch('assets/ducks/victory-'+(n+1)+'.mp4').then(r=>r.ok?r.blob():Promise.reject()).then(b=>{_winBlobs[n]=URL.createObjectURL(b);}).catch(()=>{});}}
-function setWinVariant(n){const v=faceVid.win;if(!v)return;const apply=(src)=>{if(v.src===src)return;v.src=src;try{v.load();}catch(e){}if(_playing.has('win')){try{const p=v.play&&v.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}};
-  if(_winBlobs[n]){apply(_winBlobs[n]);return;}
-  fetch('assets/ducks/victory-'+(n+1)+'.mp4').then(r=>r.ok?r.blob():Promise.reject()).then(b=>{_winBlobs[n]=URL.createObjectURL(b);apply(_winBlobs[n]);}).catch(()=>{apply('assets/ducks/victory-'+(n+1)+'.mp4');});}
-// pick the next variant (persisted so it keeps cycling across sessions), load it for the win screen
-function nextWinVariant(){const v=((save.winVariant||0)%WIN_VARIANTS+WIN_VARIANTS)%WIN_VARIANTS;save.winVariant=(v+1)%WIN_VARIANTS;persist();setWinVariant(v);return v;}
+// CELEBRATION rotation: a DIFFERENT full-body clip each time, keyed onto #winCele / #loseCele.
+// WIN = 10 victory clips (victory-1..10.mp4), LOSE = 5 defeat clips (defeat-1..5.mp4). Persisted cycle.
+function makeRotator(clipKey,prefix,count,saveKey){
+  const blobs=[]; const url=n=>'assets/ducks/'+prefix+'-'+(n+1)+'.mp4';
+  function preload(){for(let n=0;n<count;n++){if(blobs[n])continue;fetch(url(n)).then(r=>r.ok?r.blob():Promise.reject()).then(b=>{blobs[n]=URL.createObjectURL(b);}).catch(()=>{});}}
+  function setN(n){const v=faceVid[clipKey];if(!v)return;const apply=(src)=>{if(v.src===src)return;v.src=src;try{v.load();}catch(e){}if(_playing.has(clipKey)){try{const p=v.play&&v.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}};
+    if(blobs[n]){apply(blobs[n]);return;}
+    fetch(url(n)).then(r=>r.ok?r.blob():Promise.reject()).then(b=>{blobs[n]=URL.createObjectURL(b);apply(blobs[n]);}).catch(()=>{apply(url(n));});}
+  function next(){const n=((save[saveKey]||0)%count+count)%count;save[saveKey]=(n+1)%count;persist();setN(n);return n;}
+  return {preload,setN,next};
+}
+const WIN_ROT=makeRotator('win','victory',10,'winVariant');
+const LOSE_ROT=makeRotator('lose','defeat',5,'loseVariant');
+function preloadWins(){WIN_ROT.preload();LOSE_ROT.preload();}
+function nextWinVariant(){return WIN_ROT.next();}
+function nextLoseVariant(){return LOSE_ROT.next();}
 function faceLoop(){requestAnimationFrame(faceLoop);
   if(!faceVideosReady)return;
   if(document.hidden){if(_playing.size)reconcileClips(new Set());return;} // pause all decoders when backgrounded
@@ -1138,7 +1151,7 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const _bcyc=_boosterClock?((now-_boosterClock)%5000):0;const boosterActive=_bcyc<2400;
   const boosterCv=gameOn?document.querySelector('#bsDuck canvas.bface'):null; // Place uses 'idle' (already kept alive for the grid ducks)
   const hintCv=gameOn?document.querySelector('#bsHint canvas.bface'):null;if(hintCv&&boosterActive)used.add('bsthint');
-  if(winOn)used.add('win');if(loseOn)used.add('sad');if(albumOn){used.add('idle');used.add('bsthint');}
+  if(winOn)used.add('win');if(loseOn)used.add('lose');if(albumOn){used.add('idle');used.add('bsthint');}
   if(navOn)used.add('idle');if(shopOn)used.add('bsthint'); // nav Start duck (idle) + shop bundle hint icons (bsthint)
   if(smOn){used.add('idle');used.add('bsthint');} // in-level popup bundle row (Place=idle, Hint=bsthint)
   if(brOn){used.add('idle');used.add('bsthint');const _hf=$('brFace');if(_hf)used.add(_hf.getAttribute('data-bk')||'happy');} // result chips (idle/bsthint) + hero (happy/sad)
@@ -1150,7 +1163,7 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   if(albumOn||navOn||brOn||smOn)document.querySelectorAll('.bicon').forEach(cv=>{const k=cv.getAttribute('data-bk');if(k)drawFace(cv,k);}); // album/reward + nav Start duck + shop bundle + purchase-result hero + in-level popup bundle = the in-game keyed faces
   if(gameOn&&gstate){const pf=document.querySelector('.pface canvas');if(pf)drawFace(pf,now<_progUntil?'happy':'idle');}
   if(winOn)drawFace($('winCele'),'win');
-  if(loseOn)drawFace($('loseFace'),'sad');}
+  if(loseOn)drawFace($('loseCele'),'lose');}
 function duckReact(r,c,state,ms){if(faceVideosReady)faceFx.set(r*100+c,{state,until:Date.now()+(ms||1200)});}
 const HAPPY_MS=1400,CRY_MS=1500,WIN_MODAL_DELAY=1300,LOSE_MODAL_DELAY=1400;
 let _progUntil=0; // progress-bar face plays 'happy' once (until this ts) when a duck is found, then back to idle
@@ -1262,7 +1275,7 @@ function onWin(){ended=true;gameLive=false;nextWinVariant();allDucksReact('happy
   showModalSoon('scrimWin',WIN_MODAL_DELAY);} // let the board ducks celebrate first, then the victory screen
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
-function onLose(){ended=true;gameLive=false;allDucksReact('sad',LOSE_MODAL_DELAY+800);MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
+function onLose(){ended=true;gameLive=false;nextLoseVariant();allDucksReact('sad',LOSE_MODAL_DELAY+800);MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
   const canCont=!ftue&&(save.gold||0)>=CONTINUE_COST;const cb=$('btnContinue');cb.style.display=canCont?'':'none';
   if(canCont)cb.innerHTML=L("Continue","Продолжить")+' '+costChip(CONTINUE_COST);
   $('loseSub').textContent=canCont?L("Keep your ducks. Refill hearts and finish.","Сохрани уток. Пополни сердца и закончи."):L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");

@@ -40,7 +40,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .logo-img{display:block;width:min(80vw,380px);height:auto;margin:3.5vh auto 0;}
 .logo b{color:var(--orange);}
 .tag{color:var(--ink-soft);font-size:4.2vw;margin:8px 0 0;}
-.hero-wrap{width:min(40vw,180px);aspect-ratio:1;margin:2vh auto 1vh;}
+.hero-wrap{width:min(48vw,212px);aspect-ratio:1;margin:2vh auto 1vh;}
 .hero-wrap video,.hero-wrap img{width:100%;height:100%;object-fit:contain;border-radius:28px;}
 .menu{width:min(86vw,420px);display:flex;flex-direction:column;gap:11px;margin-top:1vh;}
 .btn{padding:17px;border-radius:20px;font-size:5vw;box-shadow:0 5px 0 var(--shadow);transition:transform .06s;}
@@ -57,7 +57,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .coins-line{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--ink-soft);font-size:3.6vw;margin-top:10px;min-height:18px;}
 .homegear{position:absolute;top:calc(var(--safe-top) + 5vh);right:16px;z-index:2;}
 .homelb{position:absolute;top:calc(var(--safe-top) + 5vh);left:16px;z-index:2;}
-#home .menu .btn.play{font-size:6vw;padding:20px;}
+#home .menu .btn.play{font-size:6vw;padding:20px;width:82%;align-self:center;}
 
 /* ---------- TOP BAR ---------- */
 .topbar{width:100%;max-width:460px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;position:relative;}
@@ -234,21 +234,17 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
   background:#FFFBF2;border-top:2.5px solid #EBDDC4;box-shadow:0 -4px 14px rgba(150,110,90,.12);}
 body.nav-on #navBar{display:flex;}
 body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(--nav-h) + var(--safe-bot) + 6px);}
-.navtab{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;color:var(--ink-soft);}
+.navtab{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;color:var(--ink-soft);}
 .navico{width:30px;height:30px;display:flex;align-items:center;justify-content:center;transition:transform .16s;}
 .navico svg{width:28px;height:28px;}
 .navlbl{font-size:3vw;font-weight:900;color:var(--ink-soft);line-height:1;}
-.navtab.active{color:var(--orange);}
-.navtab.active .navlbl{color:var(--orange);}
-.navtab.active .navico{transform:translateY(-2px) scale(1.06);}
-/* center Start tab: duck-pill. GRAY when not selected, BLUE when selected (distinct from the orange Level button). */
-.navStart{padding:0 6px;}
-.navStart .navico{width:auto;height:46px;flex-direction:row;align-items:center;justify-content:center;gap:6px;padding:0 16px 0 9px;border-radius:23px;background:#C2B7B0;box-shadow:0 3px 0 #A1968E;overflow:visible;transition:transform .06s,background .18s,box-shadow .18s;}
-.navStart .navico .bicon{width:34px;height:34px;display:block;filter:drop-shadow(0 1px 1px rgba(70,55,45,.32));}
-.navStart .navlbl{font-size:3.7vw;font-weight:900;color:#fff;text-shadow:0 1px 0 rgba(60,45,40,.28);}
-.navStart.active .navico{background:var(--blue);box-shadow:0 3px 0 var(--blue-d);transform:none;}
-.navStart.active .navlbl{color:#fff;text-shadow:0 1px 0 var(--blue-d);}
-.navStart .navico:active,.navStart.active .navico:active{transform:translateY(3px);box-shadow:0 0 0 var(--blue-d);}
+.navtab.active .navlbl{color:#fff;}
+.navtab.active .navico{transform:scale(1.04);}
+/* center Start tab: standard icon+label tab (duck on top, small label under), like Shop/Album */
+.navStart .navico{width:32px;height:32px;}
+.navStart .navico .bicon{width:32px;height:32px;display:block;}
+/* one BLUE selection pill that slides behind the active tab's icon+label */
+#navPill{position:absolute;border-radius:22px;background:var(--blue);box-shadow:0 3px 0 var(--blue-d);z-index:0;opacity:0;pointer-events:none;transition:left .26s cubic-bezier(.34,1.45,.6,1),top .26s,width .26s,height .26s,opacity .2s;}
 /* locked album tab: padlock badge + greyed icon (tooltip shows only on tap) */
 .navtab.navAlbum .navLk{display:none;position:absolute;top:5px;left:calc(50% + 6px);width:21px;height:21px;border-radius:50%;background:#6E4F44;border:2px solid #FFFBF2;box-shadow:0 1px 3px rgba(110,79,68,.5);align-items:center;justify-content:center;}
 .navtab.navAlbum .navLk svg{width:12px;height:12px;}
@@ -620,12 +616,14 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 
 <!-- ============ BOTTOM NAV ============ -->
 <nav id="navBar">
+  <div id="navPill"></div>
   <button class="navtab" id="navShop" aria-label="Shop">
     <span class="navico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8.5h16l-1 11.5a1.5 1.5 0 0 1-1.5 1.4H6.5A1.5 1.5 0 0 1 5 20L4 8.5z" fill="#FFD23F" stroke="#C9781E" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.4 10.5V8a3.6 3.6 0 0 1 7.2 0v2.5" fill="none" stroke="#C9781E" stroke-width="1.8" stroke-linecap="round"/></svg></span>
     <span class="navlbl" data-i="navshop">Shop</span>
   </button>
   <button class="navtab navStart active" id="navStart" aria-label="Play">
-    <span class="navico navduck"><canvas class="bicon" data-bk="idle" width="80" height="80"></canvas><span class="navlbl" data-i="navstart">Start</span></span>
+    <span class="navico navduck"><canvas class="bicon" data-bk="idle" width="80" height="80"></canvas></span>
+    <span class="navlbl" data-i="navstart">Start</span>
   </button>
   <button class="navtab navAlbum locked" id="navAlbum" aria-label="Album">
     <span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/></svg></span>
@@ -1125,9 +1123,9 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const now=Date.now();
   if(now-lastFaceTs<33)return; lastFaceTs=now;
   const used=new Set();
-  if(gameOn&&gstate){used.add('idle');faceFx.forEach((fx,k)=>{if(now>fx.until)faceFx.delete(k);else used.add(fx.state);});}
-  // booster faces: Place=idle, Hint=bsthint. Play ONE ~4s loop every 10s, then freeze static.
-  const _bcyc=_boosterClock?((now-_boosterClock)%10000):0;const boosterActive=_bcyc<4200;
+  if(gameOn&&gstate){used.add('idle');if(now<_progUntil)used.add('happy');faceFx.forEach((fx,k)=>{if(now>fx.until)faceFx.delete(k);else used.add(fx.state);});}
+  // booster icons (Place=idle, Hint=bsthint): animate ONE loop every 5s, then freeze static.
+  const _bcyc=_boosterClock?((now-_boosterClock)%5000):0;const boosterActive=_bcyc<2400;
   const boosterCv=gameOn?document.querySelector('#bsDuck canvas.bface'):null; // Place uses 'idle' (already kept alive for the grid ducks)
   const hintCv=gameOn?document.querySelector('#bsHint canvas.bface'):null;if(hintCv&&boosterActive)used.add('bsthint');
   if(winOn)used.add('win');if(loseOn)used.add('sad');if(albumOn){used.add('idle');used.add('bsthint');}
@@ -1140,10 +1138,20 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   if(gameOn&&gstate)for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]!==DUCK)continue;const el=cellEls[r]&&cellEls[r][c];if(!el)continue;const cv=el.querySelector('canvas.duckface');if(!cv)continue;const fx=faceFx.get(r*100+c);drawFace(cv,fx?fx.state:'idle');}
   if(boosterActive){if(boosterCv)drawFace(boosterCv,'idle');if(hintCv)drawFace(hintCv,'bsthint');} // draw only during the loop window; freezes static otherwise
   if(albumOn||navOn||brOn||smOn)document.querySelectorAll('.bicon').forEach(cv=>{const k=cv.getAttribute('data-bk');if(k)drawFace(cv,k);}); // album/reward + nav Start duck + shop bundle + purchase-result hero + in-level popup bundle = the in-game keyed faces
-  if(gameOn&&gstate){const pf=document.querySelector('.pface canvas');if(pf)drawFace(pf,'idle');}
+  if(gameOn&&gstate){const pf=document.querySelector('.pface canvas');if(pf)drawFace(pf,now<_progUntil?'happy':'idle');}
   if(winOn)drawFace($('winCele'),'win');
   if(loseOn)drawFace($('loseFace'),'sad');}
 function duckReact(r,c,state,ms){if(faceVideosReady)faceFx.set(r*100+c,{state,until:Date.now()+(ms||1200)});}
+const HAPPY_MS=1400,CRY_MS=1500,WIN_MODAL_DELAY=1300,LOSE_MODAL_DELAY=1400;
+let _progUntil=0; // progress-bar face plays 'happy' once (until this ts) when a duck is found, then back to idle
+// EVERY placed duck reacts together (one loop), then faceFx expires -> they return to the constantly-looping idle.
+function allDucksReact(state,ms){if(!faceVideosReady)return;const until=Date.now()+ms;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)faceFx.set(r*100+c,{state,until});}
+// a duck was found: ALL ducks (and the progress-bar face) do ONE happy loop, then idle.
+function onDuckFound(){_progUntil=Date.now()+HAPPY_MS;allDucksReact('happy',HAPPY_MS);}
+let _modalTimer=0;
+// Open the win/lose modal AFTER the board reaction, but cancellable + guarded so a stale timer can never
+// pop over home or a fresh level (only fires if we're still on this same ended level). Cleared on every (re)start.
+function showModalSoon(id,ms){clearTimeout(_modalTimer);_modalTimer=setTimeout(()=>{if(ended&&$('game').classList.contains('on'))openScrim(id);},ms);}
 
 /* ---------- game state ---------- */
 const EMPTY=0,MARK=1,DUCK=2,RED=3;
@@ -1153,7 +1161,7 @@ let ftue=null; // {active, step, target:[r,c], allowOnly:set}
 
 let gameLive=false; // a live (unfinished) normal level is resumable: Back -> home keeps it, Play returns to it
 function startLevel(m,idx){
-  mode=m;levelIdx=idx||0;ended=false;boostersUsed=0;heartsLost=0;history=[];ftue=null;faceFx.clear();_boosterClock=Date.now();
+  mode=m;levelIdx=idx||0;ended=false;boostersUsed=0;heartsLost=0;history=[];ftue=null;faceFx.clear();_boosterClock=Date.now();clearTimeout(_modalTimer);_progUntil=0;
   document.getElementById('app').classList.remove('tutdim','hintmode');document.getElementById('qboard').classList.remove('dim');
   hintActive=false;_hint=null;$('hintPill').classList.remove('on');$('hintApply').classList.remove('on');
   $('coachTop').classList.remove('on');$('coachBot').classList.remove('on');$('handhint').style.display='none';
@@ -1218,18 +1226,18 @@ function tryGuess(r,c){
   // The duck hides in ONE specific cell per region (the unique solution).
   if(puzzle.solCols[r]===c){
     // correct: the duck is found and LOCKED forever (cannot be removed)
-    gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);haptic('med');playSfx('duckfound');onFtueAction('duck',r,c);
+    gstate[r][c]=DUCK;duckCount++;renderCell(r,c);onDuckFound();haptic('med');playSfx('duckfound');onFtueAction('duck',r,c);
     if(duckCount===N&&!ftue)onWin(); else if(duckCount===N&&ftue&&ftue.active)onFtueWin();
   } else {
     // wrong: leave a PERMANENT red X (locked) and lose a heart
-    gstate[r][c]=RED;heartBreakAt(r,c,function(){renderCell(r,c);});for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++)if(gstate[rr][cc]===DUCK)duckReact(rr,cc,'sad',1600);shakeBoard();haptic('err');playSfx('loseheart');MX.track('Mistake Made',{level:levelIdx+1});
+    gstate[r][c]=RED;heartBreakAt(r,c,function(){renderCell(r,c);});allDucksReact('sad',CRY_MS);shakeBoard();haptic('err');playSfx('loseheart');MX.track('Mistake Made',{level:levelIdx+1});
     if(heartsEnabled){hearts--;heartsLost++;renderHearts();breakHeartIcon(hearts);if(hearts<=0)onLose();}
   }
 }
 function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),460);}if(gstate[r]&&gstate[r][c]===DUCK)duckReact(r,c,'oops',1000);});shakeBoard();}
 
 /* ---------- win / lose ---------- */
-function onWin(){ended=true;gameLive=false;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);haptic('ok');soundWin();confettiRain();
+function onWin(){ended=true;gameLive=false;allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;haptic('ok');soundWin();confettiRain();
   const stars=starsForWin();
   const praise=L(["Awesome!","Brilliant!","Quacktastic!","Well done!"][stars-1]||"Awesome!",["Отлично!","Блестяще!","Кряк-класс!","Молодец!"][stars-1]||"Отлично!");
   let goldGain=goldForWin(N);const tdy=ymd();if(save.lastGoldYMD!==tdy){goldGain+=dailyWinBonus();save.lastGoldYMD=tdy;}
@@ -1241,14 +1249,14 @@ function onWin(){ended=true;gameLive=false;for(let r=0;r<N;r++)for(let c=0;c<N;c
   $('winGold').innerHTML=COIN_SVG+'<span>+'+goldGain+'</span>';
   $('winSub').textContent=L("You solved it. The duck is delighted.","Ты решил. Утка в восторге.");
   $('btnNext').textContent=t('next');
-  openScrim('scrimWin');}
+  showModalSoon('scrimWin',WIN_MODAL_DELAY);} // let the board ducks celebrate first, then the victory screen
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
-function onLose(){ended=true;gameLive=false;MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
+function onLose(){ended=true;gameLive=false;allDucksReact('sad',LOSE_MODAL_DELAY+800);MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
   const canCont=!ftue&&(save.gold||0)>=CONTINUE_COST;const cb=$('btnContinue');cb.style.display=canCont?'':'none';
   if(canCont)cb.innerHTML=L("Continue","Продолжить")+' '+costChip(CONTINUE_COST);
   $('loseSub').textContent=canCont?L("Keep your ducks. Refill hearts and finish.","Сохрани уток. Пополни сердца и закончи."):L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");
-  openScrim('scrimLose');}
+  showModalSoon('scrimLose',LOSE_MODAL_DELAY);} // let the board ducks cry first, then the loss popup
 
 /* ---------- gold helpers ---------- */
 function fmtGold(n){n=n||0;return n>=10000?(Math.floor(n/100)/10)+'k':String(n);}
@@ -1272,7 +1280,7 @@ function usePlaceDuck(){if(ended||hintActive)return;let avail=false;for(let r=0;
 let _buyKey=null;
 function openBoosterBuy(k){const cost=BOOSTER_PACK_COST[k];if((save.gold||0)<cost){needGold();return;}_buyKey=k;const nm=k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Подставить утку');$('bbIcon').innerHTML=boosterIcon(k);$('bbTitle').textContent=L('Get ','Получить ')+BOOSTER_PACK_QTY+' '+nm;$('bbSub').textContent=L('Stock up to keep solving.','Запасись, чтобы решать дальше.');$('bbBuy').innerHTML=L('Buy for ','Купить за ')+costChip(cost);openScrim('scrimBuy');haptic('light');}
 function confirmBoosterBuy(){const k=_buyKey;if(!k)return;const cost=BOOSTER_PACK_COST[k];if(!spendGold(cost)){closeScrim('scrimBuy');needGold();return;}grantFreeBoosters({[k]:BOOSTER_PACK_QTY});persist();renderBoosters();closeScrim('scrimBuy');MX.track('Booster Pack Bought',{type:k,qty:BOOSTER_PACK_QTY,cost});haptic('ok');soundPop();toast('+'+BOOSTER_PACK_QTY+' '+(k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Утка')));if(k==='hint')useHint();else usePlaceDuck();}
-function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}boostersUsed++;hearts=3;ended=false;gameLive=true;renderHearts();closeScrim('scrimLose');MX.track('Continue Used',{level:levelIdx+1});haptic('ok');}
+function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}boostersUsed++;hearts=3;ended=false;gameLive=true;clearTimeout(_modalTimer);renderHearts();closeScrim('scrimLose');MX.track('Continue Used',{level:levelIdx+1});haptic('ok');}
 // Apply a purchase grant from the server: gold and/or free sticker packs.
 function grantReward(g){if(!g)return;const msgs=[];
   if(g.gold){save.gold=(save.gold||0)+g.gold;msgs.push('+'+g.gold+' '+L("gold","золота"));}
@@ -1332,10 +1340,10 @@ function applyHint(){
   const h=_hint;if(!h){hideHint();return;}
   if(h.kind==='remove'){snapshot();const [r,c]=h.target;if(gstate[r][c]===MARK)gstate[r][c]=EMPTY;hideHint();playSfx('xremove');haptic('ok');return;}
   if(h.kind==='mark'){snapshot();(h.marks||[]).forEach(([r,c])=>{if(gstate[r][c]===EMPTY)gstate[r][c]=MARK;});hideHint();playSfx('xremove');haptic('ok');return;}
-  if(h.kind==='place'){const [r,c]=h.target;let won=false;if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;won=(duckCount===N);}hideHint();duckReact(r,c,'happy',1100);pulseCell(r,c);updateCount();playSfx('duckfound');haptic('ok');if(won)onWin();return;}
+  if(h.kind==='place'){const [r,c]=h.target;let won=false;if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;won=(duckCount===N);}hideHint();onDuckFound();pulseCell(r,c);updateCount();playSfx('duckfound');haptic('ok');if(won)onWin();return;}
   hideHint();
 }
-function placeOneCorrect(){for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);pulseCell(r,c);return {r,c};}}return null;}
+function placeOneCorrect(){for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;renderCell(r,c);onDuckFound();pulseCell(r,c);return {r,c};}}return null;}
 function snapshot(){history.push({g:gstate.map(row=>row.slice()),hearts,duckCount});if(history.length>40)history.shift();}
 
 /* ---------- DOM + render ---------- */
@@ -1347,7 +1355,10 @@ function updateNav(scr){const nav=$('navBar');if(!nav)return;const top=(scr==='h
   document.body.classList.toggle('nav-on',top);
   ['navStart','navShop','navAlbum'].forEach(id=>{const b=$(id);if(b)b.classList.remove('active');});
   const map={home:'navStart',shop:'navShop',album:'navAlbum'},id=map[scr];if(id&&$(id))$(id).classList.add('active');
-  renderAlbumBtn();}
+  renderAlbumBtn();positionNavPill();requestAnimationFrame(positionNavPill);}
+let _navPillReady=false;
+function positionNavPill(){const bar=$('navBar'),pill=$('navPill');if(!bar||!pill)return;const a=bar.querySelector('.navtab.active');if(!a||!a.offsetWidth)return;const ico=a.querySelector('.navico')||a,lbl=a.querySelector('.navlbl');const top=a.offsetTop+ico.offsetTop,bot=lbl?(a.offsetTop+lbl.offsetTop+lbl.offsetHeight):(top+ico.offsetHeight);const cx=a.offsetLeft+a.offsetWidth/2,cy=(top+bot)/2,W=Math.min(64,a.offsetWidth-8),H=(bot-top)+14;if(!_navPillReady)pill.style.transition='none';pill.style.width=W+'px';pill.style.height=H+'px';pill.style.left=(cx-W/2)+'px';pill.style.top=(cy-H/2)+'px';pill.style.opacity='1';if(!_navPillReady){void pill.offsetWidth;pill.style.transition='';_navPillReady=true;}}
+try{window.addEventListener('resize',function(){positionNavPill();});}catch(e){}
 function navAlbumLockMsg(){showTip($('navAlbum'),L("Unlocks at level ","Откроется на уровне ")+ALBUM_UNLOCK_LEVEL,false);}
 // small speech-bubble tooltip anchored to a button; below=true points down (top buttons), else up (bottom nav).
 let _tipT=null;
@@ -1667,7 +1678,7 @@ const FT={
 };
 function bub(spec){let s=spec[LANG]||spec.en;(spec.hl||[]).forEach(h=>{if(s.indexOf(h)>=0)s=s.replace(h,'<span class="hl">'+h+'</span>');});return s;}
 function startFTUE(){
-  mode='levels';levelIdx=0;ended=false;boostersUsed=0;heartsLost=0;history=[];faceFx.clear();_boosterClock=Date.now();
+  mode='levels';levelIdx=0;ended=false;boostersUsed=0;heartsLost=0;history=[];faceFx.clear();_boosterClock=Date.now();clearTimeout(_modalTimer);_progUntil=0;
   MX.track('Tutorial Started');
   N=4;puzzle=generatePuzzle(4,4242);puzzle.colors=levelPalette(0,4,(Math.random()*1e9)>>>0);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
@@ -1732,11 +1743,11 @@ function onFtueAction(kind,r,c){
   else if(ftue.step===3){handHide();if(kind==='duck'){ftue.step=-1;setTimeout(ftueStep4,420);}}
 }
 function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();$('coachBotB').onclick=null;MX.track('Tutorial Won');
-  for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);
+  allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;
   save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);persist();
   ended=true;haptic('ok');soundWin();confettiRain();
   $('winTitle').textContent=L("Awesome!","Отлично!");$('winSub').textContent=L("You learned to play. Now the real puzzles begin.","Ты научился играть. Теперь начинаются настоящие головоломки.");
-  $('btnNext').textContent=t('next');openScrim('scrimWin');}
+  $('btnNext').textContent=t('next');showModalSoon('scrimWin',WIN_MODAL_DELAY);}
 
 /* ---------- home + misc ---------- */
 function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();updLbBtn();}

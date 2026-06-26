@@ -222,6 +222,13 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .booster .bcount.price{background:#F4B731;color:#7A4F12;}
 .wingold{display:inline-flex;align-items:center;gap:6px;background:#3b2f25;color:#FFD867;border-radius:16px;padding:6px 15px;font-size:4.6vw;font-weight:900;margin:4px auto 8px;}
 .wingold svg{width:22px;height:22px;}
+/* full-screen dark level-win celebration (full-body trumpet duck) */
+.winscrim{background:rgba(16,11,9,.95);}
+.wincol{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:420px;padding:16px;text-align:center;}
+.wincele{width:min(80vw,360px);aspect-ratio:1;display:block;margin-bottom:-4px;}
+.winscrim h2{color:#fff;text-shadow:0 2px 0 var(--orange-d);font-size:9vw;margin:0;}
+.winscrim p{color:#E9D9C9;margin:2px 0 8px;}
+.winscrim .btn{width:100%;max-width:320px;}
 
 #album{background:var(--bg);justify-content:flex-start;padding-left:0;padding-right:0;}
 .album-scroll{width:100%;max-width:480px;margin:0 auto;flex:1;overflow-y:auto;padding:2px 14px calc(var(--safe-bot) + 24px);-webkit-overflow-scrolling:touch;}
@@ -350,15 +357,16 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 <div id="handhint"><img src="assets/ui/finger.png" alt=""></div>
 
 <!-- ============ SCRIMS ============ -->
-<div class="scrim" id="scrimWin"><div class="modal dark modal-rel">
-  <div class="duckslot"><canvas id="winFace" class="modalface" width="240" height="240"></canvas></div>
-  <h2 id="winTitle">Awesome!</h2>
-  <div class="winstars" id="winStars"></div>
-  <div class="wingold" id="winGold"></div>
-  <p id="winSub">The duck plays a victory fanfare for you.</p>
-  <button class="btn play" id="btnNext" data-i="next">Next level</button>
-  <button class="btn ghost" id="btnWinHome" data-i="home" style="background:#3b2f25;color:#fff">Home</button>
-</div></div>
+<div class="scrim winscrim" id="scrimWin">
+  <div class="wincol">
+    <canvas id="winCele" class="wincele" width="512" height="512"></canvas>
+    <h2 id="winTitle">Awesome!</h2>
+    <div class="wingold" id="winGold"></div>
+    <p id="winSub">The duck plays a victory fanfare for you.</p>
+    <button class="btn play" id="btnNext" data-i="next">Next level</button>
+    <button class="btn ghost" id="btnWinHome" data-i="home" style="background:#3b2f25;color:#fff">Home</button>
+  </div>
+</div>
 
 <div class="scrim" id="scrimLose"><div class="modal modal-rel">
   <div class="duckslot"><canvas id="loseFace" class="modalface" width="240" height="240"></canvas></div>
@@ -420,6 +428,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
   <video id="fvsad" loop muted playsinline preload="auto"><source src="assets/ducks/face-sad.mp4" type="video/mp4"></video>
   <video id="fvbsthint" loop muted playsinline preload="auto"><source src="assets/ducks/bst-hint.mp4" type="video/mp4"></video>
   <video id="fvbstundo" loop muted playsinline preload="auto"><source src="assets/ducks/bst-undo.mp4" type="video/mp4"></video>
+  <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/win-duck.mp4" type="video/mp4"></video>
 </div>
 
 <div class="fx" id="fx"></div>
@@ -442,7 +451,7 @@ function haptic(k){try{if(!TG||!TG.HapticFeedback)return;const H=TG.HapticFeedba
   else if(k==='ok')H.notificationOccurred('success');else if(k==='err')H.notificationOccurred('error');}catch(e){}}
 
 /* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
-const DD_VERSION='0.4.0';
+const DD_VERSION='0.4.1';
 function _mxHost(){try{const tg=TG;if(tg&&typeof tg.initData==='string'&&tg.initData.length>0)return'telegram';return'web';}catch(e){return'web';}}
 const MX={ready:false,token:'',_did:'',_super:{},_pre:[],
   _enc(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}catch(_){try{return btoa(JSON.stringify(o));}catch(e){return'';}}},
@@ -507,6 +516,8 @@ const STICKER_SETS=[
   {id:'pond', en:'Pond Pals',    ru:'Друзья пруда'},
   {id:'trip', en:'Jetset Ducks', ru:'Утки в пути'},
   {id:'dream',en:'Duck Dreams',  ru:'Утиные мечты'},
+  {id:'snack',en:'Snack Attack', ru:'Снэк-атака'},
+  {id:'oops', en:'Oops Duck',    ru:'Упс, утята'},
 ];
 const STICKERS=[
   {id:'pond1',set:'pond',rarity:'common',   en:'Splashy',ru:'Плюх'},
@@ -533,6 +544,22 @@ const STICKERS=[
   {id:'dream6',set:'dream',rarity:'rare',     en:'Dragon Pup',ru:'Дракоша'},
   {id:'dream7',set:'dream',rarity:'epic',     en:'Unicorn',ru:'Единорог'},
   {id:'dream8',set:'dream',rarity:'legendary',en:'Star Duck',ru:'Звёздная утка'},
+  {id:'snack1',set:'snack',rarity:'common',   en:'Pizza Hug',ru:'Обнимашки с пиццей'},
+  {id:'snack2',set:'snack',rarity:'common',   en:'Brain Freeze',ru:'Заморозка'},
+  {id:'snack3',set:'snack',rarity:'common',   en:'Spaghetti',ru:'Спагетти'},
+  {id:'snack4',set:'snack',rarity:'common',   en:'Coffee Buzz',ru:'Кофеман'},
+  {id:'snack5',set:'snack',rarity:'rare',     en:'Donut Float',ru:'Пончик'},
+  {id:'snack6',set:'snack',rarity:'rare',     en:'Too Spicy',ru:'Остро!'},
+  {id:'snack7',set:'snack',rarity:'epic',     en:'Burger Balance',ru:'Бургер'},
+  {id:'snack8',set:'snack',rarity:'legendary',en:'Golden Cupcake',ru:'Золотой кекс'},
+  {id:'oops1',set:'oops',rarity:'common',   en:'Banana Slip',ru:'Банан'},
+  {id:'oops2',set:'oops',rarity:'common',   en:'Dizzy',ru:'Звёздочки'},
+  {id:'oops3',set:'oops',rarity:'common',   en:'Bubble Trouble',ru:'Пузыри'},
+  {id:'oops4',set:'oops',rarity:'common',   en:'Yarn Tangle',ru:'Клубок'},
+  {id:'oops5',set:'oops',rarity:'rare',     en:'Toast Surfer',ru:'Сёрфер'},
+  {id:'oops6',set:'oops',rarity:'rare',     en:'Box Spy',ru:'Коробка'},
+  {id:'oops7',set:'oops',rarity:'epic',     en:'DJ Duck',ru:'Диджей'},
+  {id:'oops8',set:'oops',rarity:'legendary',en:'Superstar',ru:'Суперзвезда'},
 ];
 function stName(s){return L(s.en,s.ru);}
 function stById(id){return STICKERS.find(s=>s.id===id);}
@@ -601,6 +628,9 @@ let faceFx=new Map(); // r*100+c -> {state, until}
 function initFaces(){
   ALL_CLIPS.forEach(s=>{faceVid[s]=document.getElementById('fv'+s);const cv=document.createElement('canvas');cv.width=cv.height=ICON_CLIPS.indexOf(s)>=0?96:256;faceKeyed[s]=cv;});
   ALL_CLIPS.forEach(s=>{const v=faceVid[s];if(!v)return;v.play&&v.play().catch(()=>{});['loadeddata','canplay'].forEach(ev=>v.addEventListener(ev,faceCheck));v.addEventListener('error',()=>{});});
+  // full-body win celebration clip (its own bigger keyed canvas)
+  faceVid.win=document.getElementById('fvwin');
+  if(faceVid.win){const wc=document.createElement('canvas');wc.width=wc.height=512;faceKeyed.win=wc;faceVid.win.play&&faceVid.win.play().catch(()=>{});['loadeddata','canplay'].forEach(ev=>faceVid.win.addEventListener(ev,faceCheck));}
   setTimeout(faceCheck,700);setTimeout(faceCheck,2200);setTimeout(faceCheck,5000);
   requestAnimationFrame(faceLoop);
 }
@@ -625,14 +655,14 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const boosterCv=gameOn?document.querySelector('#bsDuck canvas.bface'):null;if(boosterCv)used.add('happy');
   const hintCv=gameOn?document.querySelector('#bsHint canvas.bface'):null;if(hintCv)used.add('bsthint');
   const undoCv=gameOn?document.querySelector('#bsUndo canvas.bface'):null;if(undoCv)used.add('bstundo');
-  if(winOn)used.add('happy');if(loseOn)used.add('sad');
+  if(winOn)used.add('win');if(loseOn)used.add('sad');
   used.forEach(s=>keyInto(s));
   if(gameOn&&gstate)for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]!==DUCK)continue;const el=cellEls[r]&&cellEls[r][c];if(!el)continue;const cv=el.querySelector('canvas.duckface');if(!cv)continue;const fx=faceFx.get(r*100+c);drawFace(cv,fx?fx.state:'idle');}
   if(boosterCv)drawFace(boosterCv,'happy');
   if(hintCv)drawFace(hintCv,'bsthint');
   if(undoCv)drawFace(undoCv,'bstundo');
   if(gameOn&&gstate){const pf=document.querySelector('.pface canvas');if(pf)drawFace(pf,'idle');}
-  if(winOn)drawFace($('winFace'),'happy');
+  if(winOn)drawFace($('winCele'),'win');
   if(loseOn)drawFace($('loseFace'),'sad');}
 function duckReact(r,c,state,ms){if(faceVideosReady)faceFx.set(r*100+c,{state,until:Date.now()+(ms||1200)});}
 
@@ -710,10 +740,10 @@ function onWin(){ended=true;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r]
   const praise=L(["Awesome!","Brilliant!","Quacktastic!","Well done!"][stars-1]||"Awesome!",["Отлично!","Блестяще!","Кряк-класс!","Молодец!"][stars-1]||"Отлично!");
   let goldGain=goldForWin(N);const tdy=ymd();if(save.lastGoldYMD!==tdy){goldGain+=dailyWinBonus();save.lastGoldYMD=tdy;}
   save.gold=(save.gold||0)+goldGain;
-  save.levelsDone=Math.max(save.levelsDone,levelIdx+1);save.stars[levelIdx]=Math.max(save.stars[levelIdx]||0,stars);persist();updateGoldHud();
+  save.levelsDone=Math.max(save.levelsDone,levelIdx+1);persist();updateGoldHud();
   MX.track('Level Won',{level:levelIdx+1,stars,hearts_lost:heartsLost,boosters_used:boostersUsed,gold:goldGain});MX.incr({levels_won:1,gold_earned:goldGain});
   try{if(window.DuckAdjust)DuckAdjust.fire('levelComplete');}catch(e){}
-  $('winTitle').textContent=praise;$('winStars').innerHTML=starsHtml(stars);
+  $('winTitle').textContent=praise;
   $('winGold').innerHTML=COIN_SVG+'<span>+'+goldGain+'</span>';
   $('winSub').textContent=L("You solved it. The duck is delighted.","Ты решил. Утка в восторге.");
   $('btnNext').textContent=t('next');
@@ -946,9 +976,9 @@ function onFtueAction(kind,r,c){
 }
 function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();$('coachBotB').onclick=null;MX.track('Tutorial Won');
   for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);
-  save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);if(save.stars[0]==null)save.stars[0]=3;persist();
+  save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);persist();
   ended=true;haptic('ok');soundWin();confettiRain();
-  $('winTitle').textContent=L("Awesome!","Отлично!");$('winStars').innerHTML=starsHtml(3);$('winSub').textContent=L("You learned to play. Now the real puzzles begin.","Ты научился играть. Теперь начинаются настоящие головоломки.");
+  $('winTitle').textContent=L("Awesome!","Отлично!");$('winSub').textContent=L("You learned to play. Now the real puzzles begin.","Ты научился играть. Теперь начинаются настоящие головоломки.");
   $('btnNext').textContent=t('next');openScrim('scrimWin');}
 
 /* ---------- home + misc ---------- */

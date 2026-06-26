@@ -751,6 +751,24 @@ function countSolutions(N,region,limit){const byReg=Array.from({length:N},()=>[]
 function generatePuzzle(N,seed){for(let a=0;a<500;a++){const rng=mulberry32((seed^(a*2654435761))>>>0);const sol=genSolution(N,rng);if(!sol)continue;const region=genRegions(N,sol,rng);if(countSolutions(N,region,2)===1)return {N,region,solCols:sol};}
   const rng=mulberry32(seed>>>0);const sol=genSolution(N,rng)||[...Array(N).keys()];return {N,region:genRegions(N,sol,rng),solCols:sol};}
 function levelSize(idx){const lv=idx+1;if(lv<=1)return 4;if(lv<=3)return 5;if(lv<=6)return 6;if(lv<=9)return 7;if(lv<=12)return 8;return 9;} // Meowdoku curve: L1=4,L2-3=5,L4-6=6,L7-9=7,L10-12=8,L13+=9
+// Each level keeps a FIXED region STRUCTURE (deterministic seed) so its difficulty is
+// identical on every retry; only a random dihedral transform + colour shuffle change
+// WHERE the regions sit and their colours. Same shape (a 1-cell region stays a 1-cell
+// region, just elsewhere + a new colour), different look -> consistent difficulty, not memorizable.
+function levelSeed(idx){return (((idx+1)*2654435761)^0x9e3779b9)>>>0;}
+const DIHEDRAL=[(r,c,N)=>[r,c],(r,c,N)=>[c,N-1-r],(r,c,N)=>[N-1-r,N-1-c],(r,c,N)=>[N-1-c,r],(r,c,N)=>[r,N-1-c],(r,c,N)=>[N-1-r,c],(r,c,N)=>[c,r],(r,c,N)=>[N-1-c,N-1-r]];
+function transformPuzzle(pz,t){const N=pz.N,rg=Array.from({length:N},()=>new Array(N)),sc=new Array(N);
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const m=t(r,c,N);rg[m[0]][m[1]]=pz.region[r][c];}
+  for(let r=0;r<N;r++){const m=t(r,pz.solCols[r],N);sc[m[0]]=m[1];}
+  return {N,region:rg,solCols:sc};}
+function recolorPuzzle(pz){const ids=[...new Set(pz.region.flat())],sh=ids.slice();
+  for(let i=sh.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=sh[i];sh[i]=sh[j];sh[j]=t;}
+  const map={};ids.forEach((id,i)=>{map[id]=sh[i];});
+  return {N:pz.N,region:pz.region.map(row=>row.map(id=>map[id])),solCols:pz.solCols.slice()};}
+// deterministic UNIQUE base puzzle for a level (advance the seed until generatePuzzle
+// yields a unique solution, so a fixed level seed never lands on the non-unique fallback)
+function fixedPuzzle(N,seed){for(let k=0;k<48;k++){const pz=generatePuzzle(N,(seed+k*0x9e3779b9)>>>0);if(countSolutions(N,pz.region,2)===1)return pz;}return generatePuzzle(N,seed);}
+function randomizedLevel(idx){const N=levelSize(idx);let pz=fixedPuzzle(N,levelSeed(idx));pz=transformPuzzle(pz,DIHEDRAL[(Math.random()*DIHEDRAL.length)|0]);return recolorPuzzle(pz);}
 const TOTAL_LEVELS=40;
 
 /* ---------- icons ---------- */
@@ -861,7 +879,7 @@ function startLevel(m,idx){
   $('coachTop').classList.remove('on');$('coachBot').classList.remove('on');$('handhint').style.display='none';
   // Fresh random puzzle each time the level is started (so a retry is never memorized);
   // the level number only sets the size/difficulty via levelSize.
-  N=levelSize(levelIdx);puzzle=generatePuzzle(N,(Math.random()*1e9)>>>0);heartsEnabled=true;
+  N=levelSize(levelIdx);puzzle=randomizedLevel(levelIdx);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
   buildGrid();renderAll();show('game');
   MX.track('Level Started',{level:levelIdx+1,size:N+'x'+N});

@@ -668,7 +668,6 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   <h2 id="bbTitle">Get boosters</h2>
   <p id="bbSub">Stock up to keep solving.</p>
   <button class="btn play" id="bbBuy">Buy</button>
-  <button class="btn ghost" id="bbCancel">Maybe later</button>
 </div></div>
 
 <div class="scrim" id="scrimHow"><div class="modal modal-rel">
@@ -1195,7 +1194,7 @@ function useHint(){if(ended||hintActive)return;const free=(save.freeBoosters&&sa
 function usePlaceDuck(){if(ended||hintActive)return;let avail=false;for(let r=0;r<N;r++){if(gstate[r][puzzle.solCols[r]]!==DUCK){avail=true;break;}}if(!avail){toast(L("All ducks placed","Все утки на месте"));return;}const free=(save.freeBoosters&&save.freeBoosters.placeduck)||0;if(free<=0){openBoosterBuy('placeduck');return;}save.freeBoosters.placeduck--;persist();renderBoosters();boostersUsed++;MX.track('Booster Used',{type:'placeduck'});try{if(window.DuckAdjust)DuckAdjust.fire('boosterUsed');}catch(e){}placeOneCorrect();haptic('ok');playSfx('duckfound');if(duckCount===N)onWin();}
 // 0 inventory + tap booster -> confirm-buy x3 with gold (not bought until confirm). Not enough gold -> shop.
 let _buyKey=null;
-function openBoosterBuy(k){const cost=BOOSTER_PACK_COST[k];if((save.gold||0)<cost){needGold();return;}_buyKey=k;const nm=k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Подставить утку');$('bbIcon').innerHTML=boosterIcon(k);$('bbTitle').textContent=L('Get ','Получить ')+BOOSTER_PACK_QTY+' '+nm;$('bbSub').textContent=L('Stock up to keep solving.','Запасись, чтобы решать дальше.');$('bbBuy').innerHTML=L('Buy for ','Купить за ')+costChip(cost);$('bbCancel').textContent=L('Maybe later','Может позже');openScrim('scrimBuy');haptic('light');}
+function openBoosterBuy(k){const cost=BOOSTER_PACK_COST[k];if((save.gold||0)<cost){needGold();return;}_buyKey=k;const nm=k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Подставить утку');$('bbIcon').innerHTML=boosterIcon(k);$('bbTitle').textContent=L('Get ','Получить ')+BOOSTER_PACK_QTY+' '+nm;$('bbSub').textContent=L('Stock up to keep solving.','Запасись, чтобы решать дальше.');$('bbBuy').innerHTML=L('Buy for ','Купить за ')+costChip(cost);openScrim('scrimBuy');haptic('light');}
 function confirmBoosterBuy(){const k=_buyKey;if(!k)return;const cost=BOOSTER_PACK_COST[k];if(!spendGold(cost)){closeScrim('scrimBuy');needGold();return;}grantFreeBoosters({[k]:BOOSTER_PACK_QTY});persist();renderBoosters();closeScrim('scrimBuy');MX.track('Booster Pack Bought',{type:k,qty:BOOSTER_PACK_QTY,cost});haptic('ok');soundPop();toast('+'+BOOSTER_PACK_QTY+' '+(k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Утка')));if(k==='hint')useHint();else usePlaceDuck();}
 function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}boostersUsed++;hearts=3;ended=false;renderHearts();closeScrim('scrimLose');MX.track('Continue Used',{level:levelIdx+1});haptic('ok');}
 // Apply a purchase grant from the server: gold and/or free sticker packs.
@@ -1725,7 +1724,7 @@ function bind(){
   $('btnGear').onclick=()=>openSettings(true);
   $('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
   $('hintApply').onclick=applyHint;
-  $('bbBuy').onclick=confirmBoosterBuy;$('bbClose').onclick=()=>closeScrim('scrimBuy');$('bbCancel').onclick=()=>closeScrim('scrimBuy');
+  $('bbBuy').onclick=confirmBoosterBuy;$('bbClose').onclick=()=>closeScrim('scrimBuy');
   $('btnNext').onclick=()=>{closeScrim('scrimWin');startLevel('levels',levelIdx+1);};
   $('btnWinHome').onclick=()=>{closeScrim('scrimWin');show('home');refreshHome();};
   $('btnRetry').onclick=()=>{closeScrim('scrimLose');if(!save.tutorialDone){startFTUE();}else{startLevel('levels',levelIdx);}};

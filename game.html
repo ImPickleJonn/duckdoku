@@ -847,12 +847,53 @@ function closeAll(){document.querySelectorAll('.scrim').forEach(s=>s.classList.r
 
 /* ---------- shop + IAP ---------- */
 let SKUS_CACHE=null,iapEnabled=false;
-async function loadSkus(){try{const r=await fetch(API_BASE+'/api/skus');const j=await r.json();SKUS_CACHE=j.skus||[];iapEnabled=!!j.enabled;}catch(e){SKUS_CACHE=[];}}
+async function loadSkus(){try{const r=await fetch(API_BASE+'/api/skus');const j=await r.json();SKUS_CACHE=j.skus||[];iapEnabled=!!j.enabled;}catch(e){SKUS_CACHE=[];}try{if(IAP.isNative())await IAP.init();}catch(e){}}
+// ===== Native Google Play Billing (cordova-plugin-purchase / global CdvPurchase).
+// Products = the bare SKU ids; grants come from SKUS_CACHE so native + Telegram
+// stay in sync. No server wallet on native: on a confirmed purchase we apply the
+// grant on-device, then transaction.finish() (acknowledge + consume so the
+// consumable can be re-bought and Google never auto-refunds). Web/Telegram: no-op. =====
+const IAP=(function(){
+  let storeReady=false,CdvStore=null,CP=null,plat=null;const _pending={};
+  function isNative(){try{return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());}catch(e){return false;}}
+  function grantFor(id){const s=(SKUS_CACHE||[]).find(x=>x.id===id);return s&&s.grant;}
+  function settle(id,r){const p=_pending[id];if(p&&!p.done){p.done=true;delete _pending[id];p.resolve(r);}}
+  async function init(){
+    if(!isNative()||storeReady)return;
+    CP=window.CdvPurchase;if(!CP||!CP.store){console.warn('[IAP] CdvPurchase not present');return;}
+    CdvStore=CP.store;plat=CP.Platform.GOOGLE_PLAY;
+    try{CdvStore.verbosity=CP.LogLevel.WARNING;}catch(e){}
+    const ids=(SKUS_CACHE||[]).map(s=>s.id);if(!ids.length)return;
+    CdvStore.register(ids.map(id=>({id,type:CP.ProductType.CONSUMABLE,platform:plat})));
+    CdvStore.when().approved(function(tr){
+      try{(tr.products||[]).forEach(function(p){const g=grantFor(p.id);if(g)grantReward(g);try{if(window.DuckAdjust)DuckAdjust.fire('purchaseCompleted');}catch(e){}try{MX.track('IAP Success',{sku:p.id,backend:'native'});MX.incr({purchases:1});}catch(e){}settle(p.id,{ok:true,sku:p.id});});}catch(e){console.error('[IAP approved]',e);}
+      try{tr.finish();}catch(e){}
+    });
+    try{CdvStore.error(function(err){console.warn('[IAP] store error',err&&err.code,err&&err.message);});}catch(e){}
+    await CdvStore.initialize([plat]);storeReady=true;console.log('[IAP] ready,',ids.length,'products');
+    try{if($('scrimShop').classList.contains('on'))renderShop();}catch(e){}
+  }
+  async function purchase(sku){
+    if(!isNative())return {error:'web'};
+    if(!storeReady||!CdvStore){try{await init();}catch(e){}if(!storeReady||!CdvStore)return {error:'store_not_ready'};}
+    const product=CdvStore.get(sku,plat);if(!product)return {error:'no_product_for_sku'};
+    const offer=(typeof product.getOffer==='function')?product.getOffer():(product.offers&&product.offers[0]);if(!offer)return {error:'no_offer'};
+    return new Promise(function(resolve){
+      _pending[sku]={resolve:resolve,done:false};
+      setTimeout(function(){settle(sku,{error:'timeout'});},120000);
+      Promise.resolve(CdvStore.order(offer)).then(function(err){if(err&&(err.isError||err.code)){const cancelled=CP&&CP.ErrorCode&&err.code===CP.ErrorCode.PAYMENT_CANCELLED;settle(sku,cancelled?{cancelled:true}:{error:err.message||'order_failed'});}}).catch(function(e){settle(sku,{error:(e&&e.message)||'order_threw'});});
+    });
+  }
+  function priceFor(sku){if(!isNative())return null;try{if(storeReady&&CdvStore){const p=CdvStore.get(sku,plat);if(p){const offer=(typeof p.getOffer==='function')?p.getOffer():(p.offers&&p.offers[0]);const ph=offer&&offer.pricingPhases&&offer.pricingPhases[0];if(ph&&ph.price)return ph.price;}}}catch(e){}return null;}
+  function restore(){if(!isNative()||!storeReady||!CdvStore)return;try{CdvStore.restorePurchases();}catch(e){}}
+  return {init:init,purchase:purchase,priceFor:priceFor,restore:restore,isNative:isNative};
+})();
 function boosterIcon(k){if(k==='hint')return '<svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/><path d="M9 18h6"/></svg>';if(k==='undo')return '<svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.4" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>';return '<svg viewBox="0 0 24 24" fill="#FFD23F" stroke="#6E4F44" stroke-width="2"><path d="M14 8.5a3 3 0 1 0-3.6 2.94C9.5 14 7 15 5 15c2.5 3 6 4 9 3 3.5-1.2 5-4 5-7 0-1-.3-2-1-2.8L21 7l-3 .2A3 3 0 0 0 14 8.5z"/></svg>';}
 function skuIcon(s){const g=s.grant||{};return (g.packs&&!g.gold)?PACK_SVG:COIN_SVG;}
 function renderShop(){const list=$('skuList');list.innerHTML='';if(!SKUS_CACHE||!SKUS_CACHE.length){list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>';return;}
   const star='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';
-  SKUS_CACHE.forEach(s=>{const row=document.createElement('div');row.className='sku';row.innerHTML='<div class="sicon">'+skuIcon(s)+'</div><div class="smeta"><div class="stitle">'+s.title+'</div><div class="sdesc">'+s.description+'</div></div><button class="sbuy">'+s.price+' '+star+'</button>';row.querySelector('.sbuy').onclick=()=>buy(s.id);list.appendChild(row);});}
+  const native=IAP.isNative();
+  SKUS_CACHE.forEach(s=>{const priceLbl=native?('<span class="susd">'+((IAP.priceFor&&IAP.priceFor(s.id))||s.priceUsd||'')+'</span>'):(s.price+' '+star);const row=document.createElement('div');row.className='sku';row.innerHTML='<div class="sicon">'+skuIcon(s)+'</div><div class="smeta"><div class="stitle">'+s.title+'</div><div class="sdesc">'+s.description+'</div></div><button class="sbuy">'+priceLbl+'</button>';row.querySelector('.sbuy').onclick=()=>buy(s.id);list.appendChild(row);});}
 function openShop(){closeAll();renderShop();openScrim('scrimShop');MX.track('Shop Opened');if(!SKUS_CACHE)loadSkus().then(renderShop);}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function openLeaderboard(){closeAll();openScrim('scrimLB');MX.track('Leaderboard Opened');$('lbList').innerHTML='<p style="color:var(--ink-soft)">Loading...</p>';
@@ -860,7 +901,9 @@ function openLeaderboard(){closeAll();openScrim('scrimLB');MX.track('Leaderboard
 function renderLB(rows){const el=$('lbList');if(!rows.length){el.innerHTML='<p style="color:var(--ink-soft)">'+L("No players yet. Be the first!","Пока никого. Будь первым!")+'</p>';return;}
   el.innerHTML=rows.map((r,i)=>{const medal=i===0?'#FFD23F':i===1?'#CFD2D8':i===2?'#E0925A':'var(--bg2)';
     return '<div class="lbrow"><div class="lbrank" style="background:'+medal+'">'+(i+1)+'</div><div class="lbname">'+escapeHtml(r.name||'Duck')+'</div><div class="lblvl">'+L("Level ","Ур. ")+(r.level||0)+'</div></div>';}).join('');}
-async function buy(sku){if(!iapEnabled||!initData){toast(L("Open in Telegram to buy","Покупки в Telegram"));return;}
+async function buy(sku){
+  if(IAP.isNative()){const res=await IAP.purchase(sku);if(res&&res.error&&res.error!=='web'&&!res.cancelled){toast(res.error==='no_product_for_sku'?L("Not available yet","Пока недоступно"):L("Purchase did not complete","Покупка не завершена"));}return;}
+  if(!iapEnabled||!initData){toast(L("Open in Telegram to buy","Покупки в Telegram"));return;}
   try{const r=await fetch(API_BASE+'/api/create-invoice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sku,initData})});const j=await r.json();if(!j.link){toast("Could not start payment");return;}
     MX.track('IAP Invoice Opened',{sku});
     TG.openInvoice(j.link,async(st)=>{MX.track('IAP '+(st==='paid'?'Success':st==='cancelled'?'Cancelled':'Failed'),{sku});if(st==='paid'){try{if(window.DuckAdjust)DuckAdjust.fire('purchaseCompleted');}catch(e){}await pollPurchases();toast(L("Thank you!","Спасибо!"));haptic('ok');}});}catch(e){toast("Payment error");}}

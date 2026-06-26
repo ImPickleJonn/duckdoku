@@ -821,9 +821,9 @@ function conflictingCells(r,c){const out=[];const reg=puzzle.region[r][c];
 let lastTapCell=null,lastTapTime=0;
 let paintMode=null,paintMoved=false,paintTouched=null,paintStart=null,suppressClick=false;
 function gridCellAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest?el.closest('.qcell'):null;}
-function paintApply(r,c){if(gstate[r][c]===DUCK||gstate[r][c]===RED)return;if(paintMode==='mark'){if(gstate[r][c]===EMPTY){gstate[r][c]=MARK;renderCell(r,c);}}else{if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}}}
+function paintApply(r,c){if(ftue&&ftue.active&&ftue.allowOnly&&!ftue.allowOnly.has(r*100+c))return;if(gstate[r][c]===DUCK||gstate[r][c]===RED)return;if(paintMode==='mark'){if(gstate[r][c]===EMPTY){gstate[r][c]=MARK;renderCell(r,c);onFtueAction('mark',r,c);}}else{if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}}}
 function bindPaint(){const g=$('grid');let usingTouch=false;
-  function startAt(r,c){ if(ended||(ftue&&ftue.active))return; if(gstate[r][c]===DUCK){paintMode=null;return;} paintMode=(gstate[r][c]===MARK)?'erase':'mark'; paintMoved=false; paintStart=[r,c]; paintTouched=new Set([r*100+c]); }
+  function startAt(r,c){ if(ended)return; if(gstate[r][c]===DUCK){paintMode=null;return;} paintMode=(gstate[r][c]===MARK)?'erase':'mark'; paintMoved=false; paintStart=[r,c]; paintTouched=new Set([r*100+c]); }
   function moveAt(x,y){ if(!paintMode)return; const cell=gridCellAt(x,y); if(!cell)return; const r=+cell.dataset.r,c=+cell.dataset.c,key=r*100+c; if(!paintMoved){ if(r===paintStart[0]&&c===paintStart[1])return; paintMoved=true; snapshot(); haptic('light'); paintApply(paintStart[0],paintStart[1]); } if(paintTouched.has(key))return; paintTouched.add(key); paintApply(r,c); soundTick(); }
   const end=()=>{ if(paintMode&&paintMoved){ suppressClick=true; setTimeout(()=>{suppressClick=false;},80); } paintMode=null; };
   // TOUCH devices: drive painting from touch events. The Android WebView delivers
@@ -1177,8 +1177,8 @@ function ftueStep3(){ // free finish with hint card
 }
 function onFtueAction(kind,r,c){
   if(!ftue||!ftue.active)return;
-  if(ftue.step===0&&kind==='duck'){ftue.lastDuck=[r,c];setTimeout(ftueStep1,260);}
-  else if(ftue.step===1&&kind==='mark'){setTimeout(ftueStep2,260);}
+  if(ftue.step===0&&kind==='duck'){ftue.step=-1;ftue.lastDuck=[r,c];setTimeout(ftueStep1,260);}
+  else if(ftue.step===1&&kind==='mark'){ftue.step=-1;setTimeout(ftueStep2,260);}
 }
 function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();$('coachBotB').onclick=null;MX.track('Tutorial Won');
   for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);

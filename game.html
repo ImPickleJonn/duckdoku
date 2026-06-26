@@ -10,7 +10,7 @@
 <style>
 :root{
   --bg:#F3ECEC; --card:#FFFFFF; --ink:#6E4F44; --ink-soft:#A98F84; --red:#D64541;
-  --orange:#E8942F; --orange-d:#C9781E; --heart:#F0544C; --green:#3FB46E; --gold:#FFD23F;
+  --orange:#E8942F; --orange-d:#C9781E; --heart:#F0544C; --green:#3FB46E; --gold:#FFD23F; --blue:#3FA7E0; --blue-d:#2C82C9;
   --shadow:rgba(150,110,90,.16);
   --r0:#E58A77; --r1:#B773E8; --r2:#4BB6A7; --r3:#E8B24C; --r4:#6FA9E4;
   --r5:#8BCB6E; --r6:#EF94B6; --r7:#E0925A; --r8:#9E8BE6; --r9:#56C7BD;
@@ -45,7 +45,8 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .menu{width:min(86vw,420px);display:flex;flex-direction:column;gap:11px;margin-top:1vh;}
 .btn{padding:17px;border-radius:20px;font-size:5vw;box-shadow:0 5px 0 var(--shadow);transition:transform .06s;}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--shadow);}
-.btn.play{background:var(--orange);color:#fff;text-shadow:0 1px 0 var(--orange-d);}
+.btn.play{background:var(--orange);color:#fff;text-shadow:0 1px 0 var(--orange-d);box-shadow:0 6px 0 var(--orange-d);}
+.btn.play:active{box-shadow:0 2px 0 var(--orange-d);}
 .btn.alt{background:var(--r2);color:#fff;}
 .btn.row{display:flex;gap:11px;}
 .btn.ghost{background:var(--card);color:var(--ink);font-size:4.2vw;flex:1;box-shadow:0 4px 0 var(--shadow);}
@@ -240,14 +241,14 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .navtab.active{color:var(--orange);}
 .navtab.active .navlbl{color:var(--orange);}
 .navtab.active .navico{transform:translateY(-2px) scale(1.06);}
-/* center Start tab: flush orange pill carrying the LIVE keyed duck face + label (mascot + CTA, no floating circle) */
+/* center Start tab: duck-pill. GRAY when not selected, BLUE when selected (distinct from the orange Level button). */
 .navStart{padding:0 6px;}
-.navStart .navico{width:auto;height:46px;flex-direction:row;align-items:center;justify-content:center;gap:6px;padding:0 16px 0 9px;border-radius:23px;background:var(--orange);box-shadow:0 3px 0 var(--orange-d);overflow:visible;transition:transform .06s,box-shadow .06s;}
-.navStart .navico .bicon{width:34px;height:34px;display:block;filter:drop-shadow(0 1px 1px rgba(120,70,20,.28));}
-.navStart .navlbl{font-size:3.7vw;font-weight:900;color:#fff;text-shadow:0 1px 0 var(--orange-d);}
-.navStart.active .navico{transform:none;}
-.navStart.active .navlbl{color:#fff;}
-.navStart .navico:active{transform:translateY(3px);box-shadow:0 0 0 var(--orange-d);}
+.navStart .navico{width:auto;height:46px;flex-direction:row;align-items:center;justify-content:center;gap:6px;padding:0 16px 0 9px;border-radius:23px;background:#C2B7B0;box-shadow:0 3px 0 #A1968E;overflow:visible;transition:transform .06s,background .18s,box-shadow .18s;}
+.navStart .navico .bicon{width:34px;height:34px;display:block;filter:drop-shadow(0 1px 1px rgba(70,55,45,.32));}
+.navStart .navlbl{font-size:3.7vw;font-weight:900;color:#fff;text-shadow:0 1px 0 rgba(60,45,40,.28);}
+.navStart.active .navico{background:var(--blue);box-shadow:0 3px 0 var(--blue-d);transform:none;}
+.navStart.active .navlbl{color:#fff;text-shadow:0 1px 0 var(--blue-d);}
+.navStart .navico:active,.navStart.active .navico:active{transform:translateY(3px);box-shadow:0 0 0 var(--blue-d);}
 /* locked album tab: padlock badge + greyed icon (tooltip shows only on tap) */
 .navtab.navAlbum .navLk{display:none;position:absolute;top:5px;left:calc(50% + 6px);width:21px;height:21px;border-radius:50%;background:#6E4F44;border:2px solid #FFFBF2;box-shadow:0 1px 3px rgba(110,79,68,.5);align-items:center;justify-content:center;}
 .navtab.navAlbum .navLk svg{width:12px;height:12px;}

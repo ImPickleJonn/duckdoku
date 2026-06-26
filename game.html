@@ -71,7 +71,8 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 #btnAlbum.locked .alblock{display:flex;}
 .toptitle{font-size:5.4vw;color:var(--ink);}
 /* game level title: centered to the page + vertically to the top-bar icons */
-#toptitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;white-space:nowrap;font-size:4.8vw;}
+/* level title sits right next to the Back button (margin-right:auto pushes the gold/gear to the far right) */
+#toptitle{margin-left:10px;margin-right:auto;text-align:left;white-space:nowrap;font-size:4.8vw;}
 
 /* status row: count pill + hearts pill */
 .statusrow{width:100%;max-width:460px;display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px;}
@@ -682,10 +683,8 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   <h2 id="setTitle" data-i="settings">Settings</h2>
   <div class="setrow"><span data-i="sound">Sound</span><button class="iconbtn" id="setSound"><svg id="setSoundIcon" viewBox="0 0 24 24" fill="#6E4F44"><path d="M4 9v6h4l5 5V4L8 9H4z"/></svg></button></div>
   <div class="setrow"><span data-i="haptics">Vibration</span><button class="iconbtn" id="setHaptics"><svg id="setHapticsIcon" viewBox="0 0 24 24" fill="#6E4F44"><rect x="7" y="3.5" width="10" height="17" rx="2.6"/><rect x="9.4" y="6" width="5.2" height="11" rx="1" fill="#FBF3E2"/><path d="M3.5 9v6M20.5 9v6" stroke="#6E4F44" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
-  <button class="btn alt" id="setHowto" data-i="howto" style="color:#fff">How to play</button>
   <button class="btn alt" id="setRestore" data-i="restore" style="color:#fff">Restore purchases</button>
-  <button class="btn alt" id="setRestart" data-i="restart" style="color:#fff">Restart level</button>
-  <button class="btn ghost" id="setHome" data-i="home">Home</button>
+  <button class="btn play" id="setRestart" data-i="restart">Restart level</button>
   <div class="setlinks">
     <button class="setlink" id="setPrivacy" data-i="privacy">Privacy Policy</button>
     <span class="setdot">.</span>
@@ -945,9 +944,41 @@ function countSolutions(N,region,limit){const byReg=Array.from({length:N},()=>[]
   function bt(k){if(count>=limit)return;if(k===N){count++;return;}const reg=order[k];
     for(const[r,c]of byReg[reg]){if(uR[r]||uC[c]||!adjOk(r,c))continue;uR[r]=uC[c]=true;placed.push([r,c]);bt(k+1);placed.pop();uR[r]=uC[c]=false;if(count>=limit)return;}}
   bt(0);return count;}
-function generatePuzzle(N,seed){for(let a=0;a<500;a++){const rng=mulberry32((seed^(a*2654435761))>>>0);const sol=genSolution(N,rng);if(!sol)continue;const region=genRegions(N,sol,rng);if(countSolutions(N,region,2)===1)return {N,region,solCols:sol};}
-  const rng=mulberry32(seed>>>0);const sol=genSolution(N,rng)||[...Array(N).keys()];return {N,region:genRegions(N,sol,rng),solCols:sol};}
-function levelSize(idx){const lv=idx+1;if(lv<=1)return 4;if(lv<=3)return 5;if(lv<=6)return 6;if(lv<=9)return 7;if(lv<=12)return 8;return 9;} // Meowdoku curve: L1=4,L2-3=5,L4-6=6,L7-9=7,L10-12=8,L13+=9
+// collect up to `limit` solutions as column-per-row arrays
+function solveStar(N,region,limit){const byReg=Array.from({length:N},()=>[]);
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++)byReg[region[r][c]].push([r,c]);
+  const order=[...Array(N).keys()].sort((a,b)=>byReg[a].length-byReg[b].length);
+  const uR=new Array(N).fill(false),uC=new Array(N).fill(false),placed=[],sols=[];
+  const adjOk=(r,c)=>{for(const[pr,pc]of placed){if(Math.abs(pr-r)<=1&&Math.abs(pc-c)<=1)return false;}return true;};
+  function bt(k){if(sols.length>=limit)return;if(k===N){const cols=new Array(N);for(const[r,c]of placed)cols[r]=c;sols.push(cols);return;}const reg=order[k];
+    for(const[r,c]of byReg[reg]){if(uR[r]||uC[c]||!adjOk(r,c))continue;uR[r]=uC[c]=true;placed.push([r,c]);bt(k+1);placed.pop();uR[r]=uC[c]=false;if(sols.length>=limit)return;}}
+  bt(0);return sols;}
+function regionConnected(N,region,id){let s=null,cnt=0;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(region[r][c]===id){cnt++;if(!s)s=[r,c];}
+  if(!s)return false;const seen=new Set([s[0]*N+s[1]]),st=[s];while(st.length){const[r,c]=st.pop();for(const[a,b]of[[r-1,c],[r+1,c],[r,c-1],[r,c+1]]){if(a<0||b<0||a>=N||b>=N||region[a][b]!==id)continue;const k=a*N+b;if(!seen.has(k)){seen.add(k);st.push([a,b]);}}}
+  return seen.size===cnt;}
+// reshape regions until the puzzle has a UNIQUE solution: repeatedly find an alternate solution
+// and move one of its star-cells into a neighbouring region (kills the alternate, keeps the intended
+// solution valid + every region connected). Star Battle regions may be any size.
+function refineUnique(N,solCols,region,rng){
+  for(let iter=0;iter<600;iter++){
+    const sols=solveStar(N,region,2);
+    if(sols.length<=1)return region;
+    const other=sols.find(s=>{for(let r=0;r<N;r++)if(s[r]!==solCols[r])return true;return false;})||sols[1];
+    let moved=false;const rows=shuffle([...Array(N).keys()],rng);
+    for(const r of rows){const c=other[r];if(solCols[r]===c)continue;const R=region[r][c];
+      const nb=shuffle([[r-1,c],[r+1,c],[r,c-1],[r,c+1]].filter(([a,b])=>a>=0&&b>=0&&a<N&&b<N&&region[a][b]!==R),rng);
+      for(const[a,b]of nb){const Rp=region[a][b];region[r][c]=Rp;if(regionConnected(N,region,R)){moved=true;break;}region[r][c]=R;}
+      if(moved)break;}
+    if(!moved)return region; // stuck; caller retries a fresh seed
+  }
+  return region;}
+function generatePuzzle(N,seed){for(let a=0;a<80;a++){const rng=mulberry32((seed^(a*2654435761))>>>0);const sol=genSolution(N,rng);if(!sol)continue;let region=genRegions(N,sol,rng);region=refineUnique(N,sol,region,rng);if(countSolutions(N,region,2)===1)return {N,region,solCols:sol};}
+  const rng=mulberry32(seed>>>0);const sol=genSolution(N,rng)||[...Array(N).keys()];return {N,region:refineUnique(N,sol,genRegions(N,sol,rng),rng),solCols:sol};}
+// Wave difficulty (bell-ish, NOT monotonic): easy>medium>hard>easy>very-hard>easy... with peaks
+// that rise over time so late levels reach 10/11/12 ducks; breathers drop back to easy between peaks.
+const LEVEL_N=[4,5,6,5,7,5,6, 7,6,8,6,7,8,6, 9,7,8,7,9,8,7, 10,8,9,8,10,8,9, 11,8,10,9,11,9,12, 9,11,10,12,9];
+const LEVEL_WAVE=[9,11,10,12,9,11,10,12]; // repeating high wave (still wavy) for L41+
+function levelSize(idx){if(idx<0)idx=0;return idx<LEVEL_N.length?LEVEL_N[idx]:LEVEL_WAVE[(idx-LEVEL_N.length)%LEVEL_WAVE.length];}
 // Each level keeps a FIXED region STRUCTURE (deterministic seed) so its difficulty is
 // identical on every retry; only a random dihedral transform + colour shuffle change
 // WHERE the regions sit and their colours. Same shape (a 1-cell region stays a 1-cell
@@ -964,12 +995,28 @@ function recolorPuzzle(pz){const ids=[...new Set(pz.region.flat())],sh=ids.slice
   return {N:pz.N,region:pz.region.map(row=>row.map(id=>map[id])),solCols:pz.solCols.slice()};}
 // deterministic UNIQUE base puzzle for a level (advance the seed until generatePuzzle
 // yields a unique solution, so a fixed level seed never lands on the non-unique fallback)
-function fixedPuzzle(N,seed){for(let k=0;k<48;k++){const pz=generatePuzzle(N,(seed+k*0x9e3779b9)>>>0);if(countSolutions(N,pz.region,2)===1)return pz;}return generatePuzzle(N,seed);}
-function randomizedLevel(idx){const N=levelSize(idx);let pz=fixedPuzzle(N,levelSeed(idx));pz=transformPuzzle(pz,DIHEDRAL[(Math.random()*DIHEDRAL.length)|0]);return recolorPuzzle(pz);}
+const _pzCache={}; // a level's unique base puzzle is deterministic; cache it so big-N levels only generate once
+function fixedPuzzle(N,seed){const key=N+':'+seed;if(_pzCache[key])return _pzCache[key];let res=null;for(let k=0;k<48;k++){const pz=generatePuzzle(N,(seed+k*0x9e3779b9)>>>0);if(countSolutions(N,pz.region,2)===1){res=pz;break;}}if(!res)res=generatePuzzle(N,seed);_pzCache[key]=res;return res;}
+function randomizedLevel(idx){const N=levelSize(idx);let pz=fixedPuzzle(N,levelSeed(idx));pz=transformPuzzle(pz,DIHEDRAL[(Math.random()*DIHEDRAL.length)|0]);pz=recolorPuzzle(pz);pz.colors=levelPalette(idx,N,(Math.random()*1e9)>>>0);return pz;}
 const TOTAL_LEVELS=40;
 
 /* ---------- icons ---------- */
 function regionVar(i){return 'var(--r'+(i%10)+')';}
+/* ---- per-level region palette: each level gets UNIQUE colours, with a distinct->similar ramp
+   (early levels = far-apart easy-to-tell colours; late levels = closer pairs that look alike). ---- */
+function hslToHex(h,s,l){s/=100;l/=100;const a=s*Math.min(l,1-l);const f=n=>{const k=(n+h/30)%12;const x=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*x).toString(16).padStart(2,'0');};return '#'+f(0)+f(8)+f(4);}
+function hexToHsl(hex){let r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0;if(d){if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360;}const l=(mx+mn)/2,s=d?d/(1-Math.abs(2*l-1)):0;return [h,s*100,l*100];}
+function levelPalette(idx,N,salt){salt=(salt>>>0);
+  const h0=((idx*47+salt*131)%360+360)%360;                  // unique base hue per level (+ per-play salt)
+  const t=Math.max(0,Math.min(1,(idx-2)/30));                // 0..1 ramp across ~L3..L33
+  const cf=t*0.6;                                            // hue-pair compression: 0 distinct .. .6 alike (never identical)
+  const lv=11*(1-t)+3*t;                                     // lightness spread: wide early, small (>=3) late
+  const sv=9*(1-t);                                          // saturation spread early
+  const baseS=60,baseL=64,step=360/N,cols=[];
+  for(let i=0;i<N;i++){let h=h0+i*step;h+=((i%2)?-1:1)*(step*0.5)*cf; // pull adjacent pairs together as cf grows
+    const l=baseL+((i%2)?-1:1)*lv,s=baseS+((i%2)?-1:1)*sv;
+    cols.push(hslToHex(((h%360)+360)%360,Math.max(42,Math.min(76,s)),Math.max(50,Math.min(76,l))));}
+  return cols;}
 const DUCK_SVG='<svg class="duckface" viewBox="0 0 64 64"><path d="M30 6c2-3 7-2 7 2 0 2-1 3-3 4" fill="#F2913C"/><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><ellipse cx="14" cy="40" rx="7" ry="9" fill="#FBC02D"/><circle cx="24" cy="32" r="5" fill="#fff"/><circle cx="25" cy="33" r="2.7" fill="#3A2A20"/><circle cx="41" cy="32" r="5" fill="#fff"/><circle cx="42" cy="33" r="2.7" fill="#3A2A20"/><path d="M24 43 q8 8 17 0 q-3 8 -8.5 8 q-5.5 0 -8.5 -8z" fill="#F2913C" stroke="#D9762A" stroke-width="1"/><ellipse cx="17" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/><ellipse cx="47" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/></svg>';
 const DUCK_MINI='<svg viewBox="0 0 64 64"><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><circle cx="25" cy="32" r="4" fill="#3A2A20"/><circle cx="40" cy="32" r="4" fill="#3A2A20"/><path d="M25 43 q7 7 15 0 q-2 7 -7.5 7 q-5.5 0 -7.5 -7z" fill="#F2913C"/></svg>';
 const COIN_SVG='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#F4B731" stroke="#D9971F" stroke-width="1.6"/><circle cx="12" cy="12" r="6.6" fill="#FFD867" stroke="#D9971F" stroke-width="1.1"/><ellipse cx="9.3" cy="9" rx="2.1" ry="1.3" fill="#fff" opacity=".75"/></svg>';
@@ -1078,6 +1125,7 @@ let puzzle=null,N=5,gstate=null,hearts=3,duckCount=0,mode='levels',levelIdx=0;
 let heartsEnabled=true,history=[],boostersUsed=0,heartsLost=0,ended=false;
 let ftue=null; // {active, step, target:[r,c], allowOnly:set}
 
+let gameLive=false; // a live (unfinished) normal level is resumable: Back -> home keeps it, Play returns to it
 function startLevel(m,idx){
   mode=m;levelIdx=idx||0;ended=false;boostersUsed=0;heartsLost=0;history=[];ftue=null;faceFx.clear();_boosterClock=Date.now();
   document.getElementById('app').classList.remove('tutdim','hintmode');document.getElementById('qboard').classList.remove('dim');
@@ -1087,9 +1135,11 @@ function startLevel(m,idx){
   // the level number only sets the size/difficulty via levelSize.
   N=levelSize(levelIdx);puzzle=randomizedLevel(levelIdx);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
-  buildGrid();renderAll();show('game');playSfx('reveal');
+  buildGrid();renderAll();show('game');playSfx('reveal');gameLive=true;
   MX.track('Level Started',{level:levelIdx+1,size:N+'x'+N});
   try{if(window.DuckAdjust)DuckAdjust.fire('gameStarted');}catch(e){}
+  // warm the NEXT level's base puzzle in the background so big grids never hitch on first entry
+  const _ni=levelIdx+1;setTimeout(()=>{try{fixedPuzzle(levelSize(_ni),levelSeed(_ni));}catch(e){}},1400);
 }
 
 /* ---------- conflict logic ---------- */
@@ -1153,7 +1203,7 @@ function tryGuess(r,c){
 function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),460);}if(gstate[r]&&gstate[r][c]===DUCK)duckReact(r,c,'oops',1000);});shakeBoard();}
 
 /* ---------- win / lose ---------- */
-function onWin(){ended=true;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);haptic('ok');soundWin();confettiRain();
+function onWin(){ended=true;gameLive=false;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)duckReact(r,c,'happy',5000);haptic('ok');soundWin();confettiRain();
   const stars=starsForWin();
   const praise=L(["Awesome!","Brilliant!","Quacktastic!","Well done!"][stars-1]||"Awesome!",["Отлично!","Блестяще!","Кряк-класс!","Молодец!"][stars-1]||"Отлично!");
   let goldGain=goldForWin(N);const tdy=ymd();if(save.lastGoldYMD!==tdy){goldGain+=dailyWinBonus();save.lastGoldYMD=tdy;}
@@ -1168,7 +1218,7 @@ function onWin(){ended=true;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r]
   openScrim('scrimWin');}
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
-function onLose(){ended=true;MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
+function onLose(){ended=true;gameLive=false;MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
   const canCont=!ftue&&(save.gold||0)>=CONTINUE_COST;const cb=$('btnContinue');cb.style.display=canCont?'':'none';
   if(canCont)cb.innerHTML=L("Continue","Продолжить")+' '+costChip(CONTINUE_COST);
   $('loseSub').textContent=canCont?L("Keep your ducks. Refill hearts and finish.","Сохрани уток. Пополни сердца и закончи."):L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");
@@ -1196,7 +1246,7 @@ function usePlaceDuck(){if(ended||hintActive)return;let avail=false;for(let r=0;
 let _buyKey=null;
 function openBoosterBuy(k){const cost=BOOSTER_PACK_COST[k];if((save.gold||0)<cost){needGold();return;}_buyKey=k;const nm=k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Подставить утку');$('bbIcon').innerHTML=boosterIcon(k);$('bbTitle').textContent=L('Get ','Получить ')+BOOSTER_PACK_QTY+' '+nm;$('bbSub').textContent=L('Stock up to keep solving.','Запасись, чтобы решать дальше.');$('bbBuy').innerHTML=L('Buy for ','Купить за ')+costChip(cost);openScrim('scrimBuy');haptic('light');}
 function confirmBoosterBuy(){const k=_buyKey;if(!k)return;const cost=BOOSTER_PACK_COST[k];if(!spendGold(cost)){closeScrim('scrimBuy');needGold();return;}grantFreeBoosters({[k]:BOOSTER_PACK_QTY});persist();renderBoosters();closeScrim('scrimBuy');MX.track('Booster Pack Bought',{type:k,qty:BOOSTER_PACK_QTY,cost});haptic('ok');soundPop();toast('+'+BOOSTER_PACK_QTY+' '+(k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Утка')));if(k==='hint')useHint();else usePlaceDuck();}
-function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}boostersUsed++;hearts=3;ended=false;renderHearts();closeScrim('scrimLose');MX.track('Continue Used',{level:levelIdx+1});haptic('ok');}
+function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}boostersUsed++;hearts=3;ended=false;gameLive=true;renderHearts();closeScrim('scrimLose');MX.track('Continue Used',{level:levelIdx+1});haptic('ok');}
 // Apply a purchase grant from the server: gold and/or free sticker packs.
 function grantReward(g){if(!g)return;const msgs=[];
   if(g.gold){save.gold=(save.gold||0)+g.gold;msgs.push('+'+g.gold+' '+L("gold","золота"));}
@@ -1205,10 +1255,11 @@ function grantReward(g){if(!g)return;const msgs=[];
   persist();updateGoldHud();renderBoosters();if($('album').classList.contains('on'))renderAlbum();
   if(msgs.length&&!_suppressGrantToast)toast(msgs.join('   '));} // the purchase-result modal shows the reward chips, so skip the toast during a popup buy
 function ftExcludedByDucks(r,c){for(let i=0;i<N;i++){if(gstate[r][i]===DUCK||gstate[i][c]===DUCK)return true;}const reg=puzzle.region[r][c];for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++)if(gstate[rr][cc]===DUCK&&puzzle.region[rr][cc]===reg)return true;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const rr=r+dr,cc=c+dc;if(rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===DUCK)return true;}return false;}
-const REGION_NAMES_EN=['Coral','Purple','Teal','Yellow','Blue','Green','Pink','Orange','Lavender','Cyan'];
-const REGION_NAMES_RU=['Коралловый','Фиолетовый','Бирюзовый','Жёлтый','Синий','Зелёный','Розовый','Оранжевый','Лавандовый','Голубой'];
-function colorName(g){const i=g%10;return L(REGION_NAMES_EN[i],REGION_NAMES_RU[i]);}
-function colorPill(g){return '<span style="color:var(--r'+(g%10)+');font-weight:900">'+colorName(g)+'</span>';}
+// names derived from each region's ACTUAL (per-level) colour so the hint label matches what's on screen
+const HUE_NAMES=[[16,'Red','Красный'],[42,'Orange','Оранжевый'],[68,'Yellow','Жёлтый'],[100,'Lime','Салатовый'],[158,'Green','Зелёный'],[188,'Teal','Бирюзовый'],[210,'Cyan','Голубой'],[252,'Blue','Синий'],[288,'Purple','Фиолетовый'],[322,'Pink','Розовый'],[346,'Rose','Малиновый'],[361,'Red','Красный']];
+function colorHexOf(g){return (puzzle&&puzzle.colors&&puzzle.colors[g])||'#8a8a8a';}
+function colorName(g){const h=hexToHsl(colorHexOf(g))[0];for(const e of HUE_NAMES){if(h<e[0])return L(e[1],e[2]);}return L('Color','Цвет');}
+function colorPill(g){const a=hexToHsl(colorHexOf(g));return '<span style="color:'+hslToHex(a[0],Math.min(82,a[1]+6),Math.min(46,a[2]))+';font-weight:900">'+colorName(g)+'</span>';}
 function regionCells(g){const out=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(puzzle.region[r][c]===g)out.push([r,c]);return out;}
 function hasDuckIn(cells){return cells.some(([r,c])=>gstate[r][c]===DUCK);}
 function isOpenCell(r,c){return gstate[r][c]===EMPTY;}
@@ -1280,8 +1331,9 @@ function showTip(anchor,text,below){if(!anchor)return;let tip=$('floatTip');if(!
   tip.classList.add('on');haptic('err');clearTimeout(_tipT);_tipT=setTimeout(()=>{tip.classList.remove('on');},2000);}
 let cellEls=[];
 function buildGrid(){const g=$('grid');g.style.gridTemplateColumns='repeat('+N+',1fr)';g.style.gridTemplateRows='repeat('+N+',1fr)';
-  g.style.gap=(N>=8?'4px':N>=7?'5px':'6px');g.innerHTML='';cellEls=[];
-  for(let r=0;r<N;r++){const row=[];for(let c=0;c<N;c++){const d=document.createElement('div');d.className='qcell';d.style.background=regionVar(puzzle.region[r][c]);d.dataset.r=r;d.dataset.c=c;
+  g.style.gap=(N>=11?'3px':N>=8?'4px':N>=7?'5px':'6px');g.innerHTML='';cellEls=[];
+  const _rad=(N>=11?9:N>=9?11:13);
+  for(let r=0;r<N;r++){const row=[];for(let c=0;c<N;c++){const d=document.createElement('div');d.className='qcell';d.style.background=(puzzle.colors&&puzzle.colors[puzzle.region[r][c]])||regionVar(puzzle.region[r][c]);d.style.borderRadius=_rad+'px';d.dataset.r=r;d.dataset.c=c;
     d.style.animation='cellReveal .34s cubic-bezier(.34,1.56,.64,1) both '+((r+c)*0.028).toFixed(3)+'s'; // quick staggered reveal on level start
     d.addEventListener('click',()=>onCellTap(r,c));g.appendChild(d);row.push(d);}cellEls.push(row);}}
 function cellEl(r,c){return cellEls[r]&&cellEls[r][c];}
@@ -1584,9 +1636,9 @@ function bub(spec){let s=spec[LANG]||spec.en;(spec.hl||[]).forEach(h=>{if(s.inde
 function startFTUE(){
   mode='levels';levelIdx=0;ended=false;boostersUsed=0;heartsLost=0;history=[];faceFx.clear();_boosterClock=Date.now();
   MX.track('Tutorial Started');
-  N=4;puzzle=generatePuzzle(4,4242);heartsEnabled=true;
+  N=4;puzzle=generatePuzzle(4,4242);puzzle.colors=levelPalette(0,4,(Math.random()*1e9)>>>0);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
-  buildGrid();renderAll();show('game');playSfx('reveal');
+  buildGrid();renderAll();show('game');playSfx('reveal');gameLive=false; // the tutorial is not resumable (scripted step state)
   ftue={active:true,step:0};
   ftueStep0();
 }
@@ -1689,7 +1741,7 @@ function dailyClaim(){if(!dailyClaimable())return;const r=dailyTick();const i=r.
   toast(t.join('   '));}
 function updDailyDot(){const b=$('btnHomeDaily');if(!b)return;b.classList.toggle('locked',!dailyUnlocked());const dot=$('dailyDot');if(dot)dot.style.display=(dailyUnlocked()&&dailyClaimable())?'block':'none';}
 function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;const y=new Date(Date.now()-86400000);const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1;save.lastPlayYMD=today;persist();}
-function startPlay(){touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
+function startPlay(){if(gameLive&&!ended){show('game');return;} /* resume the in-progress level exactly as it was left */ touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
 /* ---------- OWNER / ADMIN (settings) ---------- */
 const ADMIN_IDS=[23040617];   // Pickle's Telegram user id -> auto owner
 const ADMIN_CODE='duckboss';  // secret unlock on native/web: tap the Settings title 7x, enter this
@@ -1705,7 +1757,12 @@ function admDoWipe(){
   try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem('dd.anon');localStorage.removeItem('dd.lastOpen');}catch(e){}
   setTimeout(()=>location.reload(),300);
 }
-function openSettings(inGame){setSoundIcon();setHapticIcon();const v=$('setVer');if(v)v.textContent='v'+DD_VERSION;$('setRestart').style.display=inGame?'':'none';$('setHome').style.display=inGame?'':'none';try{$('setAdmin').style.display=isAdmin()?'':'none';}catch(e){}openScrim('scrimSet');}
+function openSettings(inGame){setSoundIcon();setHapticIcon();const v=$('setVer');if(v)v.textContent='v'+DD_VERSION;
+  // in-game settings = sound + haptics + restart + version only; restore/privacy/contact live on the home settings.
+  $('setRestart').style.display=inGame?'':'none';
+  $('setRestore').style.display=inGame?'none':'';
+  const sl=document.querySelector('#scrimSet .setlinks');if(sl)sl.style.display=inGame?'none':'';
+  try{$('setAdmin').style.display=isAdmin()?'':'none';}catch(e){}openScrim('scrimSet');}
 function fillHow(){const en=["Place one duck in every colored area.","No two ducks can share a row or a column.","Ducks cannot touch each other, not even diagonally.","Single-tap a cell for an X note. Double-tap to place a duck.","You have 3 hearts. A duck that breaks a rule costs one heart.","Stuck? Use Hint, Undo, or Place a Duck. No ads, boosters are Telegram Stars only."];
   const ru=["Поставь по одной утке в каждой цветной зоне.","Две утки не могут быть в одном ряду или столбце.","Утки не должны соприкасаться, даже по диагонали.","Одно нажатие на клетку ставит метку X. Двойное ставит утку.","У тебя 3 сердца. Утка, нарушившая правило, стоит одно сердце.","Застрял? Подсказка, Назад или Утка. Без рекламы, бустеры только за Telegram Stars."];
   $('howBody').innerHTML=(LANG==='ru'?ru:en).map(x=>"<p style='margin:8px 0'>"+x+"</p>").join('');}
@@ -1720,7 +1777,9 @@ function bind(){
   $('btnHomeDaily').onclick=()=>{if(!dailyUnlocked()){showTip($('btnHomeDaily'),L('Unlocks at level ','Откроется на уровне ')+DAILY_UNLOCK_LEVEL,true);return;}openDaily();};
   $('dailyClose').onclick=()=>closeScrim('scrimDaily');
   $('lbClose').onclick=()=>closeScrim('scrimLB');
-  $('btnBack').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
+  // Back -> home, but a live (unfinished) level stays resumable: tapping Play returns to the exact state.
+  // Leaving the tutorial abandons it (its scripted step state is not resumable).
+  $('btnBack').onclick=()=>{if(ftue){ftue=null;gameLive=false;}ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
   $('btnGear').onclick=()=>openSettings(true);
   $('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
   $('hintApply').onclick=applyHint;
@@ -1748,13 +1807,11 @@ function bind(){
   $('admStickers').onclick=()=>{STICKERS.forEach(s=>{save.stickers[s.id]=Math.max(1,save.stickers[s.id]||0);});persist();toast(L("All stickers unlocked","Все наклейки открыты"));haptic('ok');};
   $('admWipe').onclick=()=>{const b=$('admWipe');if(!admWipeArm){admWipeArm=true;b.textContent=L("Tap again to wipe","Нажмите ещё раз");haptic('err');setTimeout(()=>{admWipeArm=false;b.textContent=L("Wipe account and reload","Стереть аккаунт");},2500);}else{admDoWipe();}};
   $('setSound').onclick=()=>{audioOn=!audioOn;save.sound=audioOn;persist();setSoundIcon();};
-  $('setHowto').onclick=()=>{closeScrim('scrimSet');fillHow();openScrim('scrimHow');};
   $('setHaptics').onclick=()=>{hapticsOn=!hapticsOn;save.haptics=hapticsOn;persist();setHapticIcon();if(hapticsOn)haptic('light');};
   $('setRestore').onclick=()=>{try{IAP.restore&&IAP.restore();}catch(e){}pollPurchases();toast(L("Checking for purchases...","Проверяем покупки..."));haptic('light');};
   $('setPrivacy').onclick=()=>{try{openExternal('https://duckdoku.com/privacy');}catch(e){}}; // CF static (always-on, clean URL); NOT API_BASE (Render 404s extensionless + cold-starts)
   $('setContact').onclick=()=>{try{openExternal('https://t.me/ImPickleJonn');}catch(e){}};
   $('setRestart').onclick=()=>{closeScrim('scrimSet');startLevel('levels',levelIdx);};
-  $('setHome').onclick=()=>{closeScrim('scrimSet');show('home');refreshHome();};
   // ----- bottom nav -----
   $('navStart').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
   $('navShop').onclick=openShopScreen;

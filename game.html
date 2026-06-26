@@ -822,11 +822,21 @@ let lastTapCell=null,lastTapTime=0;
 let paintMode=null,paintMoved=false,paintTouched=null,paintStart=null,suppressClick=false;
 function gridCellAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest?el.closest('.qcell'):null;}
 function paintApply(r,c){if(gstate[r][c]===DUCK||gstate[r][c]===RED)return;if(paintMode==='mark'){if(gstate[r][c]===EMPTY){gstate[r][c]=MARK;renderCell(r,c);}}else{if(gstate[r][c]===MARK){gstate[r][c]=EMPTY;renderCell(r,c);}}}
-function bindPaint(){const g=$('grid');
-  g.addEventListener('pointerdown',e=>{ if(ended||(ftue&&ftue.active))return; const cell=e.target.closest&&e.target.closest('.qcell'); if(!cell)return; const r=+cell.dataset.r,c=+cell.dataset.c; if(gstate[r][c]===DUCK){paintMode=null;return;} paintMode=(gstate[r][c]===MARK)?'erase':'mark'; paintMoved=false; paintStart=[r,c]; paintTouched=new Set([r*100+c]); });
-  g.addEventListener('pointermove',e=>{ if(!paintMode)return; const cell=gridCellAt(e.clientX,e.clientY); if(!cell)return; const r=+cell.dataset.r,c=+cell.dataset.c,key=r*100+c; if(!paintMoved){ if(r===paintStart[0]&&c===paintStart[1])return; paintMoved=true; snapshot(); haptic('light'); paintApply(paintStart[0],paintStart[1]); } if(paintTouched.has(key))return; paintTouched.add(key); paintApply(r,c); soundTick(); });
+function bindPaint(){const g=$('grid');let usingTouch=false;
+  function startAt(r,c){ if(ended||(ftue&&ftue.active))return; if(gstate[r][c]===DUCK){paintMode=null;return;} paintMode=(gstate[r][c]===MARK)?'erase':'mark'; paintMoved=false; paintStart=[r,c]; paintTouched=new Set([r*100+c]); }
+  function moveAt(x,y){ if(!paintMode)return; const cell=gridCellAt(x,y); if(!cell)return; const r=+cell.dataset.r,c=+cell.dataset.c,key=r*100+c; if(!paintMoved){ if(r===paintStart[0]&&c===paintStart[1])return; paintMoved=true; snapshot(); haptic('light'); paintApply(paintStart[0],paintStart[1]); } if(paintTouched.has(key))return; paintTouched.add(key); paintApply(r,c); soundTick(); }
   const end=()=>{ if(paintMode&&paintMoved){ suppressClick=true; setTimeout(()=>{suppressClick=false;},80); } paintMode=null; };
-  g.addEventListener('pointerup',end); g.addEventListener('pointercancel',end); g.addEventListener('pointerleave',end);
+  // TOUCH devices: drive painting from touch events. The Android WebView delivers
+  // touchmove across cells reliably, unlike pointer events (implicit pointer
+  // capture on touch pins moves to the start cell, so swipe-to-mark died natively).
+  g.addEventListener('touchstart',e=>{ usingTouch=true; const t=e.touches&&e.touches[0]; if(!t)return; const el=document.elementFromPoint(t.clientX,t.clientY); const cell=el&&el.closest&&el.closest('.qcell'); if(!cell)return; startAt(+cell.dataset.r,+cell.dataset.c); },{passive:true});
+  g.addEventListener('touchmove',e=>{ if(!paintMode)return; const t=e.touches&&e.touches[0]; if(!t)return; if(paintMoved&&e.cancelable)e.preventDefault(); moveAt(t.clientX,t.clientY); },{passive:false});
+  g.addEventListener('touchend',end); g.addEventListener('touchcancel',end);
+  // MOUSE (desktop): use pointer events; ignore touch pointers (handled above).
+  g.addEventListener('pointerdown',e=>{ if(usingTouch||e.pointerType==='touch')return; const cell=e.target.closest&&e.target.closest('.qcell'); if(!cell)return; startAt(+cell.dataset.r,+cell.dataset.c); });
+  g.addEventListener('pointermove',e=>{ if(usingTouch||e.pointerType==='touch')return; moveAt(e.clientX,e.clientY); });
+  g.addEventListener('pointerup',e=>{ if(e.pointerType!=='touch')end(); });
+  g.addEventListener('pointerleave',e=>{ if(e.pointerType!=='touch')end(); });
 }
 function onCellTap(r,c){
   if(ended)return;

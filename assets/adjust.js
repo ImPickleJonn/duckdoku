@@ -21,13 +21,13 @@
     fbAppId:  '2510536786035302',             // Duckdoku Facebook app (Meta attribution)
     environment: 'production',                 // 'production' or 'sandbox' (test)
     logLevel: 'SUPPRESS',                      // 'VERBOSE' while testing
-    events: {                                  // <- paste each token from Adjust
-      appOpen:           '__TOK_APP_OPEN__',
-      gameStarted:       '__TOK_GAME_STARTED__',
-      levelComplete:     '__TOK_LEVEL_COMPLETE__',
-      levelFailed:       '__TOK_LEVEL_FAILED__',
-      boosterUsed:       '__TOK_BOOSTER_USED__',
-      purchaseCompleted: '__TOK_PURCHASE_COMPLETED__',
+    events: {                                  // Adjust event tokens (events-7tm4lwjur2f4.csv)
+      appOpen:           'gok408',
+      gameStarted:       'qm2l24',
+      levelComplete:     'uj4ce5',
+      levelFailed:       'l95tri',
+      boosterUsed:       '7ohulr',
+      purchaseCompleted: 'f75xwc',
     },
   };
 

@@ -17,7 +17,7 @@
    =========================================================================== */
 (function (global) {
   var ADJUST_CONFIG = {
-    appToken: '__ADJUST_APP_TOKEN__',        // <- paste from Adjust
+    appToken: '7tm4lwjur2f4',                 // Duckdoku (Adjust) — Android + iOS
     fbAppId:  '__FACEBOOK_APP_ID__',          // <- paste from Facebook
     environment: 'production',                 // 'production' or 'sandbox' (test)
     logLevel: 'SUPPRESS',                      // 'VERBOSE' while testing

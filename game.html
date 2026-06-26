@@ -108,6 +108,19 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .booster svg{width:32px;height:32px;}
 .booster canvas.bface{width:40px;height:40px;display:block;}
 .modalface{width:100%;height:100%;display:block;}
+/* ---------- OWNER / ADMIN panel ---------- */
+.admSec{font-weight:900;font-size:12px;letter-spacing:.4px;color:var(--ink-soft);text-transform:uppercase;margin:16px 2px 8px;text-align:left;}
+.admSec.admdanger{color:var(--red);}
+.admgold{font-weight:800;color:var(--ink-soft);text-transform:none;letter-spacing:0;}
+.admStep{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0;}
+.admpm{font-size:26px;font-weight:900;color:var(--ink);}
+.adminput{width:100%;box-sizing:border-box;border:2px solid var(--bg);background:#fff;color:var(--ink);border-radius:14px;padding:11px;font-family:inherit;font-size:18px;font-weight:900;text-align:center;}
+.admlvl{width:96px;}
+.admgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0;}
+.admgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:6px 0;}
+.admgrid .btn,.admgrid3 .btn{margin:0;padding:11px 4px;font-size:13px;}
+.admnote{margin:6px 0;color:var(--ink-soft);}
+.admmsg{color:var(--red);font-size:13px;min-height:16px;margin-top:6px;}
 .booster .bcount{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 5px;background:var(--heart);color:#fff;border-radius:11px;font-size:3.1vw;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 var(--shadow);}
 .booster .bcount.zero{background:var(--green);}
 .blabel{position:absolute;bottom:-18px;font-size:2.7vw;color:var(--ink-soft);white-space:nowrap;}
@@ -455,12 +468,36 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 
 <div class="scrim" id="scrimSet"><div class="modal modal-rel">
   <button class="closex" id="setClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  <h2 data-i="settings">Settings</h2>
+  <h2 id="setTitle" data-i="settings">Settings</h2>
   <div class="setrow"><span data-i="sound">Sound</span><button class="iconbtn" id="setSound"><svg id="setSoundIcon" viewBox="0 0 24 24" fill="#6E4F44"><path d="M4 9v6h4l5 5V4L8 9H4z"/></svg></button></div>
   <button class="btn play" id="setShop" data-i="shop" style="color:#fff">Shop</button>
   <button class="btn alt" id="setHowto" data-i="howto" style="color:#fff">How to play</button>
   <button class="btn alt" id="setRestart" data-i="restart" style="color:#fff">Restart level</button>
   <button class="btn ghost" id="setHome" data-i="home">Home</button>
+  <button class="btn ghost" id="setAdmin" style="display:none;color:#C0392B">Owner</button>
+</div></div>
+
+<div class="scrim" id="scrimAdmin"><div class="modal modal-rel">
+  <button class="closex" id="admClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h2>Owner</h2>
+  <div id="admLock" style="display:none">
+    <p class="admnote">Enter owner code</p>
+    <input id="admCode" class="adminput" type="password" autocomplete="off" placeholder="code">
+    <button class="btn play" id="admUnlock" style="color:#fff">Unlock</button>
+    <div id="admLockMsg" class="admmsg"></div>
+  </div>
+  <div id="admPanel" style="display:none">
+    <div class="admSec">Jump to level</div>
+    <div class="admStep"><button class="iconbtn admpm" id="admMinus">-</button><input id="admLvl" class="adminput admlvl" type="number" min="1" max="99" value="1"><button class="iconbtn admpm" id="admPlus">+</button></div>
+    <button class="btn play" id="admGo" style="color:#fff">Go to level 1</button>
+    <div class="admSec">Resources <span class="admgold">(<span id="admGold">0</span> gold)</span></div>
+    <div class="admgrid"><button class="btn alt" data-gold="1000" style="color:#fff">+1,000 gold</button><button class="btn alt" data-gold="10000" style="color:#fff">+10,000 gold</button></div>
+    <div class="admgrid3"><button class="btn alt" data-boost="undo" style="color:#fff">+10 undo</button><button class="btn alt" data-boost="hint" style="color:#fff">+10 hint</button><button class="btn alt" data-boost="placeduck" style="color:#fff">+10 place</button></div>
+    <div class="admgrid"><button class="btn alt" data-pack="basic" style="color:#fff">+5 basic packs</button><button class="btn alt" data-pack="golden" style="color:#fff">+5 golden packs</button></div>
+    <button class="btn alt" id="admStickers" style="color:#fff">Unlock all stickers</button>
+    <div class="admSec admdanger">Danger</div>
+    <button class="btn" id="admWipe" style="background:var(--red);color:#fff">Wipe account and reload</button>
+  </div>
 </div></div>
 
 <div class="scrim" id="scrimLB"><div class="modal modal-rel">
@@ -1145,7 +1182,22 @@ function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Da
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;const y=new Date(Date.now()-86400000);const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1;save.lastPlayYMD=today;persist();}
 function startPlay(){touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
-function openSettings(inGame){setSoundIcon();$('setRestart').style.display=inGame?'':'none';$('setHome').style.display=inGame?'':'none';openScrim('scrimSet');}
+/* ---------- OWNER / ADMIN (settings) ---------- */
+const ADMIN_IDS=[23040617];   // Pickle's Telegram user id -> auto owner
+const ADMIN_CODE='duckboss';  // secret unlock on native/web: tap the Settings title 7x, enter this
+const ADMIN_DEV=/^(localhost|127\.0\.0\.1|0\.0\.0\.0|)$/.test(location.hostname);
+function admUid(){return (TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.id)||0;}
+function isAdmin(){return ADMIN_DEV||save.admin===1||ADMIN_IDS.indexOf(admUid())>=0;}
+let admSel=1,admWipeArm=false;
+function openAdmin(){const ok=isAdmin();$('admLock').style.display=ok?'none':'block';$('admPanel').style.display=ok?'block':'none';admSel=Math.max(1,(save.levelsDone||0)+1);if(ok)admRender();openScrim('scrimAdmin');}
+function admRender(){const li=$('admLvl');if(li)li.value=admSel;$('admGo').textContent=L("Go to level ","Уровень ")+admSel;$('admGold').textContent=fmtGold(save.gold);}
+function admUnlock(){if(($('admCode').value||'').trim()===ADMIN_CODE){save.admin=1;persist();$('admLock').style.display='none';$('admPanel').style.display='block';admRender();haptic('ok');}else{$('admLockMsg').textContent=L("Wrong code","Неверный код");haptic('err');}}
+function admDoWipe(){
+  try{if(initData)fetch(API_BASE+'/api/delete-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})}).catch(()=>{});}catch(e){}
+  try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem('dd.anon');localStorage.removeItem('dd.lastOpen');}catch(e){}
+  setTimeout(()=>location.reload(),300);
+}
+function openSettings(inGame){setSoundIcon();$('setRestart').style.display=inGame?'':'none';$('setHome').style.display=inGame?'':'none';try{$('setAdmin').style.display=isAdmin()?'':'none';}catch(e){}openScrim('scrimSet');}
 function fillHow(){const en=["Place one duck in every colored area.","No two ducks can share a row or a column.","Ducks cannot touch each other, not even diagonally.","Single-tap a cell for an X note. Double-tap to place a duck.","You have 3 hearts. A duck that breaks a rule costs one heart.","Stuck? Use Hint, Undo, or Place a Duck. No ads, boosters are Telegram Stars only."];
   const ru=["Поставь по одной утке в каждой цветной зоне.","Две утки не могут быть в одном ряду или столбце.","Утки не должны соприкасаться, даже по диагонали.","Одно нажатие на клетку ставит метку X. Двойное ставит утку.","У тебя 3 сердца. Утка, нарушившая правило, стоит одно сердце.","Застрял? Подсказка, Назад или Утка. Без рекламы, бустеры только за Telegram Stars."];
   $('howBody').innerHTML=(LANG==='ru'?ru:en).map(x=>"<p style='margin:8px 0'>"+x+"</p>").join('');}
@@ -1168,6 +1220,20 @@ function bind(){
   $('shopClose').onclick=()=>closeScrim('scrimShop');
   $('howClose').onclick=()=>closeScrim('scrimHow');$('howOk').onclick=()=>closeScrim('scrimHow');
   $('setClose').onclick=()=>closeScrim('scrimSet');
+  // ----- owner / admin panel -----
+  $('setAdmin').onclick=()=>{closeScrim('scrimSet');openAdmin();};
+  (function(){let n=0,t=0;$('setTitle').addEventListener('click',()=>{const now=Date.now();n=(now-t<3000)?n+1:1;t=now;if(n>=7){n=0;closeScrim('scrimSet');openAdmin();}});})(); // tap title 7x to unlock on native
+  $('admClose').onclick=()=>closeScrim('scrimAdmin');
+  $('admUnlock').onclick=admUnlock;
+  $('admMinus').onclick=()=>{admSel=Math.max(1,admSel-1);admRender();};
+  $('admPlus').onclick=()=>{admSel=Math.min(99,admSel+1);admRender();};
+  $('admLvl').onchange=()=>{admSel=Math.max(1,Math.min(99,parseInt($('admLvl').value,10)||1));admRender();};
+  $('admGo').onclick=()=>{const n=Math.max(1,Math.min(99,admSel|0));save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone||0,n-1);persist();closeScrim('scrimAdmin');closeScrim('scrimSet');startLevel('levels',n-1);};
+  document.querySelectorAll('#admPanel [data-gold]').forEach(b=>b.onclick=()=>{addGold(+b.dataset.gold);admRender();toast('+'+b.dataset.gold+' '+L("gold","золота"));haptic('ok');});
+  document.querySelectorAll('#admPanel [data-boost]').forEach(b=>b.onclick=()=>{grantFreeBoosters({[b.dataset.boost]:10});persist();renderBoosters();toast('+10 '+b.dataset.boost);haptic('ok');});
+  document.querySelectorAll('#admPanel [data-pack]').forEach(b=>b.onclick=()=>{save.freePacks=save.freePacks||{basic:0,golden:0};save.freePacks[b.dataset.pack]=(save.freePacks[b.dataset.pack]||0)+5;persist();toast('+5 '+b.dataset.pack+' '+L("packs","паков"));haptic('ok');});
+  $('admStickers').onclick=()=>{STICKERS.forEach(s=>{save.stickers[s.id]=Math.max(1,save.stickers[s.id]||0);});persist();toast(L("All stickers unlocked","Все наклейки открыты"));haptic('ok');};
+  $('admWipe').onclick=()=>{const b=$('admWipe');if(!admWipeArm){admWipeArm=true;b.textContent=L("Tap again to wipe","Нажмите ещё раз");haptic('err');setTimeout(()=>{admWipeArm=false;b.textContent=L("Wipe account and reload","Стереть аккаунт");},2500);}else{admDoWipe();}};
   $('setSound').onclick=()=>{audioOn=!audioOn;save.sound=audioOn;persist();setSoundIcon();};
   $('setHowto').onclick=()=>{closeScrim('scrimSet');fillHow();openScrim('scrimHow');};
   $('setShop').onclick=()=>{closeScrim('scrimSet');openShop();};

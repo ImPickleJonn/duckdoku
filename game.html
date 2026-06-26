@@ -451,7 +451,7 @@ function haptic(k){try{if(!TG||!TG.HapticFeedback)return;const H=TG.HapticFeedba
   else if(k==='ok')H.notificationOccurred('success');else if(k==='err')H.notificationOccurred('error');}catch(e){}}
 
 /* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
-const DD_VERSION='0.4.1';
+const DD_VERSION='0.4.2';
 function _mxHost(){try{const tg=TG;if(tg&&typeof tg.initData==='string'&&tg.initData.length>0)return'telegram';return'web';}catch(e){return'web';}}
 const MX={ready:false,token:'',_did:'',_super:{},_pre:[],
   _enc(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}catch(_){try{return btoa(JSON.stringify(o));}catch(e){return'';}}},
@@ -912,7 +912,7 @@ async function pollPurchases(){if(!initData)return;try{const r=await fetch(API_B
 /* ================= Duck Album: sticker collection + gold packs ================= */
 const GOLD_PACK_SVG='<svg viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="16" rx="3" fill="#F4B731" stroke="#D9971F" stroke-width="1.4"/><path d="M4.5 9h15" stroke="#D9971F" stroke-width="1.3"/><path d="M12 4v16" stroke="#fff" stroke-width="1.1" opacity=".5"/><path d="M12 2.4l1.9 2.8H10.1z" fill="#fff"/><circle cx="12" cy="14.5" r="2" fill="#fff" opacity=".85"/></svg>';
 const TROPHY_MINI='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg>';
-function stickerImg(id){return '<img class="stimg" src="assets/stickers/'+id+'.png" alt="" onerror="this.classList.add(\'noimg\')">';}
+function stickerImg(id){return '<img class="stimg" src="assets/stickers/'+id+'.png?v='+DD_VERSION+'" alt="" onerror="this.classList.add(\'noimg\')">';}
 function ownedCount(id){return (save.stickers&&save.stickers[id])||0;}
 function setOwnedN(setId){return STICKERS.filter(s=>s.set===setId&&ownedCount(s.id)>0).length;}
 function setTotalN(setId){return STICKERS.filter(s=>s.set===setId).length;}
@@ -959,7 +959,7 @@ function renderAlbum(){renderAlbumPacks();updateGoldHud();const wrap=$('albumSet
   }).join('');}
 
 function openAlbum(){show('album');renderAlbum();renderHomeAvatar();MX.track('Album Opened');}
-function renderHomeAvatar(){const wrap=$('homeAvaWrap'),img=$('homeAvaImg');if(!wrap||!img)return;if(save.avatarSticker){img.onerror=()=>wrap.classList.add('hidden');img.src='assets/stickers/'+save.avatarSticker+'.png';wrap.classList.remove('hidden');}else wrap.classList.add('hidden');}
+function renderHomeAvatar(){const wrap=$('homeAvaWrap'),img=$('homeAvaImg');if(!wrap||!img)return;if(save.avatarSticker){img.onerror=()=>wrap.classList.add('hidden');img.src='assets/stickers/'+save.avatarSticker+'.png?v='+DD_VERSION;wrap.classList.remove('hidden');}else wrap.classList.add('hidden');}
 
 /* ================= FTUE (scripted first-run, matches Meowdoku) ================= */
 const FT={

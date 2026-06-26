@@ -243,7 +243,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .navtab.navAlbum.locked .navico svg{filter:grayscale(.55);opacity:.55;}
 .navtab.navAlbum.locked .navLk{display:block;}
 /* locked DAILY button (homebar): greyed out; tooltip on tap */
-#btnHomeDaily.locked svg{filter:grayscale(1);opacity:.5;}
+#btnHomeDaily.locked svg,#btnHomeLB.locked svg{filter:grayscale(1);opacity:.5;}
 /* tap tooltip ("Unlocks at level N") for locked nav/daily buttons */
 .floatTip{position:fixed;z-index:96;transform:translate(-50%,-100%);background:#fff;color:var(--ink);font-style:normal;
   font-size:3.3vw;font-weight:900;padding:6px 12px;border-radius:12px;border:1.6px solid #EBDDC4;
@@ -1694,8 +1694,11 @@ function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach
   $('btnNext').textContent=t('next');openScrim('scrimWin');}
 
 /* ---------- home + misc ---------- */
-function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();}
+function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();updLbBtn();}
 function albumUnlocked(){return (save.levelsDone||0)>=ALBUM_UNLOCK_LEVEL-1;}
+const LEADERBOARD_UNLOCK_LEVEL=13; // leaderboard stays locked until the player reaches this level
+function lbUnlocked(){return (save.levelsDone||0)>=LEADERBOARD_UNLOCK_LEVEL-1;}
+function updLbBtn(){const b=$('btnHomeLB');if(b)b.classList.toggle('locked',!lbUnlocked());}
 function renderAlbumBtn(){const t=$('navAlbum');if(!t)return;t.classList.toggle('locked',!albumUnlocked());} // bottom-nav Album tab: .locked shows the padlock badge + dims the icon (tooltip shows only on tap)
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 /* ---------- Daily Reward: a 7-day grid that repeats inside a 30-day streak (RTW model) ---------- */
@@ -1773,7 +1776,7 @@ function setHapticIcon(){const i=$('setHapticsIcon');if(i)i.style.opacity=haptic
 function bind(){
   $('btnPlay').onclick=startPlay;
   $('btnHomeGear').onclick=()=>openSettings(false);
-  $('btnHomeLB').onclick=openLeaderboard;
+  $('btnHomeLB').onclick=()=>{if(!lbUnlocked()){showTip($('btnHomeLB'),L('Unlocks at level ','Откроется на уровне ')+LEADERBOARD_UNLOCK_LEVEL,true);return;}openLeaderboard();};
   $('btnHomeDaily').onclick=()=>{if(!dailyUnlocked()){showTip($('btnHomeDaily'),L('Unlocks at level ','Откроется на уровне ')+DAILY_UNLOCK_LEVEL,true);return;}openDaily();};
   $('dailyClose').onclick=()=>closeScrim('scrimDaily');
   $('lbClose').onclick=()=>closeScrim('scrimLB');

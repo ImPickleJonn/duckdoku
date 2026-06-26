@@ -63,23 +63,27 @@ function reportEvent(event, info) {
 // understands: { gold?:number, packs?:{ basic?:number, golden?:number } }.
 const SKUS = {
   gold_small: {
-    id: 'gold_small', title: 'Pouch of Gold', description: '250 gold coins. Spend on boosters and sticker packs.',
+    id: 'gold_small', kind: 'gold', title: 'Pouch of Gold', description: '250 gold coins. Spend on boosters and sticker packs.',
     price: 60, priceUsd: '$0.79', grant: { gold: 250 },
   },
   gold_med: {
-    id: 'gold_med', title: 'Sack of Gold', description: '800 gold coins. Better value.',
+    id: 'gold_med', kind: 'gold', title: 'Sack of Gold', description: '800 gold coins. Better value.',
     price: 159, priceUsd: '$1.99', grant: { gold: 800 },
   },
   gold_large: {
-    id: 'gold_large', title: 'Treasure Chest', description: '2000 gold coins. Best value.',
+    id: 'gold_large', kind: 'gold', title: 'Treasure Chest', description: '2000 gold coins. Best value.',
     price: 349, priceUsd: '$4.49', grant: { gold: 2000 },
   },
   starter_bundle: {
-    id: 'starter_bundle', title: 'Starter Bundle', description: '600 gold plus 1 Golden sticker pack.',
+    id: 'starter_bundle', kind: 'bundle', title: 'Starter Bundle', description: '600 gold plus 1 Golden sticker pack.',
     price: 199, priceUsd: '$2.59', grant: { gold: 600, packs: { golden: 1 } },
   },
+  duckling_bundle: {
+    id: 'duckling_bundle', kind: 'bundle', title: 'Duckling Bundle', description: '1200 gold plus 2 Golden sticker packs.',
+    price: 349, priceUsd: '$4.49', grant: { gold: 1200, packs: { golden: 2 } },
+  },
   collector_bundle: {
-    id: 'collector_bundle', title: 'Collector Bundle', description: '1800 gold plus 3 Golden sticker packs.',
+    id: 'collector_bundle', kind: 'bundle', title: 'Collector Bundle', description: '1800 gold plus 3 Golden sticker packs.',
     price: 499, priceUsd: '$6.49', grant: { gold: 1800, packs: { golden: 3 } },
   },
   test_purchase: {
@@ -195,7 +199,7 @@ app.get('/api/skus', (req, res) => {
   res.json({
     enabled: !!BOT_TOKEN,
     skus: Object.values(SKUS).filter(s => !s.adminOnly).map(s => ({
-      id: s.id, title: s.title, description: s.description, price: s.price, priceUsd: s.priceUsd, grant: s.grant,
+      id: s.id, kind: s.kind || ((s.grant && s.grant.packs) ? 'bundle' : 'gold'), title: s.title, description: s.description, price: s.price, priceUsd: s.priceUsd, grant: s.grant,
     })),
   });
 });
@@ -468,36 +472,106 @@ function lbLoad() {
 // Each type carries several copy variants; a per-user daily salt rotates them so
 // repeat sends never read the same. Mirrors the Rail the Way notification system.
 const NOTIF_CTA = { en: 'Play now', ru: 'Играть' };
-const NOTIF = {
-  comeback: {
-    en: ['Your ducks miss you. A fresh puzzle is waiting whenever you are ready.',
-         'The pond has been quiet without you. One cozy puzzle to come back to?',
-         'A little duck is still hiding, waiting for you to find it.'],
-    ru: ['Утята скучают по тебе. Новая головоломка ждёт, когда захочешь.',
-         'Без тебя на пруду тихо. Одна уютная головоломка, чтобы вернуться?',
-         'Маленькая утка всё ещё прячется и ждёт, когда ты её найдёшь.'],
-  },
-  daily: {
-    en: ['A new day, a new duck puzzle. Come find every hidden duck.',
-         'Today the pond is fresh. Can you spot every duck?'],
-    ru: ['Новый день, новая утиная головоломка. Найди всех спрятанных уток.',
-         'Сегодня на пруду всё свежее. Найдёшь всех уток?'],
-  },
-  nudge: {
-    en: ['One quick puzzle? The duck is ready when you are.',
-         'Just one little duck to find. Quick game?',
-         'A tidy little board is waiting. Find the duck?'],
-    ru: ['Одна быстрая головоломка? Утка готова, когда и ты.',
-         'Всего одна уточка, которую нужно найти. Быстрая игра?',
-         'Тебя ждёт аккуратная доска. Найдёшь утку?'],
-  },
-  newlevels: {
-    en: ['New puzzles are open. Think you can find every hidden duck?',
-         'Fresh boards just landed. Ready for a trickier hunt?'],
-    ru: ['Открылись новые головоломки. Думаешь, найдёшь всех спрятанных уток?',
-         'Появились новые доски. Готов к более хитрой охоте?'],
-  },
-};
+// Flat catalog of 30+ notifications, each its own copy + ONE media asset.
+// trig maps to the loop's trigger types (comeback/daily/nudge/newlevels).
+// kind: 'photo' (NBP still) or 'animation' (FAL clip or gameplay recording).
+// Media lives under assets/notif/{,anim,play} and is served from ASSET_BASE.
+const NOTIF_ITEMS = [
+  // ---- TYPE 2: Nano Banana still banners (sendPhoto) ----
+  { id:'n_window',    trig:'comeback',  kind:'photo', media:'assets/notif/comeback.png',
+    en:'Your ducks miss you. A fresh puzzle is waiting whenever you are ready.',
+    ru:'Утята скучают по тебе. Новая головоломка ждёт, когда захочешь.' },
+  { id:'n_cocoa',     trig:'comeback',  kind:'photo', media:'assets/notif/cocoa.png',
+    en:'The pond has been quiet without you. Cozy up with one little puzzle?',
+    ru:'Без тебя на пруду тихо. Уютно устроишься с одной головоломкой?' },
+  { id:'n_mailbox',   trig:'comeback',  kind:'photo', media:'assets/notif/mailbox.png',
+    en:'A little duck left the light on for you. Come back any time.',
+    ru:'Маленькая утка оставила для тебя свет. Возвращайся, когда захочешь.' },
+  { id:'n_sunrise',   trig:'daily',     kind:'photo', media:'assets/notif/daily.png',
+    en:'A new day, a new duck puzzle. Come find every hidden duck.',
+    ru:'Новый день, новая утиная головоломка. Найди всех спрятанных уток.' },
+  { id:'n_trophy',    trig:'daily',     kind:'photo', media:'assets/notif/trophy.png',
+    en:'Keep your streak warm. Today the ducks are hiding again.',
+    ru:'Не теряй серию. Сегодня утки снова прячутся.' },
+  { id:'n_peek',      trig:'nudge',     kind:'photo', media:'assets/notif/nudge.png',
+    en:'One quick puzzle? The duck is ready when you are.',
+    ru:'Одна быстрая головоломка? Утка готова, когда и ты.' },
+  { id:'n_sleepy',    trig:'nudge',     kind:'photo', media:'assets/notif/sleepy.png',
+    en:'A tidy little board is waiting. One quick duck before bed?',
+    ru:'Тебя ждёт аккуратная доска. Одна быстрая утка перед сном?' },
+  { id:'n_magnifier', trig:'nudge',     kind:'photo', media:'assets/notif/magnifier.png',
+    en:'Put your detective hat on. One duck to deduce.',
+    ru:'Надевай шляпу детектива. Одну утку нужно вычислить.' },
+  { id:'n_newboards', trig:'newlevels', kind:'photo', media:'assets/notif/newlevels.png',
+    en:'New puzzles are open. Think you can find every hidden duck?',
+    ru:'Открылись новые головоломки. Думаешь, найдёшь всех спрятанных уток?' },
+  { id:'n_balloons',  trig:'newlevels', kind:'photo', media:'assets/notif/balloons.png',
+    en:'Fresh boards just landed. Ready for a trickier hunt?',
+    ru:'Появились новые доски. Готов к более хитрой охоте?' },
+  { id:'n_star',      trig:'newlevels', kind:'photo', media:'assets/notif/star.png',
+    en:'New stars to earn. The ducks are waiting to be found.',
+    ru:'Новые звёзды ждут. Утки готовы, чтобы их нашли.' },
+  // ---- TYPE 3: FAL animated duck clips (sendAnimation) ----
+  { id:'a_wave',      trig:'comeback',  kind:'animation', media:'assets/notif/anim/a_wave.mp4',
+    en:'Your duck is waving you back. One cozy puzzle?',
+    ru:'Твоя утка машет тебе. Одна уютная головоломка?' },
+  { id:'a_yawn',      trig:'comeback',  kind:'animation', media:'assets/notif/anim/a_yawn.mp4',
+    en:'Even a sleepy duck saved you a spot. Drop by?',
+    ru:'Даже сонная утка заняла тебе место. Заглянешь?' },
+  { id:'a_heart',     trig:'comeback',  kind:'animation', media:'assets/notif/anim/a_heart.mp4',
+    en:'A little duck heart, just for you. Come play?',
+    ru:'Маленькое утиное сердечко, только для тебя. Сыграем?' },
+  { id:'a_crown',     trig:'daily',     kind:'animation', media:'assets/notif/anim/a_crown.mp4',
+    en:'Earn your crown today. Find every hidden duck.',
+    ru:'Заслужи корону сегодня. Найди всех спрятанных уток.' },
+  { id:'a_dance',     trig:'daily',     kind:'animation', media:'assets/notif/anim/a_dance.mp4',
+    en:'The pond is dancing for a fresh puzzle. Join in?',
+    ru:'Пруд танцует ради новой головоломки. Присоединишься?' },
+  { id:'a_jump',      trig:'daily',     kind:'animation', media:'assets/notif/anim/a_jump.mp4',
+    en:'Hop to it. Today the ducks are ready to be found.',
+    ru:'За дело. Сегодня утки готовы, чтобы их нашли.' },
+  { id:'a_wink',      trig:'nudge',     kind:'animation', media:'assets/notif/anim/a_wink.mp4',
+    en:'Just one quick game? The duck gives you a wink.',
+    ru:'Всего одна быстрая игра? Утка тебе подмигивает.' },
+  { id:'a_thinking',  trig:'nudge',     kind:'animation', media:'assets/notif/anim/a_thinking.mp4',
+    en:'One little puzzle to ponder. The duck is thinking too.',
+    ru:'Одна головоломка, чтобы подумать. Утка тоже думает.' },
+  { id:'a_trumpet',   trig:'newlevels', kind:'animation', media:'assets/notif/anim/a_trumpet.mp4',
+    en:'Victory is calling. New boards are open.',
+    ru:'Победа зовёт. Новые доски открыты.' },
+  { id:'a_confetti',  trig:'newlevels', kind:'animation', media:'assets/notif/anim/a_confetti.mp4',
+    en:'Fresh boards, fresh confetti. Come celebrate a solve.',
+    ru:'Новые доски, новое конфетти. Отпразднуй решение.' },
+  // ---- TYPE 1: real gameplay recordings (sendAnimation) ----
+  { id:'g_album',     trig:'comeback',  kind:'animation', media:'assets/notif/play/g_album.mp4',
+    en:'Your sticker album is missing a few ducks. Come fill it in.',
+    ru:'В твоём альбоме наклеек не хватает уток. Заполни его.' },
+  { id:'g_win',       trig:'daily',     kind:'animation', media:'assets/notif/play/g_win.mp4',
+    en:'This is how good a solve feels. Your turn today.',
+    ru:'Вот как приятно решать. Сегодня твой ход.' },
+  { id:'g_solve',     trig:'daily',     kind:'animation', media:'assets/notif/play/g_solve.mp4',
+    en:'A whole board solved, duck by duck. Try today\'s.',
+    ru:'Целая доска решена, утка за уткой. Попробуй сегодняшнюю.' },
+  { id:'g_place',     trig:'nudge',     kind:'animation', media:'assets/notif/play/g_place.mp4',
+    en:'Tap, tap, found. A duck is hiding right now.',
+    ru:'Тап, тап, нашёл. Прямо сейчас прячется утка.' },
+  { id:'g_swipe',     trig:'nudge',     kind:'animation', media:'assets/notif/play/g_swipe.mp4',
+    en:'Swipe to clear a row, then spot the duck. Quick game?',
+    ru:'Проведи по ряду, потом найди утку. Быстрая игра?' },
+  { id:'g_hint',      trig:'nudge',     kind:'animation', media:'assets/notif/play/g_hint.mp4',
+    en:'Stuck for a second? A hint and you are flying. Quick game?',
+    ru:'Застрял на секунду? Подсказка и ты снова в деле. Быстрая игра?' },
+  { id:'g_pack',      trig:'newlevels', kind:'animation', media:'assets/notif/play/g_pack.mp4',
+    en:'Solve, earn gold, open a sticker pack. Come collect.',
+    ru:'Решай, зарабатывай золото, открывай наборы наклеек. Собирай.' },
+  { id:'g_levelup',   trig:'newlevels', kind:'animation', media:'assets/notif/play/g_levelup.mp4',
+    en:'Level up is one puzzle away. New boards await.',
+    ru:'До нового уровня одна головоломка. Новые доски ждут.' },
+  { id:'g_combo',     trig:'newlevels', kind:'animation', media:'assets/notif/play/g_combo.mp4',
+    en:'New, trickier boards just opened. Show them how it is done.',
+    ru:'Открылись новые, более хитрые доски. Покажи класс.' },
+];
+function itemsForTrig(trig){ return NOTIF_ITEMS.filter(it => it.trig === trig); }
 // Media pools per type: cute duck stills (photos) + animated 3D duck clips, all
 // already shipped under /assets/ducks. sendNotif alternates photo and animation
 // by a per-user daily salt and degrades gracefully photo -> animation -> text.
@@ -510,28 +584,20 @@ const NOTIF_MEDIA = {
 const NOTIF_COOLDOWN = { comeback: 48 * 3600e3, daily: 24 * 3600e3, nudge: 24 * 3600e3, newlevels: 36 * 3600e3 };
 function notifAssetUrl(p) { return ASSET_BASE() + '/' + String(p).replace(/^\/+/, ''); }
 function notifPick(arr, salt) { return (arr && arr.length) ? arr[Math.abs(salt | 0) % arr.length] : ''; }
-async function sendNotif(s, key) {
-  const def = NOTIF[key]; if (!def || !s || !s.chatId) return { ok: false };
+async function sendNotifItem(s, item) {
+  if (!item || !s || !s.chatId) return { ok: false };
   const lang = s.lang === 'ru' ? 'ru' : 'en';
-  const salt = (Number(s.uid || s.chatId) || 0) + Math.floor(Date.now() / 86400000);
-  const ri = Math.abs(salt | 0);
-  const caption = notifPick(def[lang] || def.en, salt);
-  if (!caption) return { ok: false };
+  const caption = item[lang] || item.en;
   const reply_markup = { inline_keyboard: [[{ text: NOTIF_CTA[lang] || NOTIF_CTA.en, web_app: { url: GAME() } }]] };
-  const media = NOTIF_MEDIA[key] || {};
-  const photo = (media.photos && media.photos.length) ? notifAssetUrl(media.photos[ri % media.photos.length]) : '';
-  const anim = (media.anims && media.anims.length) ? notifAssetUrl(media.anims[ri % media.anims.length]) : '';
-  const photoItem = photo ? { m: 'sendPhoto', k: 'photo', v: photo } : null;
-  const animItem = anim ? { m: 'sendAnimation', k: 'animation', v: anim } : null;
-  // Alternate which media leads (animation vs photo) by salt, fall back across both, then text.
-  const seq = ((ri % 2 === 0) ? [animItem, photoItem] : [photoItem, animItem]).filter(Boolean);
-  for (const it of seq) {
-    const payload = { chat_id: s.chatId, caption, reply_markup };
-    payload[it.k] = it.v;
-    const r = await tg(it.m, payload);
-    if (r && r.ok) return r;
-    if (r && r.error_code === 403) return r; // blocked: stop trying
-  }
+  const url = notifAssetUrl(item.media);
+  const method = item.kind === 'photo' ? 'sendPhoto' : 'sendAnimation';
+  const mkey = item.kind === 'photo' ? 'photo' : 'animation';
+  const payload = { chat_id: s.chatId, caption, reply_markup };
+  payload[mkey] = url;
+  const r = await tg(method, payload);
+  if (r && r.ok) return r;
+  if (r && r.error_code === 403) return r; // blocked: stop trying
+  // media failed (e.g. not deployed yet) -> still deliver the nudge as text
   return tg('sendMessage', { chat_id: s.chatId, text: caption, reply_markup });
 }
 
@@ -566,8 +632,11 @@ async function notifyLoop() {
     if (sent >= NOTIF_MAX_PER_PASS) break;
     try {
       const k = pickTrigger(s); if (!k) continue;
+      const pool = itemsForTrig(k); if (!pool.length) continue;
+      const salt = (Number(uid) || 0) + Math.floor(Date.now() / 86400000);
+      const item = pool[Math.abs(salt | 0) % pool.length];
       s.uid = s.uid || uid;
-      const r = await sendNotif(s, k);
+      const r = await sendNotifItem(s, item);
       if (r && r.ok) {
         const ymd = nowYMD();
         s.notifN = (s.notifYMD === ymd ? (s.notifN || 0) : 0) + 1; s.notifYMD = ymd;
@@ -599,13 +668,13 @@ function welcomeText(first) {
     'No ads. Just you, the board, and the ducks.\n\nTap Play to start.';
 }
 async function previewAll(chatId, lang) {
-  await tg('sendMessage', { chat_id: chatId, text: 'Preview of every push notification (' + Object.keys(NOTIF).length + '):' });
-  for (const k of Object.keys(NOTIF)) {
-    await tg('sendMessage', { chat_id: chatId, text: 'trigger: ' + k });
-    await sendNotif({ chatId, lang }, k);
-    await new Promise(r => setTimeout(r, 350));
+  await tg('sendMessage', { chat_id: chatId, text: 'Preview of all ' + NOTIF_ITEMS.length + ' push notifications.' });
+  for (const item of NOTIF_ITEMS) {
+    await tg('sendMessage', { chat_id: chatId, text: item.id + '  (' + item.trig + ', ' + item.kind + ')' });
+    await sendNotifItem({ chatId, lang }, item);
+    await new Promise(r => setTimeout(r, 600));
   }
-  await tg('sendMessage', { chat_id: chatId, text: 'End of preview.' });
+  await tg('sendMessage', { chat_id: chatId, text: 'End of preview. ' + NOTIF_ITEMS.length + ' total.' });
 }
 function statsText() {
   let total = users.size, active = 0, opted = 0; const now = Date.now();

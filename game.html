@@ -17,6 +17,7 @@
   --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
   --app-h:100dvh;            /* real usable height; set from Telegram viewportStableHeight on TG (desktop footer-safe) */
   --board-reserve:344px;     /* vertical space the board must leave for top bar + chips + status + boosters + padding */
+  --nav-h:72px;              /* bottom nav bar height (Shop / Start / Album) */
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
 /* the board is a drag-paint surface: every descendant must disable browser touch
@@ -194,6 +195,47 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .sku .sbuy:active{transform:translateY(2px);box-shadow:0 1px 0 var(--orange-d);}
 .star{width:16px;height:16px;}
 .setrow{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:16px;padding:14px 16px;margin:8px 0;box-shadow:0 3px 0 var(--shadow);font-size:4.2vw;}
+/* settings: secondary text links + version */
+.setlinks{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0 2px;}
+.setlink{background:none;color:var(--ink-soft);font-size:3.5vw;font-weight:800;text-decoration:underline;padding:2px 4px;}
+.setdot{color:var(--ink-soft);font-weight:900;}
+.setver{color:var(--ink-soft);font-size:3.1vw;font-weight:800;margin-top:8px;}
+
+/* ---------- SHOP (full screen) ---------- */
+#shop{justify-content:flex-start;}
+.shop-scroll{width:100%;max-width:480px;margin:0 auto;flex:1;min-height:0;overflow-y:auto;padding:2px 4px calc(var(--safe-bot) + 14px);-webkit-overflow-scrolling:touch;}
+.shopsub{color:var(--ink-soft);font-size:3.5vw;text-align:center;margin:0 0 12px;}
+.shopSecTitle{font-size:4.4vw;color:var(--ink);font-weight:900;margin:14px 4px 4px;display:flex;align-items:center;gap:7px;}
+.shopSecTitle::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--orange);}
+.shopBox{display:flex;flex-direction:column;}
+
+/* ---------- BOTTOM NAV ---------- */
+#navBar{position:fixed;left:0;right:0;bottom:0;z-index:80;display:none;align-items:stretch;justify-content:space-around;
+  height:calc(var(--nav-h) + var(--safe-bot));padding-bottom:var(--safe-bot);
+  background:#FFFBF2;border-top:2.5px solid #EBDDC4;box-shadow:0 -4px 14px rgba(150,110,90,.12);}
+body.nav-on #navBar{display:flex;}
+body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(--nav-h) + var(--safe-bot) + 6px);}
+.navtab{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;color:var(--ink-soft);}
+.navico{width:30px;height:30px;display:flex;align-items:center;justify-content:center;transition:transform .16s;}
+.navico svg{width:28px;height:28px;}
+.navlbl{font-size:3vw;font-weight:900;color:var(--ink-soft);line-height:1;}
+.navtab.active{color:var(--orange);}
+.navtab.active .navlbl{color:var(--orange);}
+.navtab.active .navico{transform:translateY(-2px) scale(1.06);}
+/* center Start tab: raised circular duck */
+.navStart .navico{width:54px;height:54px;border-radius:50%;background:#fff;border:3px solid var(--gold);box-shadow:0 4px 0 var(--shadow);margin-top:-24px;}
+.navStart .navico svg{width:44px;height:44px;}
+.navStart.active .navico{border-color:var(--orange);}
+/* locked album tab: padlock badge + "reach level" bubble */
+.navtab.navAlbum .navLk{display:none;position:absolute;top:6px;left:calc(50% + 7px);width:18px;height:18px;}
+.navtab.navAlbum.locked .navico svg{filter:grayscale(.55);opacity:.55;}
+.navtab.navAlbum.locked .navLk{display:block;}
+.navtab.navAlbum .navSoon{display:none;}
+.navtab.navAlbum.locked .navSoon{display:block;}
+.navSoon{position:absolute;top:-17px;left:50%;transform:translateX(-50%);white-space:nowrap;z-index:4;font-style:normal;
+  background:#fff;color:var(--ink);font-size:2.7vw;font-weight:900;padding:3px 8px 4px;border-radius:11px;
+  border:1.6px solid #EBDDC4;box-shadow:0 3px 6px rgba(150,110,90,.22);}
+.navSoon::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:5px solid transparent;border-top-color:#fff;border-bottom:0;}
 #lbList{max-height:60vh;overflow-y:auto;text-align:left;}
 .lbrow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:11px 14px;margin:7px 0;box-shadow:0 3px 0 var(--shadow);}
 .lbrank{width:30px;height:30px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:4vw;color:#6b4a2a;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);}
@@ -425,7 +467,6 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
       <div class="hb-left">
       <button class="iconbtn" id="btnHomeLB" aria-label="leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" fill="#FFD23F"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg></button>
       <button class="iconbtn" id="btnHomeDaily" aria-label="daily reward"><svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round"><rect x="3.6" y="10" width="16.8" height="10.4" rx="1.8" fill="#FFD23F" stroke="#E8942F" stroke-width="1.5"/><rect x="3" y="7.4" width="18" height="3.6" rx="1.2" fill="#FFE08A" stroke="#E8942F" stroke-width="1.4"/><path d="M12 7.4V20.4" stroke="#E8942F" stroke-width="1.7"/><path d="M12 7.4C12 7.4 10 3.4 7.6 4.4 5.8 5.2 7.4 7.4 12 7.4z" fill="#F0544C" stroke="#D6453E" stroke-width="1"/><path d="M12 7.4C12 7.4 14 3.4 16.4 4.4 18.2 5.2 16.6 7.4 12 7.4z" fill="#F0544C" stroke="#D6453E" stroke-width="1"/></svg><i class="dailydot" id="dailyDot"></i></button>
-      <button class="iconbtn" id="btnAlbum" aria-label="duck album"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/></svg><i class="alblock" id="albLock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></i></button>
       </div>
       <div class="hb-right">
         <button class="goldpill" id="homeGold"><span class="cicon"></span><span class="goldval">0</span></button>
@@ -490,7 +531,41 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
     </div>
   </section>
 
+  <!-- ============ SHOP (full screen, reached from the bottom nav) ============ -->
+  <section id="shop" class="screen">
+    <div class="topbar">
+      <button class="iconbtn" id="shopBack" aria-label="back"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="toptitle" data-i="shop">Shop</div>
+      <div class="topright"><button class="goldpill" id="shopGold"><span class="cicon"></span><span class="goldval">0</span></button><button class="iconbtn" id="shopGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44" fill-rule="evenodd"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button></div>
+    </div>
+    <div class="shop-scroll">
+      <p class="shopsub" data-i="shopsub">Boosters and gold. No ads, ever.</p>
+      <div class="shopSecTitle" data-i="goldpacks">Gold</div>
+      <div id="shopGoldBox" class="shopBox"></div>
+      <div class="shopSecTitle" data-i="bundles">Bundles</div>
+      <div id="shopBundleBox" class="shopBox"></div>
+    </div>
+  </section>
+
 </div>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav id="navBar">
+  <button class="navtab" id="navShop" aria-label="Shop">
+    <span class="navico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8.5h16l-1 11.5a1.5 1.5 0 0 1-1.5 1.4H6.5A1.5 1.5 0 0 1 5 20L4 8.5z" fill="#FFD23F" stroke="#C9781E" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.4 10.5V8a3.6 3.6 0 0 1 7.2 0v2.5" fill="none" stroke="#C9781E" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+    <span class="navlbl" data-i="navshop">Shop</span>
+  </button>
+  <button class="navtab navStart active" id="navStart" aria-label="Play">
+    <span class="navico navduck"><svg viewBox="0 0 64 64"><ellipse cx="32" cy="39" rx="22" ry="20" fill="#FFD23F"/><circle cx="25" cy="33" r="3.6" fill="#3A2A20"/><circle cx="39" cy="33" r="3.6" fill="#3A2A20"/><path d="M25 44 q7 6.5 14 0 q-2 6.5 -7 6.5 q-5 0 -7 -6.5z" fill="#F2913C"/><ellipse cx="22" cy="40" rx="3.4" ry="2.2" fill="#F2A0A0" opacity=".55"/><ellipse cx="42" cy="40" rx="3.4" ry="2.2" fill="#F2A0A0" opacity=".55"/></svg></span>
+    <span class="navlbl" data-i="navstart">Start</span>
+  </button>
+  <button class="navtab navAlbum locked" id="navAlbum" aria-label="Album">
+    <i class="navSoon"><span data-i="navsoon">Reach level</span> <span id="navSoonLvl">10</span></i>
+    <span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/></svg></span>
+    <i class="navLk"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" fill="#A98F84"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></i>
+    <span class="navlbl" data-i="navalbum">Album</span>
+  </button>
+</nav>
 
 <!-- coach bubbles + hand -->
 <div class="coach" id="coachTop"><div class="bubble" id="coachTopB"></div></div>
@@ -542,11 +617,18 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
   <button class="closex" id="setClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <h2 id="setTitle" data-i="settings">Settings</h2>
   <div class="setrow"><span data-i="sound">Sound</span><button class="iconbtn" id="setSound"><svg id="setSoundIcon" viewBox="0 0 24 24" fill="#6E4F44"><path d="M4 9v6h4l5 5V4L8 9H4z"/></svg></button></div>
-  <button class="btn play" id="setShop" data-i="shop" style="color:#fff">Shop</button>
+  <div class="setrow"><span data-i="haptics">Vibration</span><button class="iconbtn" id="setHaptics"><svg id="setHapticsIcon" viewBox="0 0 24 24" fill="#6E4F44"><rect x="7" y="3.5" width="10" height="17" rx="2.6"/><rect x="9.4" y="6" width="5.2" height="11" rx="1" fill="#FBF3E2"/><path d="M3.5 9v6M20.5 9v6" stroke="#6E4F44" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
   <button class="btn alt" id="setHowto" data-i="howto" style="color:#fff">How to play</button>
+  <button class="btn alt" id="setRestore" data-i="restore" style="color:#fff">Restore purchases</button>
   <button class="btn alt" id="setRestart" data-i="restart" style="color:#fff">Restart level</button>
   <button class="btn ghost" id="setHome" data-i="home">Home</button>
+  <div class="setlinks">
+    <button class="setlink" id="setPrivacy" data-i="privacy">Privacy Policy</button>
+    <span class="setdot">.</span>
+    <button class="setlink" id="setContact" data-i="contact">Contact us</button>
+  </div>
   <button class="btn ghost" id="setAdmin" style="display:none;color:#C0392B">Owner</button>
+  <div class="setver" id="setVer"></div>
 </div></div>
 
 <div class="scrim" id="scrimAdmin"><div class="modal modal-rel">
@@ -635,6 +717,7 @@ if(TG){ syncAppHeight(); TG.onEvent&&TG.onEvent('viewportChanged',syncAppHeight)
 const initData=TG&&TG.initData?TG.initData:'';
 const API_BASE=(function(){const h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h.endsWith('.onrender.com'))return '';return 'https://duckdoku.onrender.com';})();
 function haptic(k){
+  if(typeof hapticsOn!=='undefined'&&!hapticsOn)return;
   try{if(TG&&TG.HapticFeedback){const H=TG.HapticFeedback;
     if(k==='light')H.impactOccurred('light');else if(k==='med')H.impactOccurred('medium');else if(k==='heavy')H.impactOccurred('heavy');
     else if(k==='ok')H.notificationOccurred('success');else if(k==='err')H.notificationOccurred('error');return;}}catch(e){}
@@ -680,11 +763,13 @@ const I18N={
   en:{play:"Play",zen:"Zen",daily:"Daily",shop:"Shop",howto:"How to play",undo:"Undo",hint:"Hint",placeduck:"Place",
     next:"Next level",home:"Home",retry:"Try again",levelup:"Level up!",keepgoing:"Keep going",gotit:"Got it",
     adventure:"Adventure",shopsub:"Gold for boosters, sticker packs and more. No ads, ever.",album:"Duck Album",newstickers:"New stickers!",tagline:"A cozy duck logic puzzle",
-    settings:"Settings",sound:"Sound",restart:"Restart level",leaderboard:"Leaderboard",lbsub:"Who reached the highest level."},
+    settings:"Settings",sound:"Sound",restart:"Restart level",leaderboard:"Leaderboard",lbsub:"Who reached the highest level.",
+    navshop:"Shop",navstart:"Start",navalbum:"Album",navsoon:"Reach level",haptics:"Vibration",restore:"Restore purchases",privacy:"Privacy Policy",contact:"Contact us",goldpacks:"Gold",bundles:"Bundles"},
   ru:{play:"Играть",zen:"Дзен",daily:"Ежедневный",shop:"Магазин",howto:"Как играть",undo:"Назад",hint:"Подсказка",placeduck:"Утка",
     next:"Дальше",home:"Домой",retry:"Заново",levelup:"Новый уровень!",keepgoing:"Играть",gotit:"Понятно",
     adventure:"Кампания",shopsub:"Золото для бустеров и наборов наклеек. Без рекламы.",album:"Альбом уток",newstickers:"Новые наклейки!",tagline:"Уютный пазл с уткой",
-    settings:"Настройки",sound:"Звук",restart:"Заново",leaderboard:"Таблица лидеров",lbsub:"Кто дошёл до самого высокого уровня."},
+    settings:"Настройки",sound:"Звук",restart:"Заново",leaderboard:"Таблица лидеров",lbsub:"Кто дошёл до самого высокого уровня.",
+    navshop:"Магазин",navstart:"Старт",navalbum:"Альбом",navsoon:"Дойди до уровня",haptics:"Вибрация",restore:"Восстановить покупки",privacy:"Конфиденциальность",contact:"Связаться",goldpacks:"Золото",bundles:"Наборы"},
 };
 let LANG=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.language_code||navigator.language||'en').slice(0,2);
 if(!I18N[LANG])LANG='en';
@@ -823,7 +908,7 @@ const DUCK_SVG='<svg class="duckface" viewBox="0 0 64 64"><path d="M30 6c2-3 7-2
 const DUCK_MINI='<svg viewBox="0 0 64 64"><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><circle cx="25" cy="32" r="4" fill="#3A2A20"/><circle cx="40" cy="32" r="4" fill="#3A2A20"/><path d="M25 43 q7 7 15 0 q-2 7 -7.5 7 q-5.5 0 -7.5 -7z" fill="#F2913C"/></svg>';
 const COIN_SVG='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#F4B731" stroke="#D9971F" stroke-width="1.6"/><circle cx="12" cy="12" r="6.6" fill="#FFD867" stroke="#D9971F" stroke-width="1.1"/><ellipse cx="9.3" cy="9" rx="2.1" ry="1.3" fill="#fff" opacity=".75"/></svg>';
 const LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-const ALBUM_UNLOCK_LEVEL=7; // Duck Album stays locked until the player reaches this level
+const ALBUM_UNLOCK_LEVEL=10; // Duck Album stays locked until the player reaches this level
 const PACK_SVG='<svg viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="16" rx="3" fill="#E8942F" stroke="#C9781E" stroke-width="1.4"/><path d="M4.5 9h15" stroke="#C9781E" stroke-width="1.3"/><path d="M12 4v16" stroke="#fff" stroke-width="1.1" opacity=".45"/><path d="M12 2.6l1.6 2.4H10.4z" fill="#FFD867"/></svg>';
 const X_SVG='<svg class="xmark" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"><path d="M18 18 L46 46"/><path d="M46 18 L18 46"/></svg>';
 const REDX_SVG='<svg class="xmark" viewBox="0 0 64 64" fill="none" stroke="#E0433A" stroke-width="13" stroke-linecap="round"><path d="M18 18 L46 46"/><path d="M46 18 L18 46"/></svg>';
@@ -929,7 +1014,7 @@ function startLevel(m,idx){
   // the level number only sets the size/difficulty via levelSize.
   N=levelSize(levelIdx);puzzle=randomizedLevel(levelIdx);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
-  buildGrid();renderAll();show('game');
+  buildGrid();renderAll();show('game');playSfx('reveal');
   MX.track('Level Started',{level:levelIdx+1,size:N+'x'+N});
   try{if(window.DuckAdjust)DuckAdjust.fire('gameStarted');}catch(e){}
 }
@@ -976,7 +1061,7 @@ function onCellTap(r,c){
   if(isDouble){ tryGuess(r,c); lastTapCell=null; }
   else { // single tap toggles the player's own X note
     if(cur===EMPTY){snapshot();gstate[r][c]=MARK;renderCell(r,c);pressTile(r,c);haptic('light');soundTick();onFtueAction('mark',r,c);}
-    else if(cur===MARK){snapshot();gstate[r][c]=EMPTY;renderCell(r,c);haptic('light');}
+    else if(cur===MARK){snapshot();gstate[r][c]=EMPTY;renderCell(r,c);haptic('light');playSfx('xremove');}
   }
   updateCount();
 }
@@ -984,7 +1069,7 @@ function tryGuess(r,c){
   // The duck hides in ONE specific cell per region (the unique solution).
   if(puzzle.solCols[r]===c){
     // correct: the duck is found and LOCKED forever (cannot be removed)
-    gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);haptic('med');soundPlace();onFtueAction('duck',r,c);
+    gstate[r][c]=DUCK;duckCount++;renderCell(r,c);duckReact(r,c,'happy',1100);haptic('med');playSfx('duckfound');onFtueAction('duck',r,c);
     if(duckCount===N&&!ftue)onWin(); else if(duckCount===N&&ftue&&ftue.active)onFtueWin();
   } else {
     // wrong: leave a PERMANENT red X (locked) and lose a heart
@@ -1033,7 +1118,7 @@ function useUndo(){if(ended)return;if(!history.length){toast(L("Nothing to undo"
   for(let r=0;r<N;r++)for(let c=0;c<N;c++){ if(gstate[r][c]===DUCK||gstate[r][c]===RED)continue; const v=h.g[r][c]; gstate[r][c]=(v===DUCK||v===RED)?EMPTY:v; }
   renderAll();haptic('light');}
 function useHint(){if(ended)return;const mv=computeHint();if(!mv){toast(L("Look for a color with only one open cell","Ищи цвет с одной свободной клеткой"));haptic('light');return;}if(!payBooster('hint')){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'hint',cost:BOOSTER_COST.hint});pulseCell(mv.r,mv.c);renderBoosters();haptic('med');toast(mv.msg);}
-function usePlaceDuck(){if(ended)return;let avail=false;for(let r=0;r<N;r++){if(gstate[r][puzzle.solCols[r]]!==DUCK){avail=true;break;}}if(!avail){toast(L("All ducks placed","Все утки на месте"));return;}if(!payBooster('placeduck')){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'placeduck',cost:BOOSTER_COST.placeduck});placeOneCorrect();renderBoosters();haptic('ok');soundPlace();if(duckCount===N)onWin();}
+function usePlaceDuck(){if(ended)return;let avail=false;for(let r=0;r<N;r++){if(gstate[r][puzzle.solCols[r]]!==DUCK){avail=true;break;}}if(!avail){toast(L("All ducks placed","Все утки на месте"));return;}if(!payBooster('placeduck')){needGold();return;}boostersUsed++;MX.track('Booster Used',{type:'placeduck',cost:BOOSTER_COST.placeduck});placeOneCorrect();renderBoosters();haptic('ok');playSfx('duckfound');if(duckCount===N)onWin();}
 function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}boostersUsed++;hearts=3;ended=false;renderHearts();closeScrim('scrimLose');MX.track('Continue Used',{level:levelIdx+1});haptic('ok');}
 // Apply a purchase grant from the server: gold and/or free sticker packs.
 function grantReward(g){if(!g)return;const msgs=[];
@@ -1051,7 +1136,15 @@ function snapshot(){history.push({g:gstate.map(row=>row.slice()),hearts,duckCoun
 
 /* ---------- DOM + render ---------- */
 function $(id){return document.getElementById(id);}
-function show(scr){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===scr));}
+function show(scr){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===scr));updateNav(scr);}
+function curScreen(){const s=document.querySelector('.screen.on');return s?s.id:'home';}
+// bottom nav: visible on the top-level destinations (home/shop/album), hidden during a live puzzle.
+function updateNav(scr){const nav=$('navBar');if(!nav)return;const top=(scr==='home'||scr==='shop'||scr==='album');
+  document.body.classList.toggle('nav-on',top);
+  ['navStart','navShop','navAlbum'].forEach(id=>{const b=$(id);if(b)b.classList.remove('active');});
+  const map={home:'navStart',shop:'navShop',album:'navAlbum'},id=map[scr];if(id&&$(id))$(id).classList.add('active');
+  renderAlbumBtn();}
+function navAlbumLockMsg(){toast(L("Reach Level ","Дойди до уровня ")+ALBUM_UNLOCK_LEVEL+L(" to unlock the Duck Album",", чтобы открыть Альбом"));haptic('err');}
 let cellEls=[];
 function buildGrid(){const g=$('grid');g.style.gridTemplateColumns='repeat('+N+',1fr)';g.style.gridTemplateRows='repeat('+N+',1fr)';
   g.style.gap=(N>=8?'4px':N>=7?'5px':'6px');g.innerHTML='';cellEls=[];
@@ -1097,6 +1190,7 @@ function toast(m){if(!m)return;const el=$('toast');el.textContent=m;el.classList
 
 /* ---------- sound ---------- */
 let actx=null,audioOn=save.sound;
+let hapticsOn=(save.haptics!==false); // vibration on by default; toggled in Settings
 function ac(){if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}return actx;}
 function blip(f,d,type,v){if(!audioOn)return;const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.value=v||0.05;o.connect(g);g.connect(a.destination);const n=a.currentTime;g.gain.exponentialRampToValueAtTime(0.0001,n+d);o.start(n);o.stop(n+d);}
 function soundTick(){blip(300,0.05,'sine',0.035);}
@@ -1107,6 +1201,15 @@ function soundLose(){[392,330,262].forEach((f,i)=>setTimeout(()=>blip(f,0.22,'si
 function soundWhoosh(){blip(170,0.18,'sawtooth',0.04);setTimeout(()=>blip(120,0.12,'sine',0.03),60);}
 function soundPop(){blip(440,0.08,'triangle',0.05);setTimeout(()=>blip(680,0.06,'triangle',0.04),55);}
 function soundSparkle(){[880,1175,1568].forEach((f,i)=>setTimeout(()=>blip(f,0.1,'triangle',0.045),i*55));}
+/* ---- file-based SFX (custom wavs -> mp3): decoded via the existing AudioContext, gated by audioOn ---- */
+const SFX_SRC={ui:'assets/sfx/ui-button.mp3',reveal:'assets/sfx/grid-reveal.mp3',xremove:'assets/sfx/x-removed.mp3',duckfound:'assets/sfx/duck-found.mp3'};
+const SFX_VOL={ui:0.55,reveal:0.7,xremove:0.8,duckfound:0.9};
+const sfxBuf={},sfxNode={};let _sfxLoaded=false;
+async function loadSfx(){if(_sfxLoaded)return;_sfxLoaded=true;const a=ac();if(!a){_sfxLoaded=false;return;}await Promise.all(Object.keys(SFX_SRC).map(async k=>{try{const r=await fetch(SFX_SRC[k]);const ab=await r.arrayBuffer();sfxBuf[k]=await a.decodeAudioData(ab);}catch(e){}}));}
+function playSfx(k,v){if(!audioOn)return;const a=ac();if(!a)return;if(a.state==='suspended'){try{a.resume();}catch(e){}}const b=sfxBuf[k];if(!b){loadSfx();return;}try{if(k==='reveal'&&sfxNode.reveal){try{sfxNode.reveal.stop();}catch(e){}}const s=a.createBufferSource();s.buffer=b;const g=a.createGain();g.gain.value=(v!=null?v:(SFX_VOL[k]||0.7));s.connect(g);g.connect(a.destination);s.start();if(k==='reveal'){sfxNode.reveal=s;s.onended=()=>{if(sfxNode.reveal===s)sfxNode.reveal=null;};}}catch(e){}}
+// preload sfx on first interaction (autoplay policy) + a generic click on every button press
+window.addEventListener('pointerdown',()=>{ac();loadSfx();},{once:true,capture:true});
+document.addEventListener('pointerdown',e=>{const b=e.target&&e.target.closest&&e.target.closest('button');if(b&&!b.disabled)playSfx('ui');},true);
 
 /* ---------- duck videos ---------- */
 let audioUnlocked=false;
@@ -1165,12 +1268,30 @@ const IAP=(function(){
 // album/reward booster icons render the SAME live keyed faces as the in-game boosters
 // (Place='idle' duck head, Hint='bsthint' bulb) via faceLoop -> .bicon canvases.
 function boosterIcon(k){if(k==='hint')return '<canvas class="bicon" data-bk="bsthint" width="80" height="80"></canvas>';if(k==='undo')return '<svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.4" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>';return '<canvas class="bicon" data-bk="idle" width="80" height="80"></canvas>';}
-function skuIcon(s){const g=s.grant||{};return (g.packs&&!g.gold)?PACK_SVG:COIN_SVG;}
-function renderShop(){const list=$('skuList');list.innerHTML='';if(!SKUS_CACHE||!SKUS_CACHE.length){list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>';return;}
-  const star='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';
-  const native=IAP.isNative();
-  SKUS_CACHE.forEach(s=>{const priceLbl=native?('<span class="susd">'+((IAP.priceFor&&IAP.priceFor(s.id))||s.priceUsd||'')+'</span>'):(s.price+' '+star);const row=document.createElement('div');row.className='sku';row.innerHTML='<div class="sicon">'+skuIcon(s)+'</div><div class="smeta"><div class="stitle">'+s.title+'</div><div class="sdesc">'+s.description+'</div></div><button class="sbuy">'+priceLbl+'</button>';row.querySelector('.sbuy').onclick=()=>buy(s.id);list.appendChild(row);});}
-function openShop(){closeAll();renderShop();openScrim('scrimShop');MX.track('Shop Opened');if(!SKUS_CACHE)loadSkus().then(renderShop);}
+function isBundleSku(s){return s.kind==='bundle'||!!(s.grant&&s.grant.packs);}
+function skuIcon(s){return isBundleSku(s)?GOLD_PACK_SVG:COIN_SVG;}
+function skuRowHtml(s){const native=IAP.isNative();const star='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';
+  const priceLbl=native?('<span class="susd">'+((IAP.priceFor&&IAP.priceFor(s.id))||s.priceUsd||'')+'</span>'):(s.price+' '+star);
+  return '<div class="sku" data-sku="'+s.id+'"><div class="sicon">'+skuIcon(s)+'</div><div class="smeta"><div class="stitle">'+s.title+'</div><div class="sdesc">'+s.description+'</div></div><button class="sbuy" data-buy="'+s.id+'">'+priceLbl+'</button></div>';}
+// MODAL shop (in-game quick top-up): flat list of every SKU.
+function renderShop(){const list=$('skuList');if(!list)return;if(!SKUS_CACHE||!SKUS_CACHE.length){list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>';return;}
+  list.innerHTML=SKUS_CACHE.map(skuRowHtml).join('');}
+// FULL-SCREEN shop (bottom nav): gold packs section + bundles section.
+function renderShopScreen(){const gb=$('shopGoldBox'),bb=$('shopBundleBox');if(!gb||!bb)return;
+  if(!SKUS_CACHE||!SKUS_CACHE.length){gb.innerHTML='<p style="color:var(--ink-soft);text-align:center">'+L("Shop opens soon","Магазин скоро")+'</p>';bb.innerHTML='';return;}
+  gb.innerHTML=SKUS_CACHE.filter(s=>!isBundleSku(s)).map(skuRowHtml).join('');
+  bb.innerHTML=SKUS_CACHE.filter(isBundleSku).map(skuRowHtml).join('');}
+let _shopReturn='home';
+function openShop(){closeAll();renderShop();openScrim('scrimShop');MX.track('Shop Opened',{surface:'modal'});if(!SKUS_CACHE)loadSkus().then(renderShop);}
+function openShopScreen(){_shopReturn=(curScreen()==='game')?'game':'home';renderShopScreen();updateGoldHud();show('shop');MX.track('Shop Opened',{surface:'screen'});if(!SKUS_CACHE)loadSkus().then(renderShopScreen);}
+function exitShop(){if(_shopReturn==='game'){show('game');}else{show('home');refreshHome();}}
+// open a privacy/support link safely across Telegram, native (Capacitor), and plain web.
+function openExternal(url){
+  var inTG=false;try{inTG=!!(TG&&typeof TG.initData==='string'&&TG.initData.length>0);}catch(e){}
+  if(inTG){try{if(/t\.me\//.test(url)&&TG.openTelegramLink){TG.openTelegramLink(url);return;}if(TG.openLink){TG.openLink(url);return;}}catch(e){}}
+  try{var C=window.Capacitor;if(C&&C.Plugins&&C.Plugins.Browser){C.Plugins.Browser.open({url:url});return;}}catch(e){}
+  try{if(window.open(url,'_blank'))return;}catch(e){}
+  try{location.href=url;}catch(e){}}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function openLeaderboard(){closeAll();openScrim('scrimLB');MX.track('Leaderboard Opened');$('lbList').innerHTML='<p style="color:var(--ink-soft)">Loading...</p>';
   fetch(API_BASE+'/api/leaderboard').then(r=>r.json()).then(j=>renderLB((j&&j.top)||[])).catch(()=>{$('lbList').innerHTML='<p style="color:var(--ink-soft)">'+L("Could not load right now.","Не удалось загрузить.")+'</p>';});}
@@ -1282,7 +1403,7 @@ function startFTUE(){
   MX.track('Tutorial Started');
   N=4;puzzle=generatePuzzle(4,4242);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
-  buildGrid();renderAll();show('game');
+  buildGrid();renderAll();show('game');playSfx('reveal');
   ftue={active:true,step:0};
   ftueStep0();
 }
@@ -1340,7 +1461,7 @@ function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach
 /* ---------- home + misc ---------- */
 function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();}
 function albumUnlocked(){return (save.levelsDone||0)>=ALBUM_UNLOCK_LEVEL-1;}
-function renderAlbumBtn(){const b=$('btnAlbum');if(!b)return;b.classList.toggle('locked',!albumUnlocked());} // icon-only circle button in the homebar; .locked shows the padlock badge + dims the icon
+function renderAlbumBtn(){const t=$('navAlbum');if(!t)return;t.classList.toggle('locked',!albumUnlocked());const lv=$('navSoonLvl');if(lv)lv.textContent=ALBUM_UNLOCK_LEVEL;} // bottom-nav Album tab: .locked shows the padlock badge + "Reach level N" bubble + dims the icon
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 /* ---------- Daily Reward: a 7-day grid that repeats inside a 30-day streak (RTW model) ---------- */
 const CHECK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
@@ -1401,11 +1522,12 @@ function admDoWipe(){
   try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem('dd.anon');localStorage.removeItem('dd.lastOpen');}catch(e){}
   setTimeout(()=>location.reload(),300);
 }
-function openSettings(inGame){setSoundIcon();$('setRestart').style.display=inGame?'':'none';$('setHome').style.display=inGame?'':'none';try{$('setAdmin').style.display=isAdmin()?'':'none';}catch(e){}openScrim('scrimSet');}
+function openSettings(inGame){setSoundIcon();setHapticIcon();const v=$('setVer');if(v)v.textContent='v'+DD_VERSION;$('setRestart').style.display=inGame?'':'none';$('setHome').style.display=inGame?'':'none';try{$('setAdmin').style.display=isAdmin()?'':'none';}catch(e){}openScrim('scrimSet');}
 function fillHow(){const en=["Place one duck in every colored area.","No two ducks can share a row or a column.","Ducks cannot touch each other, not even diagonally.","Single-tap a cell for an X note. Double-tap to place a duck.","You have 3 hearts. A duck that breaks a rule costs one heart.","Stuck? Use Hint, Undo, or Place a Duck. No ads, boosters are Telegram Stars only."];
   const ru=["Поставь по одной утке в каждой цветной зоне.","Две утки не могут быть в одном ряду или столбце.","Утки не должны соприкасаться, даже по диагонали.","Одно нажатие на клетку ставит метку X. Двойное ставит утку.","У тебя 3 сердца. Утка, нарушившая правило, стоит одно сердце.","Застрял? Подсказка, Назад или Утка. Без рекламы, бустеры только за Telegram Stars."];
   $('howBody').innerHTML=(LANG==='ru'?ru:en).map(x=>"<p style='margin:8px 0'>"+x+"</p>").join('');}
 function setSoundIcon(){$('setSoundIcon').style.opacity=audioOn?1:0.35;}
+function setHapticIcon(){const i=$('setHapticsIcon');if(i)i.style.opacity=hapticsOn?1:0.35;}
 
 /* ---------- wire up ---------- */
 function bind(){
@@ -1442,12 +1564,22 @@ function bind(){
   $('admWipe').onclick=()=>{const b=$('admWipe');if(!admWipeArm){admWipeArm=true;b.textContent=L("Tap again to wipe","Нажмите ещё раз");haptic('err');setTimeout(()=>{admWipeArm=false;b.textContent=L("Wipe account and reload","Стереть аккаунт");},2500);}else{admDoWipe();}};
   $('setSound').onclick=()=>{audioOn=!audioOn;save.sound=audioOn;persist();setSoundIcon();};
   $('setHowto').onclick=()=>{closeScrim('scrimSet');fillHow();openScrim('scrimHow');};
-  $('setShop').onclick=()=>{closeScrim('scrimSet');openShop();};
+  $('setHaptics').onclick=()=>{hapticsOn=!hapticsOn;save.haptics=hapticsOn;persist();setHapticIcon();if(hapticsOn)haptic('light');};
+  $('setRestore').onclick=()=>{try{IAP.restore&&IAP.restore();}catch(e){}pollPurchases();toast(L("Checking for purchases...","Проверяем покупки..."));haptic('light');};
+  $('setPrivacy').onclick=()=>{try{openExternal('https://duckdoku.com/privacy');}catch(e){}}; // CF static (always-on, clean URL); NOT API_BASE (Render 404s extensionless + cold-starts)
+  $('setContact').onclick=()=>{try{openExternal('https://t.me/ImPickleJonn');}catch(e){}};
   $('setRestart').onclick=()=>{closeScrim('scrimSet');startLevel('levels',levelIdx);};
   $('setHome').onclick=()=>{closeScrim('scrimSet');show('home');refreshHome();};
-  $('btnAlbum').onclick=()=>{if(!albumUnlocked()){toast(L("Reach Level ","Дойди до уровня ")+ALBUM_UNLOCK_LEVEL+L(" to unlock the Duck Album",", чтобы открыть Альбом"));haptic('err');return;}openAlbum();};
+  // ----- bottom nav -----
+  $('navStart').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
+  $('navShop').onclick=openShopScreen;
+  $('navAlbum').onclick=()=>{if(!albumUnlocked()){navAlbumLockMsg();return;}openAlbum();};
+  $('shopBack').onclick=exitShop;
+  $('shopGear').onclick=()=>openSettings(false);
   $('albumBack').onclick=()=>{show('home');refreshHome();};
-  $('homeGold').onclick=openShop;$('gameGold').onclick=openShop;$('albumGold').onclick=openShop;
+  $('homeGold').onclick=openShopScreen;$('gameGold').onclick=openShop;$('albumGold').onclick=openShopScreen;$('shopGold').onclick=openShopScreen;
+  // buy delegation for both shop surfaces (rows carry data-buy)
+  ['skuList','shopGoldBox','shopBundleBox'].forEach(id=>{const el=$(id);if(el)el.addEventListener('click',e=>{const b=e.target.closest('[data-buy]');if(b)buy(b.getAttribute('data-buy'));});});
   $('btnContinue').onclick=continueLevel;
   $('packOk').onclick=()=>{closeScrim('scrimPack');renderAlbum();};
   $('rwdOk').onclick=()=>closeScrim('scrimReward');
@@ -1481,6 +1613,7 @@ function boot(){applyI18n();document.querySelectorAll('.cicon').forEach(e=>{e.in
   if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,lang:LANG,levelsDone:(save&&save.levelsDone)||0,tz:-(new Date().getTimezoneOffset()/60)})}).catch(()=>{});}catch(e){}}
   // first launch ever on this device: skip the home screen, drop straight into the tutorial level
   try{if(!localStorage.getItem('dd.launched')&&!save.tutorialDone){startPlay();}localStorage.setItem('dd.launched','1');}catch(e){}
+  updateNav(curScreen()); // show the bottom nav on whatever screen we boot into (home, or game during the first-run tutorial)
 }
 /* ===== Duckdoku home hero: the THREE RULES on a real valid board =====
    Builds a guaranteed valid mini board with the game's own generatePuzzle (so

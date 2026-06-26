@@ -283,13 +283,13 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .bbuy .star{width:16px;height:16px;flex:none;}
 /* in-level popup: compact titleless bundle row (contents left, price right) + extra space under the title */
 #scrimShop #skuList{margin-top:16px;}
-.bundlerow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;background:var(--card);border-radius:18px;padding:9px 13px;margin-top:11px;box-shadow:0 3px 0 var(--shadow);}
+.bundlerow{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%;background:var(--card);border-radius:18px;padding:12px 14px 13px;margin-top:11px;box-shadow:0 3px 0 var(--shadow);}
 .bundlerow:active{transform:translateY(2px);box-shadow:0 1px 0 var(--shadow);}
-.bundlerow .brcontents{display:flex;align-items:center;gap:13px;}
-.bundlerow .bcitem{gap:3px;}
-.bundlerow .bcico{width:30px;height:30px;}
-.bundlerow .bcn{font-size:3.2vw;}
-.bundlerow .bbuy{flex:none;padding:10px 15px;font-size:3.9vw;}
+.bundlerow .brtitle{font-size:4.4vw;color:var(--ink);font-weight:900;text-align:center;}
+.bundlerow .brcontents{display:flex;align-items:center;justify-content:center;gap:20px;}
+.bundlerow .bcico{width:34px;height:34px;}
+.bundlerow .bcn{font-size:3.3vw;}
+.bundlerow .bbuy{min-width:130px;padding:10px 16px;font-size:3.9vw;}
 /* IAP loader (dim + spinner) shown from the Buy tap until the native store / Telegram payment sheet appears */
 .iapload{position:fixed;inset:0;z-index:97;background:rgba(40,28,24,.55);display:none;align-items:center;justify-content:center;}
 .iapload.on{display:flex;}
@@ -849,12 +849,12 @@ const I18N={
     next:"Next level",home:"Home",retry:"Try again",levelup:"Level up!",keepgoing:"Keep going",gotit:"Got it",
     adventure:"Adventure",shopsub:"Gold for boosters, sticker packs and more. No ads, ever.",album:"Duck Album",newstickers:"New stickers!",tagline:"A cozy duck logic puzzle",
     settings:"Settings",sound:"Sound",restart:"Restart level",leaderboard:"Leaderboard",lbsub:"Who reached the highest level.",
-    navshop:"Shop",navstart:"Start",navalbum:"Album",navsoon:"Reach level",haptics:"Vibration",restore:"Restore purchases",privacy:"Privacy Policy",contact:"Contact us",goldpacks:"Gold",bundles:"Bundles",buygold:"Buy Gold!"},
+    navshop:"Shop",navstart:"Start",navalbum:"Album",navsoon:"Reach level",haptics:"Vibration",restore:"Restore purchases",privacy:"Privacy Policy",contact:"Contact us",goldpacks:"Gold",bundles:"Bundles",buygold:"Buy Gold!",duckloadbundle:"Duckload Bundle!"},
   ru:{play:"Играть",zen:"Дзен",daily:"Ежедневный",shop:"Магазин",howto:"Как играть",undo:"Назад",hint:"Подсказка",placeduck:"Утка",
     next:"Дальше",home:"Домой",retry:"Заново",levelup:"Новый уровень!",keepgoing:"Играть",gotit:"Понятно",
     adventure:"Кампания",shopsub:"Золото для бустеров и наборов наклеек. Без рекламы.",album:"Альбом уток",newstickers:"Новые наклейки!",tagline:"Уютный пазл с уткой",
     settings:"Настройки",sound:"Звук",restart:"Заново",leaderboard:"Таблица лидеров",lbsub:"Кто дошёл до самого высокого уровня.",
-    navshop:"Магазин",navstart:"Старт",navalbum:"Альбом",navsoon:"Дойди до уровня",haptics:"Вибрация",restore:"Восстановить покупки",privacy:"Конфиденциальность",contact:"Связаться",goldpacks:"Золото",bundles:"Наборы",buygold:"Купить золото!"},
+    navshop:"Магазин",navstart:"Старт",navalbum:"Альбом",navsoon:"Дойди до уровня",haptics:"Вибрация",restore:"Восстановить покупки",privacy:"Конфиденциальность",contact:"Связаться",goldpacks:"Золото",bundles:"Наборы",buygold:"Купить золото!",duckloadbundle:"Утиный набор!"},
 };
 let LANG=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.language_code||navigator.language||'en').slice(0,2);
 if(!I18N[LANG])LANG='en';
@@ -1496,11 +1496,11 @@ function bundleCardHtml(s){const g=s.grant||{};
   let items='<div class="bcitem"><span class="bcico">'+COIN_SVG+'</span><span class="bcn">'+((g.gold||0).toLocaleString('en-US'))+'</span></div>';
   if(g.boosters)['placeduck','hint','undo'].forEach(k=>{if(g.boosters[k])items+='<div class="bcitem"><span class="bcico">'+boosterIcon(k)+'</span><span class="bcn">x'+g.boosters[k]+'</span></div>';});
   return '<button class="bundle" data-buy="'+s.id+'"><div class="btitle">'+s.title+'</div><div class="bcontents">'+items+'</div><div class="bbuy">'+priceTag(s)+'</div></button>';}
-// Compact bundle ROW (in-level popup): contents (gold + boosters icons + amounts) on the left, price on the right, NO title.
+// Bundle card for the in-level popup: "Duckload Bundle!" title on top, centered gold + booster icons, price below.
 function bundleRowHtml(s){const g=s.grant||{};
-  let items='<span class="bcitem"><span class="bcico">'+COIN_SVG+'</span><span class="bcn">'+((g.gold||0).toLocaleString('en-US'))+'</span></span>';
-  if(g.boosters)['placeduck','hint','undo'].forEach(k=>{if(g.boosters[k])items+='<span class="bcitem"><span class="bcico">'+boosterIcon(k)+'</span><span class="bcn">x'+g.boosters[k]+'</span></span>';});
-  return '<button class="bundlerow" data-buy="'+s.id+'"><span class="brcontents">'+items+'</span><span class="bbuy">'+priceTag(s)+'</span></button>';}
+  let items='<div class="bcitem"><span class="bcico">'+COIN_SVG+'</span><span class="bcn">'+((g.gold||0).toLocaleString('en-US'))+'</span></div>';
+  if(g.boosters)['placeduck','hint','undo'].forEach(k=>{if(g.boosters[k])items+='<div class="bcitem"><span class="bcico">'+boosterIcon(k)+'</span><span class="bcn">x'+g.boosters[k]+'</span></div>';});
+  return '<button class="bundlerow" data-buy="'+s.id+'"><div class="brtitle">'+t('duckloadbundle')+'</div><div class="brcontents">'+items+'</div><div class="bbuy">'+priceTag(s)+'</div></button>';}
 // MODAL shop (in-level quick top-up): the 3 GOLD-PACK cards (like the shop tab) + the Starter Bundle as a titleless row.
 function renderShop(){const list=$('skuList');if(!list)return;if(!SKUS_CACHE||!SKUS_CACHE.length){list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>';return;}
   const gold='<div class="gpGrid">'+SKUS_CACHE.filter(s=>!isBundleSku(s)).map(goldCardHtml).join('')+'</div>';

@@ -34,12 +34,12 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .hidden{display:none!important;}
 
 /* ---------- HOME ---------- */
-#home{justify-content:flex-start;text-align:center;background:#ECD48A;padding-top:calc(var(--safe-top) + 6vh);}
+#home{justify-content:flex-start;text-align:center;background:#FBF3E2;padding-top:calc(var(--safe-top) + 6vh);}
 .logo{font-size:13vw;letter-spacing:.5px;margin:3vh 0 0;line-height:1;color:var(--ink);text-shadow:0 3px 0 #fff,0 5px 0 var(--orange-d);}
 .logo-img{display:block;width:min(80vw,380px);height:auto;margin:3.5vh auto 0;filter:drop-shadow(0 5px 7px rgba(120,90,40,.22));}
 .logo b{color:var(--orange);}
 .tag{color:var(--ink-soft);font-size:4.2vw;margin:8px 0 0;}
-.hero-wrap{width:min(58vw,280px);aspect-ratio:1;margin:2.5vh auto 1vh;}
+.hero-wrap{width:min(40vw,180px);aspect-ratio:1;margin:2vh auto 1vh;}
 .hero-wrap video,.hero-wrap img{width:100%;height:100%;object-fit:contain;border-radius:28px;}
 .menu{width:min(86vw,420px);display:flex;flex-direction:column;gap:11px;margin-top:1vh;}
 .btn{padding:17px;border-radius:20px;font-size:5vw;box-shadow:0 5px 0 var(--shadow);transition:transform .06s;}
@@ -62,6 +62,12 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .iconbtn{width:44px;height:44px;border-radius:50%;background:var(--card);box-shadow:0 3px 0 var(--shadow);display:flex;align-items:center;justify-content:center;flex:none;}
 .iconbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--shadow);}
 .iconbtn svg{width:22px;height:22px;}
+.hb-left{display:flex;align-items:center;gap:9px;}
+#btnAlbum{position:relative;}
+#btnAlbum.locked > svg{filter:grayscale(.55);opacity:.5;}
+.alblock{position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;border-radius:50%;background:#C9BDB8;border:2px solid var(--card);display:none;align-items:center;justify-content:center;color:#fff;}
+.alblock svg{width:9px;height:9px;}
+#btnAlbum.locked .alblock{display:flex;}
 .toptitle{font-size:5.4vw;color:var(--ink);}
 
 /* status row: count pill + hearts pill */
@@ -414,15 +420,17 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
   <!-- ============ HOME ============ -->
   <section id="home" class="screen on">
     <div class="homebar">
+      <div class="hb-left">
       <button class="iconbtn" id="btnHomeLB" aria-label="leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" fill="#FFD23F"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg></button>
       <button class="iconbtn" id="btnHomeDaily" aria-label="daily reward"><svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round"><rect x="3.6" y="10" width="16.8" height="10.4" rx="1.8" fill="#FFD23F" stroke="#E8942F" stroke-width="1.5"/><rect x="3" y="7.4" width="18" height="3.6" rx="1.2" fill="#FFE08A" stroke="#E8942F" stroke-width="1.4"/><path d="M12 7.4V20.4" stroke="#E8942F" stroke-width="1.7"/><path d="M12 7.4C12 7.4 10 3.4 7.6 4.4 5.8 5.2 7.4 7.4 12 7.4z" fill="#F0544C" stroke="#D6453E" stroke-width="1"/><path d="M12 7.4C12 7.4 14 3.4 16.4 4.4 18.2 5.2 16.6 7.4 12 7.4z" fill="#F0544C" stroke="#D6453E" stroke-width="1"/></svg><i class="dailydot" id="dailyDot"></i></button>
+      <button class="iconbtn" id="btnAlbum" aria-label="duck album"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/></svg><i class="alblock" id="albLock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></i></button>
+      </div>
       <div class="hb-right">
         <button class="goldpill" id="homeGold"><span class="cicon"></span><span class="goldval">0</span></button>
         <button class="iconbtn" id="btnHomeGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44"><path d="M12 2.4c.95 0 1.78.62 2.04 1.5.66-.72 1.72-.92 2.6-.41.86.5 1.22 1.5.92 2.42.94-.22 1.92.27 2.27 1.18.34.9-.05 1.9-.9 2.36.85.46 1.24 1.46.9 2.36-.35.91-1.33 1.4-2.27 1.18.3.92-.06 1.92-.92 2.42-.88.51-1.94.31-2.6-.41-.26.88-1.09 1.5-2.04 1.5s-1.78-.62-2.04-1.5c-.66.72-1.72.92-2.6.41-.86-.5-1.22-1.5-.92-2.42-.94.22-1.92-.27-2.27-1.18-.34-.9.05-1.9.9-2.36-.85-.46-1.24-1.46-.9-2.36.35-.91 1.33-1.4 2.27-1.18-.3-.92.06-1.92.92-2.42.88-.51 1.94-.31 2.6.41.26-.88 1.09-1.5 2.04-1.5z"/><circle cx="12" cy="12" r="3.5" fill="#fff"/></svg></button>
       </div>
     </div>
     <img class="logo-img" src="assets/ui/logo.png?v=2" alt="Duckdoku">
-    <div class="tag" id="tagline">A cozy duck logic puzzle</div>
     <div class="coins-line"><span id="streakLine"></span></div>
     <div class="fill"></div>
     <div class="ddh-rule" id="ddhRule"></div>
@@ -431,7 +439,6 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
     </div>
     <div class="menu">
       <button class="btn play" id="btnPlay" data-i="play">Level 1</button>
-      <button class="btn alt" id="btnAlbum">Duck Album</button>
     </div>
     <div class="fill"></div>
   </section>
@@ -1331,7 +1338,7 @@ function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach
 /* ---------- home + misc ---------- */
 function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();}
 function albumUnlocked(){return (save.levelsDone||0)>=ALBUM_UNLOCK_LEVEL-1;}
-function renderAlbumBtn(){const b=$('btnAlbum');if(!b)return;const lk=!albumUnlocked();b.classList.toggle('locked',lk);if(lk)b.innerHTML='<span class="albmain">'+LOCK_SVG+'<span>'+L("Duck Album","Альбом")+'</span></span><span class="albsub">'+L("Level ","Уровень ")+ALBUM_UNLOCK_LEVEL+'</span>';else b.textContent=L("Duck Album","Альбом");}
+function renderAlbumBtn(){const b=$('btnAlbum');if(!b)return;b.classList.toggle('locked',!albumUnlocked());} // icon-only circle button in the homebar; .locked shows the padlock badge + dims the icon
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 /* ---------- Daily Reward: a 7-day grid that repeats inside a 30-day streak (RTW model) ---------- */
 const CHECK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
@@ -1466,7 +1473,7 @@ function fcmInit(){
     PN.requestPermissions().then(function(p){if(p&&p.receive==='granted')PN.register();}).catch(function(){});
   }catch(e){}
 }
-function boot(){applyI18n();$('tagline').textContent=t('tagline');document.querySelectorAll('.cicon').forEach(e=>{e.innerHTML=COIN_SVG;});bind();bindPaint();fillHow();refreshHome();updateGoldHud();initFaces();mxBoot();fcmInit();
+function boot(){applyI18n();document.querySelectorAll('.cicon').forEach(e=>{e.innerHTML=COIN_SVG;});bind();bindPaint();fillHow();refreshHome();updateGoldHud();initFaces();mxBoot();fcmInit();
   try{if(window.DuckAdjust){DuckAdjust.init();DuckAdjust.fire('appOpen');}}catch(e){}
   loadSkus();pollPurchases();cloudLoad();
   if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,lang:LANG,levelsDone:(save&&save.levelsDone)||0,tz:-(new Date().getTimezoneOffset()/60)})}).catch(()=>{});}catch(e){}}
@@ -1519,7 +1526,7 @@ function boot(){applyI18n();$('tagline').textContent=t('tagline');document.query
   function retractX(cells,when){ at(when,function(){ cells.forEach(function(rc){ var x=xAt(rc[0],rc[1]); if(x.classList.contains('ddh-stamp')){ x.classList.remove('ddh-stamp'); x.classList.add('ddh-retract'); } cellEl[rc[0]][rc[1]].classList.remove('ddh-dim'); }); }); }
   function clearAllX(){ for(var r=0;r<N;r++)for(var c=0;c<N;c++){ xAt(r,c).className='ddh-x'; cellEl[r][c].classList.remove('ddh-dim','ddh-host'); } }
 
-  function placeDuck(dr,dc){ for(var r=0;r<N;r++)for(var c=0;c<N;c++)cellEl[r][c].classList.remove('ddh-host'); cellEl[dr][dc].classList.add('ddh-host'); cellEl[dr][dc].appendChild(duck); duck.classList.remove('ddh-bob','ddh-leave','ddh-land'); void duck.offsetWidth; duck.classList.add('ddh-land'); paintDuck('happy'); }
+  function placeDuck(dr,dc){ for(var r=0;r<N;r++)for(var c=0;c<N;c++)cellEl[r][c].classList.remove('ddh-host'); cellEl[dr][dc].classList.add('ddh-host'); cellEl[dr][dc].appendChild(duck); duck.classList.remove('ddh-bob','ddh-leave','ddh-land'); void duck.offsetWidth; duck.classList.add('ddh-land'); paintDuck('idle'); }
   // three rule demos in sequence; each shows the rule text while the X's play it out.
   // Rule 3 (no touching) always uses the CENTRE duck so all 8 neighbours get X'd.
   var DEMOS=[ {rule:1,dr:0,dc:0}, {rule:2,dr:2,dc:2}, {rule:3,dr:1,dc:1} ];

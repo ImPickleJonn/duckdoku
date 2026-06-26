@@ -1147,7 +1147,7 @@ function tryGuess(r,c){
     if(duckCount===N&&!ftue)onWin(); else if(duckCount===N&&ftue&&ftue.active)onFtueWin();
   } else {
     // wrong: leave a PERMANENT red X (locked) and lose a heart
-    gstate[r][c]=RED;heartBreakAt(r,c,function(){renderCell(r,c);});for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++)if(gstate[rr][cc]===DUCK)duckReact(rr,cc,'sad',1600);shakeBoard();haptic('err');soundBad();MX.track('Mistake Made',{level:levelIdx+1});
+    gstate[r][c]=RED;heartBreakAt(r,c,function(){renderCell(r,c);});for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++)if(gstate[rr][cc]===DUCK)duckReact(rr,cc,'sad',1600);shakeBoard();haptic('err');playSfx('loseheart');MX.track('Mistake Made',{level:levelIdx+1});
     if(heartsEnabled){hearts--;heartsLost++;renderHearts();breakHeartIcon(hearts);if(hearts<=0)onLose();}
   }
 }
@@ -1336,8 +1336,8 @@ function soundWhoosh(){blip(170,0.18,'sawtooth',0.04);setTimeout(()=>blip(120,0.
 function soundPop(){blip(440,0.08,'triangle',0.05);setTimeout(()=>blip(680,0.06,'triangle',0.04),55);}
 function soundSparkle(){[880,1175,1568].forEach((f,i)=>setTimeout(()=>blip(f,0.1,'triangle',0.045),i*55));}
 /* ---- file-based SFX (custom wavs -> mp3): decoded via the existing AudioContext, gated by audioOn ---- */
-const SFX_SRC={ui:'assets/sfx/ui-button.mp3',reveal:'assets/sfx/grid-reveal.mp3',xremove:'assets/sfx/x-removed.mp3',duckfound:'assets/sfx/duck-found.mp3'};
-const SFX_VOL={ui:0.55,reveal:0.7,xremove:0.8,duckfound:0.9};
+const SFX_SRC={ui:'assets/sfx/ui-button.mp3',reveal:'assets/sfx/grid-reveal.mp3',xremove:'assets/sfx/x-removed.mp3',duckfound:'assets/sfx/duck-found.mp3',loseheart:'assets/sfx/lose-heart.mp3'};
+const SFX_VOL={ui:0.55,reveal:0.7,xremove:0.8,duckfound:0.9,loseheart:0.9};
 const sfxBuf={},sfxNode={};let _sfxLoaded=false;
 async function loadSfx(){if(_sfxLoaded)return;_sfxLoaded=true;const a=ac();if(!a){_sfxLoaded=false;return;}await Promise.all(Object.keys(SFX_SRC).map(async k=>{try{const r=await fetch(SFX_SRC[k]);const ab=await r.arrayBuffer();sfxBuf[k]=await a.decodeAudioData(ab);}catch(e){}}));}
 function playSfx(k,v){if(!audioOn)return;const a=ac();if(!a)return;if(a.state==='suspended'){try{a.resume();}catch(e){}}const b=sfxBuf[k];if(!b){loadSfx();return;}try{if(k==='reveal'&&sfxNode.reveal){try{sfxNode.reveal.stop();}catch(e){}}const s=a.createBufferSource();s.buffer=b;const g=a.createGain();g.gain.value=(v!=null?v:(SFX_VOL[k]||0.7));s.connect(g);g.connect(a.destination);s.start();if(k==='reveal'){sfxNode.reveal=s;s.onended=()=>{if(sfxNode.reveal===s)sfxNode.reveal=null;};}}catch(e){}}

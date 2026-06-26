@@ -176,7 +176,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .coach .bubble{background:var(--card);color:var(--ink);border-radius:20px;padding:14px 18px;font-size:4vw;max-width:440px;box-shadow:0 6px 0 var(--shadow);text-align:center;pointer-events:auto;display:flex;align-items:center;gap:10px;justify-content:center;}
 /* FTUE hint coach as a compact speech-bubble tooltip anchored to the Hint booster (top set inline by positionHintTip) */
 .coach.tipbub{bottom:auto;}
-.coach.tipbub .bubble{position:relative;display:block;gap:0;line-height:1.3;font-size:3.5vw;padding:10px 16px;max-width:78vw;border-radius:16px;box-shadow:0 4px 0 var(--shadow);}
+.coach.tipbub .bubble{position:relative;display:block;white-space:nowrap;gap:0;line-height:1.3;font-size:3.4vw;padding:9px 15px;max-width:none;border-radius:16px;box-shadow:0 4px 0 var(--shadow);}
 .coach.tipbub .bubble::after{content:"";position:absolute;left:var(--tail,50%);transform:translateX(-50%);border:8px solid transparent;top:-8px;border-bottom-color:var(--card);border-top:0;}
 .coach.tipbub.tip-up .bubble::after{top:auto;bottom:-8px;border-top-color:var(--card);border-bottom:0;}
 .coach .bubble .hl{color:var(--red);}
@@ -239,10 +239,14 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .navtab.active{color:var(--orange);}
 .navtab.active .navlbl{color:var(--orange);}
 .navtab.active .navico{transform:translateY(-2px) scale(1.06);}
-/* center Start tab: raised circular duck = the LIVE keyed idle face (never SVG) */
-.navStart .navico{width:54px;height:54px;border-radius:50%;background:#fff;border:3px solid var(--gold);box-shadow:0 4px 0 var(--shadow);margin-top:-24px;overflow:hidden;}
-.navStart .navico .bicon{width:46px;height:46px;display:block;}
-.navStart.active .navico{border-color:var(--orange);}
+/* center Start tab: flush orange pill carrying the LIVE keyed duck face + label (mascot + CTA, no floating circle) */
+.navStart{padding:0 6px;}
+.navStart .navico{width:auto;height:46px;flex-direction:row;align-items:center;justify-content:center;gap:6px;padding:0 16px 0 9px;border-radius:23px;background:var(--orange);box-shadow:0 3px 0 var(--orange-d);overflow:visible;transition:transform .06s,box-shadow .06s;}
+.navStart .navico .bicon{width:34px;height:34px;display:block;filter:drop-shadow(0 1px 1px rgba(120,70,20,.28));}
+.navStart .navlbl{font-size:3.7vw;font-weight:900;color:#fff;text-shadow:0 1px 0 var(--orange-d);}
+.navStart.active .navico{transform:none;}
+.navStart.active .navlbl{color:#fff;}
+.navStart .navico:active{transform:translateY(3px);box-shadow:0 0 0 var(--orange-d);}
 /* locked album tab: padlock badge + greyed icon (tooltip shows only on tap) */
 .navtab.navAlbum .navLk{display:none;position:absolute;top:6px;left:calc(50% + 7px);width:18px;height:18px;}
 .navtab.navAlbum.locked .navico svg{filter:grayscale(.55);opacity:.55;}
@@ -606,8 +610,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
     <span class="navlbl" data-i="navshop">Shop</span>
   </button>
   <button class="navtab navStart active" id="navStart" aria-label="Play">
-    <span class="navico navduck"><canvas class="bicon" data-bk="idle" width="80" height="80"></canvas></span>
-    <span class="navlbl" data-i="navstart">Start</span>
+    <span class="navico navduck"><canvas class="bicon" data-bk="idle" width="80" height="80"></canvas><span class="navlbl" data-i="navstart">Start</span></span>
   </button>
   <button class="navtab navAlbum locked" id="navAlbum" aria-label="Album">
     <span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/></svg></span>
@@ -1650,10 +1653,14 @@ function startFTUE(){
 }
 function ftueDim(on){$('app').classList.toggle('tutdim',on);$('qboard').classList.toggle('dim',on);}
 function ftueSpot(cells){cellEls.forEach(row=>row.forEach(el=>el.classList.remove('spot')));ftue.allowOnly=new Set();cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el)el.classList.add('spot');ftue.allowOnly.add(r*100+c);});}
-function showCoach(which,spec,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=bub(spec)+(withLamp?' '+LAMP_SVG:'');el.style.removeProperty('--tail');const c=which==='top'?$('coachTop'):$('coachBot');c.classList.remove('tipbub','tip-up');c.removeAttribute('style');c.classList.add('on');}
+function showCoach(which,spec,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=bub(spec)+(withLamp?' '+LAMP_SVG:'');el.style.removeProperty('--tail');el.style.removeProperty('font-size');const c=which==='top'?$('coachTop'):$('coachBot');c.classList.remove('tipbub','tip-up');c.removeAttribute('style');c.classList.add('on');}
 // Anchor the FTUE hint coach as a small speech-bubble tooltip under the Hint booster (flips above if it would clip the bottom).
 function positionHintTip(){const hint=$('bsHint'),cb=$('coachBot'),bub=$('coachBotB');if(!hint||!cb||!bub)return;
   cb.style.bottom='auto';cb.style.top='0';cb.classList.remove('tip-up');
+  // keep the tooltip a single line: shrink the font if it would overflow the viewport
+  bub.style.removeProperty('font-size');
+  const maxw=window.innerWidth-24,bw=bub.getBoundingClientRect().width;
+  if(bw>maxw){const base=parseFloat(getComputedStyle(bub).fontSize);bub.style.fontSize=(base*maxw/bw).toFixed(1)+'px';}
   const hr=hint.getBoundingClientRect(),bh=bub.getBoundingClientRect().height;
   let top=hr.bottom+13;if(top+bh>window.innerHeight-8){top=hr.top-bh-13;cb.classList.add('tip-up');}
   cb.style.top=top+'px';

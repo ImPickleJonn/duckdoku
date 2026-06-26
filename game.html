@@ -358,7 +358,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .dailygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px;}
 .dcell{position:relative;aspect-ratio:.95;border-radius:14px;background:var(--card);box-shadow:0 3px 0 var(--shadow);border:2px solid #EADFDB;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px;}
 .dcell .dday{font-size:2.7vw;font-weight:900;color:var(--ink-soft);}
-.dcell .dgico{width:30px;height:30px;display:flex;flex:none;}.dcell .dgico svg{width:100%;height:100%;}
+.dcell .dgico{width:30px;height:30px;display:flex;flex:none;}.dcell .dgico svg{width:100%;height:100%;}.dcell .dgico .bicon{width:100%;height:100%;display:block;}
 .dcell .damt{font-size:3.1vw;font-weight:900;color:var(--ink);}
 .dcell.claimed{opacity:.5;}
 .dcell.today{border-color:var(--orange);box-shadow:0 0 0 2px var(--orange),0 3px 0 var(--shadow);animation:dtodayPulse 1.5s ease-in-out infinite;cursor:pointer;}
@@ -421,7 +421,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
         <button class="iconbtn" id="btnHomeGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44"><path d="M12 2.4c.95 0 1.78.62 2.04 1.5.66-.72 1.72-.92 2.6-.41.86.5 1.22 1.5.92 2.42.94-.22 1.92.27 2.27 1.18.34.9-.05 1.9-.9 2.36.85.46 1.24 1.46.9 2.36-.35.91-1.33 1.4-2.27 1.18.3.92-.06 1.92-.92 2.42-.88.51-1.94.31-2.6-.41-.26.88-1.09 1.5-2.04 1.5s-1.78-.62-2.04-1.5c-.66.72-1.72.92-2.6.41-.86-.5-1.22-1.5-.92-2.42-.94.22-1.92-.27-2.27-1.18-.34-.9.05-1.9.9-2.36-.85-.46-1.24-1.46-.9-2.36.35-.91 1.33-1.4 2.27-1.18-.3-.92.06-1.92.92-2.42.88-.51 1.94-.31 2.6.41.26-.88 1.09-1.5 2.04-1.5z"/><circle cx="12" cy="12" r="3.5" fill="#fff"/></svg></button>
       </div>
     </div>
-    <img class="logo-img" src="assets/ui/logo.png" alt="Duckdoku">
+    <img class="logo-img" src="assets/ui/logo.png?v=2" alt="Duckdoku">
     <div class="tag" id="tagline">A cozy duck logic puzzle</div>
     <div class="coins-line"><span id="streakLine"></span></div>
     <div class="fill"></div>
@@ -884,7 +884,7 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const gameOn=$('game').classList.contains('on');
   const winOn=$('scrimWin').classList.contains('on'),loseOn=$('scrimLose').classList.contains('on');
   const homeEl=document.getElementById('home'),homeOn=!!(homeEl&&homeEl.classList.contains('on'));
-  const albumEl=document.getElementById('album'),albumOn=!!(albumEl&&albumEl.classList.contains('on'))||$('scrimReward').classList.contains('on'); // album/reward prize icons reuse the SAME keyed booster faces
+  const albumEl=document.getElementById('album'),albumOn=!!(albumEl&&albumEl.classList.contains('on'))||$('scrimReward').classList.contains('on')||$('scrimDaily').classList.contains('on'); // album/reward/daily prize icons reuse the SAME keyed booster faces
   if(!gameOn&&!winOn&&!loseOn&&!homeOn&&!albumOn){if(_playing.size)reconcileClips(new Set());return;}
   const now=Date.now();
   if(now-lastFaceTs<33)return; lastFaceTs=now;
@@ -1351,7 +1351,7 @@ function dailyTick(){const r=dailyRec(),dn=dayNum();
   return r;}
 function dailyClaimable(){if(!dailyUnlocked()||dailyResting())return false;const r=dailyTick();return r.day<DAILY.length&&r.last!==ymd();}
 function grantDaily(rw){if(!rw)return;if(rw.gold)save.gold=(save.gold||0)+rw.gold;if(rw.free)grantFreeBoosters(rw.free);if(rw.pack){save.freePacks=save.freePacks||{basic:0,golden:0};save.freePacks[rw.pack]=(save.freePacks[rw.pack]||0)+1;}persist();updateGoldHud();renderBoosters();}
-function dailyBoostIcon(k){return k==='hint'?'<svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/><path d="M9 18h6"/></svg>':DUCK_MINI;}
+function dailyBoostIcon(k){return boosterIcon(k);} // daily booster reward icons = the SAME animated in-game keyed faces (placeduck->idle head, hint->bsthint bulb)
 function dailyRewIcon(rw){let ic,amt;if(rw.pack){ic=rw.pack==='golden'?GOLD_PACK_SVG:PACK_SVG;amt=L('Pack','Набор');}else if(rw.gold){ic=COIN_SVG;amt=rw.gold;}else{const k=Object.keys(rw.free)[0];ic=dailyBoostIcon(k);amt='x'+rw.free[k];}return '<span class="dgico">'+ic+'</span><b class="damt">'+amt+'</b>';}
 function openDaily(){$('dailyTitle').textContent=L('Daily Reward','Ежедневная награда');$('dailySub').textContent=L('Claim every day. Miss a day and the streak resets.','Заходи каждый день. Пропустишь день, серия сбросится.');renderDaily();openScrim('scrimDaily');MX.track('Daily Opened');}
 function renderDaily(){const r=dailyTick();const claimedToday=(r.last===ymd());const canClaim=dailyUnlocked()&&!dailyResting()&&r.day<DAILY.length&&!claimedToday;

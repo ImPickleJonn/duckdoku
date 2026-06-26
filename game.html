@@ -667,7 +667,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 
 <div class="scrim" id="scrimShop"><div class="modal modal-rel">
   <button class="closex" id="shopClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  <h2 data-i="shop">Shop</h2><p data-i="shopsub">Boosters to help you. No ads, ever.</p>
+  <h2 data-i="shop">Shop</h2>
   <div id="skuList"></div>
 </div></div>
 
@@ -1480,9 +1480,9 @@ function bundleCardHtml(s){const g=s.grant||{};
   let items='<div class="bcitem"><span class="bcico">'+COIN_SVG+'</span><span class="bcn">'+((g.gold||0).toLocaleString('en-US'))+'</span></div>';
   if(g.boosters)['placeduck','hint','undo'].forEach(k=>{if(g.boosters[k])items+='<div class="bcitem"><span class="bcico">'+boosterIcon(k)+'</span><span class="bcn">x'+g.boosters[k]+'</span></div>';});
   return '<button class="bundle" data-buy="'+s.id+'"><div class="btitle">'+s.title+'</div><div class="bcontents">'+items+'</div><div class="bbuy">'+priceTag(s)+'</div></button>';}
-// MODAL shop (in-game quick top-up): flat list of every SKU.
+// MODAL shop (in-game quick top-up): just the 3 GOLD-PACK cards, same as the shop tab (no bundles).
 function renderShop(){const list=$('skuList');if(!list)return;if(!SKUS_CACHE||!SKUS_CACHE.length){list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>';return;}
-  list.innerHTML=SKUS_CACHE.map(skuRowHtml).join('');}
+  list.innerHTML='<div class="gpGrid">'+SKUS_CACHE.filter(s=>!isBundleSku(s)).map(goldCardHtml).join('')+'</div>';}
 // FULL-SCREEN shop (bottom nav): gold packs (3 cards) + bundles (gold + boosters).
 function renderShopScreen(){const gb=$('shopGoldBox'),bb=$('shopBundleBox');if(!gb||!bb)return;
   if(!SKUS_CACHE||!SKUS_CACHE.length){gb.innerHTML='<p style="color:var(--ink-soft);text-align:center">'+L("Shop opens soon","Магазин скоро")+'</p>';bb.innerHTML='';return;}

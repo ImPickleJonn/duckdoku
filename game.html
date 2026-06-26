@@ -346,6 +346,32 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 #scrimReward .modal{text-align:center;}
 .rwd-trophy{width:92px;height:92px;margin:2px auto 2px;animation:rwdPop .5s cubic-bezier(.34,1.6,.5,1) both;}
 .rwd-trophy svg{width:100%;height:100%;}
+/* ---------- Daily Reward (30-day streak, 7-day grid) ---------- */
+#btnHomeDaily{position:relative;}
+.dailydot{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:var(--heart);border:2px solid var(--card);display:none;}
+.daily-modal{max-width:min(94vw,440px);}
+.dailysub{font-size:3.1vw;color:var(--ink-soft);font-weight:800;margin:2px 0 13px;}
+.dailyprog{margin:0 2px 14px;}
+.dpbar{height:13px;border-radius:7px;background:#EAD6A8;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.14);}
+.dpfill{height:100%;border-radius:7px;background:linear-gradient(90deg,#FFD23F,#E8942F);transition:width .55s cubic-bezier(.34,1.4,.64,1);}
+.dpn{text-align:center;font-size:3.1vw;font-weight:900;color:#9A6212;margin-top:6px;}
+.dailygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px;}
+.dcell{position:relative;aspect-ratio:.95;border-radius:14px;background:var(--card);box-shadow:0 3px 0 var(--shadow);border:2px solid #EADFDB;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px;}
+.dcell .dday{font-size:2.7vw;font-weight:900;color:var(--ink-soft);}
+.dcell .dgico{width:30px;height:30px;display:flex;flex:none;}.dcell .dgico svg{width:100%;height:100%;}
+.dcell .damt{font-size:3.1vw;font-weight:900;color:var(--ink);}
+.dcell.claimed{opacity:.5;}
+.dcell.today{border-color:var(--orange);box-shadow:0 0 0 2px var(--orange),0 3px 0 var(--shadow);animation:dtodayPulse 1.5s ease-in-out infinite;cursor:pointer;}
+@keyframes dtodayPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.045);}}
+.dcell.locked .dgico{filter:grayscale(.45);opacity:.7;}
+.dcell.day7{grid-column:span 3;aspect-ratio:auto;flex-direction:row;justify-content:center;gap:12px;padding:11px;background:linear-gradient(135deg,#FFF4D6,#FFE3B0);border-color:#F1C457;}
+.dcell.day7 .dday{font-size:3.3vw;color:#9A6212;}
+.dcell.day7 .dgico{width:42px;height:42px;}
+.dcell.day7 .damt{font-size:3.8vw;color:#9A6212;}
+.dcell .dchk{position:absolute;top:3px;right:3px;width:18px;height:18px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 0 rgba(0,0,0,.12);}
+.dcell .dchk svg{width:11px;height:11px;}
+.dailyclaim{width:100%;}
+.dailyclaim.off{background:#C9BDB8;color:#fff;box-shadow:0 5px 0 rgba(150,110,90,.25);pointer-events:none;}
 @keyframes rwdPop{0%{transform:scale(.3) rotate(-12deg);opacity:0;}100%{transform:scale(1) rotate(0);opacity:1;}}
 .rwd-items{display:flex;flex-direction:column;gap:9px;margin:8px 0 14px;align-items:center;}
 .rwd-item{display:inline-flex;align-items:center;gap:9px;background:var(--card);border-radius:14px;padding:9px 18px;box-shadow:0 3px 0 var(--shadow);font-size:4.4vw;font-weight:900;color:var(--ink);min-width:150px;justify-content:center;}
@@ -389,6 +415,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
   <section id="home" class="screen on">
     <div class="homebar">
       <button class="iconbtn" id="btnHomeLB" aria-label="leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" fill="#FFD23F"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg></button>
+      <button class="iconbtn" id="btnHomeDaily" aria-label="daily reward"><svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round"><rect x="3.6" y="10" width="16.8" height="10.4" rx="1.8" fill="#FFD23F" stroke="#E8942F" stroke-width="1.5"/><rect x="3" y="7.4" width="18" height="3.6" rx="1.2" fill="#FFE08A" stroke="#E8942F" stroke-width="1.4"/><path d="M12 7.4V20.4" stroke="#E8942F" stroke-width="1.7"/><path d="M12 7.4C12 7.4 10 3.4 7.6 4.4 5.8 5.2 7.4 7.4 12 7.4z" fill="#F0544C" stroke="#D6453E" stroke-width="1"/><path d="M12 7.4C12 7.4 14 3.4 16.4 4.4 18.2 5.2 16.6 7.4 12 7.4z" fill="#F0544C" stroke="#D6453E" stroke-width="1"/></svg><i class="dailydot" id="dailyDot"></i></button>
       <div class="hb-right">
         <button class="goldpill" id="homeGold"><span class="cicon"></span><span class="goldval">0</span></button>
         <button class="iconbtn" id="btnHomeGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44"><path d="M12 2.4c.95 0 1.78.62 2.04 1.5.66-.72 1.72-.92 2.6-.41.86.5 1.22 1.5.92 2.42.94-.22 1.92.27 2.27 1.18.34.9-.05 1.9-.9 2.36.85.46 1.24 1.46.9 2.36-.35.91-1.33 1.4-2.27 1.18.3.92-.06 1.92-.92 2.42-.88.51-1.94.31-2.6-.41-.26.88-1.09 1.5-2.04 1.5s-1.78-.62-2.04-1.5c-.66.72-1.72.92-2.6.41-.86-.5-1.22-1.5-.92-2.42-.94.22-1.92-.27-2.27-1.18-.34-.9.05-1.9.9-2.36-.85-.46-1.24-1.46-.9-2.36.35-.91 1.33-1.4 2.27-1.18-.3-.92.06-1.92.92-2.42.88-.51 1.94-.31 2.6.41.26-.88 1.09-1.5 2.04-1.5z"/><circle cx="12" cy="12" r="3.5" fill="#fff"/></svg></button>
@@ -555,6 +582,15 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
   <p id="rwdSub"></p>
   <div class="rwd-items" id="rwdItems"></div>
   <button class="btn play" id="rwdOk" data-i="gotit">Got it</button>
+</div></div>
+
+<div class="scrim" id="scrimDaily"><div class="modal modal-rel daily-modal">
+  <button class="closex" id="dailyClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h2 id="dailyTitle">Daily Reward</h2>
+  <div class="dailysub" id="dailySub"></div>
+  <div class="dailyprog"><div class="dpbar"><div class="dpfill" id="dailyProgFill"></div></div><div class="dpn" id="dailyProgN"></div></div>
+  <div class="dailygrid" id="dailyGrid"></div>
+  <button class="btn play dailyclaim" id="dailyClaimBtn"></button>
 </div></div>
 
 <!-- hidden source clips for the live in-grid duck head (chroma-keyed onto cells) -->
@@ -1293,10 +1329,52 @@ function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach
   $('btnNext').textContent=t('next');openScrim('scrimWin');}
 
 /* ---------- home + misc ---------- */
-function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();}
+function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();}
 function albumUnlocked(){return (save.levelsDone||0)>=ALBUM_UNLOCK_LEVEL-1;}
 function renderAlbumBtn(){const b=$('btnAlbum');if(!b)return;const lk=!albumUnlocked();b.classList.toggle('locked',lk);if(lk)b.innerHTML='<span class="albmain">'+LOCK_SVG+'<span>'+L("Duck Album","Альбом")+'</span></span><span class="albsub">'+L("Level ","Уровень ")+ALBUM_UNLOCK_LEVEL+'</span>';else b.textContent=L("Duck Album","Альбом");}
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+/* ---------- Daily Reward: a 7-day grid that repeats inside a 30-day streak (RTW model) ---------- */
+const CHECK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+const DAILY_UNLOCK_LEVEL=10,DAILY_STREAK_MAX=30,DAILY_REST_DAYS=3;
+const DAILY=[{gold:50},{free:{hint:1}},{gold:100},{free:{placeduck:1}},{gold:150},{free:{hint:2}},{gold:300,pack:'golden'}]; // Day 7 = gold + Golden album pack
+const DAILY_MILESTONES={15:{gold:400,pack:'basic'},30:{gold:1000,pack:'golden'}}; // streak bonuses on top of the daily
+function dailyRec(){if(!save.daily)save.daily={day:0,last:'',streak:0,lastN:0,restUntil:0};return save.daily;}
+function dayNum(){const d=new Date();return Math.floor(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/86400000);}
+function dailyUnlocked(){return (save.levelsDone||0)>=DAILY_UNLOCK_LEVEL-1;}
+function dailyResting(){const r=save.daily;return !!(r&&r.restUntil&&dayNum()<r.restUntil);}
+function dailyTick(){const r=dailyRec(),dn=dayNum();
+  if(r.streak==null)r.streak=r.day||0;
+  if(r.restUntil&&dn>=r.restUntil){r.restUntil=0;r.day=0;r.streak=0;persist();}
+  const gap=(r.lastN)?dn-r.lastN:0;
+  if(gap>=2){r.day=0;r.streak=0;persist();}                  // missed a day -> back to Day 1
+  else if(gap>=1&&r.day>=DAILY.length){r.day=0;persist();}   // new day after finishing the 7-grid -> restart grid, keep streak
+  return r;}
+function dailyClaimable(){if(!dailyUnlocked()||dailyResting())return false;const r=dailyTick();return r.day<DAILY.length&&r.last!==ymd();}
+function grantDaily(rw){if(!rw)return;if(rw.gold)save.gold=(save.gold||0)+rw.gold;if(rw.free)grantFreeBoosters(rw.free);if(rw.pack){save.freePacks=save.freePacks||{basic:0,golden:0};save.freePacks[rw.pack]=(save.freePacks[rw.pack]||0)+1;}persist();updateGoldHud();renderBoosters();}
+function dailyBoostIcon(k){return k==='hint'?'<svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/><path d="M9 18h6"/></svg>':DUCK_MINI;}
+function dailyRewIcon(rw){let ic,amt;if(rw.pack){ic=rw.pack==='golden'?GOLD_PACK_SVG:PACK_SVG;amt=L('Pack','Набор');}else if(rw.gold){ic=COIN_SVG;amt=rw.gold;}else{const k=Object.keys(rw.free)[0];ic=dailyBoostIcon(k);amt='x'+rw.free[k];}return '<span class="dgico">'+ic+'</span><b class="damt">'+amt+'</b>';}
+function openDaily(){$('dailyTitle').textContent=L('Daily Reward','Ежедневная награда');$('dailySub').textContent=L('Claim every day. Miss a day and the streak resets.','Заходи каждый день. Пропустишь день, серия сбросится.');renderDaily();openScrim('scrimDaily');MX.track('Daily Opened');}
+function renderDaily(){const r=dailyTick();const claimedToday=(r.last===ymd());const canClaim=dailyUnlocked()&&!dailyResting()&&r.day<DAILY.length&&!claimedToday;
+  $('dailyProgN').innerHTML='<b>'+(r.streak||0)+'</b> / '+DAILY_STREAK_MAX+' '+L('days','дней');
+  $('dailyProgFill').style.width=Math.min(100,(r.streak||0)/DAILY_STREAK_MAX*100)+'%';
+  const grid=$('dailyGrid');if(!grid)return;grid.innerHTML='';
+  for(let i=0;i<DAILY.length;i++){const state=i<r.day?'claimed':((i===r.day&&canClaim)?'today':'locked');
+    const cell=document.createElement('div');cell.className='dcell '+state+(i===DAILY.length-1?' day7':'');
+    cell.innerHTML='<div class="dday">'+L('Day ','День ')+(i+1)+'</div>'+dailyRewIcon(DAILY[i])+(i<r.day?'<span class="dchk">'+CHECK_SVG+'</span>':'');
+    if(state==='today')cell.onclick=()=>dailyClaim();
+    grid.appendChild(cell);}
+  const cb=$('dailyClaimBtn');if(cb){cb.classList.toggle('off',!canClaim);cb.textContent=canClaim?(L('Claim Day ','Забрать день ')+(r.day+1)):(claimedToday?L('Come back tomorrow!','Возвращайся завтра!'):dailyResting()?L('All 30 done! Resets soon','Все 30 собраны!'):L('Locked','Закрыто'));cb.onclick=canClaim?(()=>dailyClaim()):null;}}
+function dailyClaim(){if(!dailyClaimable())return;const r=dailyTick();const i=r.day,rw=DAILY[i];
+  grantDaily(rw);
+  r.day++;r.streak=(r.streak||0)+1;r.last=ymd();r.lastN=dayNum();
+  const ms=DAILY_MILESTONES[r.streak];if(ms)grantDaily(ms);
+  if(r.streak>=DAILY_STREAK_MAX)r.restUntil=dayNum()+DAILY_REST_DAYS;
+  persist();MX.track('Daily Claimed',{day:i+1,streak:r.streak});haptic('ok');soundWin();confettiRain();
+  renderDaily();updDailyDot();
+  const t=[];if(rw.gold)t.push('+'+rw.gold+' '+L('gold','золота'));if(rw.free){const k=Object.keys(rw.free)[0];t.push('+'+rw.free[k]+' '+(k==='hint'?L('Hint','Подсказка'):L('Place','Утка')));}if(rw.pack)t.push('+1 '+(rw.pack==='golden'?L('Golden pack','Золотой набор'):L('Pack','Набор')));
+  if(ms){if(ms.gold)t.push('+'+ms.gold+' '+L('gold','золота'));if(ms.pack)t.push('+1 '+L('pack','набор'));}
+  toast(t.join('   '));}
+function updDailyDot(){const b=$('btnHomeDaily');if(!b)return;const dot=$('dailyDot');if(dot)dot.style.display=(dailyUnlocked()&&dailyClaimable())?'block':'none';}
 function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;const y=new Date(Date.now()-86400000);const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1;save.lastPlayYMD=today;persist();}
 function startPlay(){touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
 /* ---------- OWNER / ADMIN (settings) ---------- */
@@ -1325,6 +1403,8 @@ function bind(){
   $('btnPlay').onclick=startPlay;
   $('btnHomeGear').onclick=()=>openSettings(false);
   $('btnHomeLB').onclick=openLeaderboard;
+  $('btnHomeDaily').onclick=()=>{if(!dailyUnlocked()){toast(L('Reach Level ','Дойди до уровня ')+DAILY_UNLOCK_LEVEL+L(' to unlock daily rewards',' для ежедневных наград'));haptic('err');return;}openDaily();};
+  $('dailyClose').onclick=()=>closeScrim('scrimDaily');
   $('lbClose').onclick=()=>closeScrim('scrimLB');
   $('btnBack').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
   $('btnGear').onclick=()=>openSettings(true);

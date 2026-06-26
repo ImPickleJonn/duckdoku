@@ -19,13 +19,18 @@ html = html.replace(/const API_BASE=\(function\(\)\{[\s\S]*?\}\)\(\);/, "const A
 if (html === before) console.warn('WARN: API_BASE pattern not found, native build may call relative /api');
 fs.writeFileSync(path.join(WWW, 'index.html'), html);
 
+// asset dirs the native app never loads at runtime, so shipping them just bloats
+// the APK/AAB: notif = Telegram DM media the SERVER sends; store = Play Store
+// listing graphics; stickers2 = an unused duplicate of stickers/; variations =
+// duck-gen source art.
+const SKIP_DIRS = new Set(['variations', 'notif', 'store', 'stickers2']);
 function cp(src, dst) {
   if (!fs.existsSync(src)) return;
   fs.mkdirSync(dst, { recursive: true });
   for (const f of fs.readdirSync(src)) {
     if (f.startsWith('_') || f.endsWith('-frame.png')) continue; // skip montages + video posters not needed natively
     const s = path.join(src, f), d = path.join(dst, f);
-    if (fs.statSync(s).isDirectory()) { if (f === 'variations') continue; cp(s, d); }
+    if (fs.statSync(s).isDirectory()) { if (SKIP_DIRS.has(f)) continue; cp(s, d); }
     else fs.copyFileSync(s, d);
   }
 }

@@ -9,7 +9,8 @@
     "ducks": "node brand/gen-ducks.js",
     "ducks:pro": "node brand/gen-ducks.js --pro",
     "mobile:build": "node scripts/build-mobile.js",
-    "mobile:sync": "node scripts/build-mobile.js && npx cap sync android"
+    "mobile:patch": "node scripts/patch-android.js",
+    "mobile:sync": "node scripts/build-mobile.js && npx cap sync android && node scripts/patch-android.js"
   },
   "engines": {
     "node": ">=18"

@@ -836,7 +836,7 @@ function onWin(){ended=true;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r]
   openScrim('scrimWin');}
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
-function onLose(){ended=true;MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
+function onLose(){ended=true;MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
   const canCont=!ftue&&(save.gold||0)>=CONTINUE_COST;const cb=$('btnContinue');cb.style.display=canCont?'':'none';
   if(canCont)cb.innerHTML=L("Continue","Продолжить")+' '+costChip(CONTINUE_COST);
   $('loseSub').textContent=canCont?L("Keep your ducks. Refill hearts and finish.","Сохрани уток. Пополни сердца и закончи."):L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");
@@ -850,7 +850,7 @@ function spendGold(n){if((save.gold||0)<n)return false;save.gold-=n;persist();up
 function needGold(){toast(L("Not enough gold","Не хватает золота"));openShop();}
 function costChip(n){return '<span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle"><span style="width:18px;height:18px;display:inline-flex">'+COIN_SVG+'</span>'+n+'</span>';}
 // A booster use spends a FREE prize credit first, otherwise gold.
-function payBooster(k){if(save.freeBoosters&&save.freeBoosters[k]>0){save.freeBoosters[k]--;persist();updateGoldHud();renderBoosters();return true;}return spendGold(BOOSTER_COST[k]);}
+function payBooster(k){let ok=false;if(save.freeBoosters&&save.freeBoosters[k]>0){save.freeBoosters[k]--;persist();updateGoldHud();renderBoosters();ok=true;}else{ok=spendGold(BOOSTER_COST[k]);}if(ok){try{DuckAdjust.fire('boosterUsed');}catch(e){}}return ok;}
 function grantFreeBoosters(obj){if(!obj)return;save.freeBoosters=save.freeBoosters||{undo:0,hint:0,placeduck:0};for(const k in obj)save.freeBoosters[k]=(save.freeBoosters[k]||0)+(obj[k]||0);}
 
 /* ---------- boosters (spend gold per use; Stars buy gold, not boosters) ---------- */

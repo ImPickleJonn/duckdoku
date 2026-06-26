@@ -1,0 +1,7 @@
+token,name,unique
+"appopn","App Open","false"
+"gamest","Game Started","false"
+"lvlcmp","Level Complete","false"
+"lvlfal","Level Failed","false"
+"booste","Booster Used","false"
+"purcmp","Purchase Completed","false"

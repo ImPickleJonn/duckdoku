@@ -304,6 +304,29 @@ app.get('/api/leaderboard', (req, res) => {
   res.json({ top: arr.slice(0, 50) });
 });
 
+// ---- Adjust SERVER CALLBACK (install / attribution). In Adjust: Data management
+//      -> Server callbacks -> New callback -> Activity type = Install -> paste the
+//      /api/adjust-callback URL with the {placeholders} (see DUCKDOKU-ADJUST-SETUP.md).
+//      ALWAYS returns 200 (Adjust retries on any non-2xx). Logs each hit as
+//      [adjust-cb] and keeps a small in-memory ring of recent attributed installs.
+//      Mirrors Rail the Way / Dumpling Drop. The endpoint is open (no secret). ----
+const adjustLog = [];
+app.get('/api/adjust-callback', (req, res) => {
+  res.type('text/plain').send('ok');
+  try {
+    const q = req.query || {};
+    const rec = {
+      event: q.event || 'install', network: q.network || null, campaign: q.campaign || null,
+      adgroup: q.adgroup || null, creative: q.creative || null, store: q.store || null,
+      os: q.os || null, country: q.country || null, adid: q.adid || null,
+      revenue: q.revenue || null, currency: q.currency || null, app_version: q.app_version || null,
+      ts: Date.now(),
+    };
+    console.log('[adjust-cb]', JSON.stringify(rec));
+    adjustLog.push(rec); if (adjustLog.length > 500) adjustLog.shift();
+  } catch (e) {}
+});
+
 // FCM device tokens from the native Android app (Firebase Cloud Messaging).
 // Stored in memory (add Postgres for durability). Server-side SEND additionally
 // needs a Firebase Admin service account JSON (see fcmSend below) which is not

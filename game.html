@@ -1377,7 +1377,11 @@ const IAP=(function(){
     const ids=(SKUS_CACHE||[]).map(s=>s.id);if(!ids.length)return;
     CdvStore.register(ids.map(id=>({id,type:CP.ProductType.CONSUMABLE,platform:plat})));
     CdvStore.when().approved(function(tr){
-      try{(tr.products||[]).forEach(function(p){const g=grantFor(p.id);if(g)grantReward(g);try{if(window.DuckAdjust)DuckAdjust.fire('purchaseCompleted');}catch(e){}try{MX.track('IAP Success',{sku:p.id,backend:'native'});MX.incr({purchases:1});}catch(e){}settle(p.id,{ok:true,sku:p.id});});}catch(e){console.error('[IAP approved]',e);}
+      try{(tr.products||[]).forEach(function(p){const g=grantFor(p.id);const mine=(_pendingBuy===p.id); // user-initiated buy (vs a restored/queued txn)
+        if(g){if(mine)_suppressGrantToast=true;grantReward(g);if(mine)_suppressGrantToast=false;}
+        try{if(window.DuckAdjust)DuckAdjust.fire('purchaseCompleted');}catch(e){}try{MX.track('IAP Success',{sku:p.id,backend:'native'});MX.incr({purchases:1});}catch(e){}settle(p.id,{ok:true,sku:p.id});
+        if(mine){_pendingBuy=null;hideIapLoad();showBuyResult(true,p.id);} // approved() is the source of truth -> always show success when the grant actually lands
+      });}catch(e){console.error('[IAP approved]',e);}
       try{tr.finish();}catch(e){}
     });
     try{CdvStore.error(function(err){console.warn('[IAP] store error',err&&err.code,err&&err.message);});}catch(e){}
@@ -1443,6 +1447,7 @@ function renderLB(rows){const el=$('lbList');if(!rows.length){el.innerHTML='<p s
     return '<div class="lbrow"><div class="lbrank" style="background:'+medal+'">'+(i+1)+'</div><div class="lbname">'+escapeHtml(r.name||'Duck')+'</div><div class="lblvl">'+L("Level ","Ур. ")+(r.level||0)+'</div></div>';}).join('');}
 /* ---- IAP loader + purchase result (mirrors RTW) ---- */
 let _suppressGrantToast=false;
+let _pendingBuy=null; // sku the user is actively buying on native; the IAP approved() handler drives the success modal for it (robust to the 120s purchase timeout)
 function showIapLoad(label){const o=$('iapLoad');if(!o)return;const l=$('iapLoadLbl');if(l)l.textContent=label||L('Opening payment...','Открываем оплату...');o.classList.add('on');}
 function hideIapLoad(){const o=$('iapLoad');if(o)o.classList.remove('on');}
 function buyGrantOf(sku){const s=(SKUS_CACHE||[]).find(x=>x.id===sku);return s&&s.grant;}
@@ -1458,13 +1463,15 @@ function showBuyResult(ok,sku){const m=$('scrimBuyResult');if(!m)return;
   if(ok){haptic('ok');try{soundWin();}catch(e){}try{confettiRain();}catch(e){}}else{haptic('err');}}
 function closeBuyResult(){closeScrim('scrimBuyResult');}
 async function buy(sku){
-  // NATIVE (Google Play): loader -> store sheet -> grant (in IAP approved) -> result modal
+  // NATIVE (Google Play): loader -> store sheet -> grant + SUCCESS modal driven by IAP approved() (source of truth)
   if(IAP.isNative()){
-    showIapLoad(L('Opening store...','Открываем магазин...'));
-    _suppressGrantToast=true;let res;try{res=await IAP.purchase(sku);}catch(e){res={error:(e&&e.message)||'threw'};}
-    _suppressGrantToast=false;hideIapLoad();
-    if(res&&res.ok){showBuyResult(true,sku);return;}
-    if(res&&res.cancelled){MX.track('IAP Cancelled',{sku});showBuyResult(false,sku);return;}
+    _pendingBuy=sku;showIapLoad(L('Opening store...','Открываем магазин...'));
+    let res;try{res=await IAP.purchase(sku);}catch(e){res={error:(e&&e.message)||'threw'};}
+    if(res&&res.ok){return;}            // approved() already hid the loader + showed the success modal
+    hideIapLoad();
+    if(res&&res.cancelled){_pendingBuy=null;MX.track('IAP Cancelled',{sku});showBuyResult(false,sku);return;}
+    if(res&&res.error==='timeout'){return;} // the grant may still arrive late -> approved() will show success; never report a false failure
+    _pendingBuy=null;
     if(res&&res.error&&res.error!=='web'){toast(res.error==='no_product_for_sku'?L("Not available yet","Пока недоступно"):L("Purchase did not complete","Покупка не завершена"));haptic('err');}
     return;
   }

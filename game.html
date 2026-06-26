@@ -1010,12 +1010,13 @@ function levelPalette(idx,N,salt){salt=(salt>>>0);
   const h0=((idx*47+salt*131)%360+360)%360;                  // unique base hue per level (+ per-play salt)
   const t=Math.max(0,Math.min(1,(idx-2)/30));                // 0..1 ramp across ~L3..L33
   const cf=t*0.6;                                            // hue-pair compression: 0 distinct .. .6 alike (never identical)
-  const lv=11*(1-t)+3*t;                                     // lightness spread: wide early, small (>=3) late
-  const sv=9*(1-t);                                          // saturation spread early
-  const baseS=60,baseL=64,step=360/N,cols=[];
+  const lv=4;                                                // small, uniform lightness alternation: cohesive early, pairs still distinct late
+  const baseS=46+15*t;                                       // soft pastel early -> richer late (early colours were too bright)
+  const baseL=71-7*t;                                        // light pastel early -> mid late
+  const step=360/N,cols=[];
   for(let i=0;i<N;i++){let h=h0+i*step;h+=((i%2)?-1:1)*(step*0.5)*cf; // pull adjacent pairs together as cf grows
-    const l=baseL+((i%2)?-1:1)*lv,s=baseS+((i%2)?-1:1)*sv;
-    cols.push(hslToHex(((h%360)+360)%360,Math.max(42,Math.min(76,s)),Math.max(50,Math.min(76,l))));}
+    const l=baseL+((i%2)?-1:1)*lv;                           // SAME saturation for every region in a level = one cohesive palette
+    cols.push(hslToHex(((h%360)+360)%360,baseS,Math.max(50,Math.min(82,l))));}
   return cols;}
 const DUCK_SVG='<svg class="duckface" viewBox="0 0 64 64"><path d="M30 6c2-3 7-2 7 2 0 2-1 3-3 4" fill="#F2913C"/><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><ellipse cx="14" cy="40" rx="7" ry="9" fill="#FBC02D"/><circle cx="24" cy="32" r="5" fill="#fff"/><circle cx="25" cy="33" r="2.7" fill="#3A2A20"/><circle cx="41" cy="32" r="5" fill="#fff"/><circle cx="42" cy="33" r="2.7" fill="#3A2A20"/><path d="M24 43 q8 8 17 0 q-3 8 -8.5 8 q-5.5 0 -8.5 -8z" fill="#F2913C" stroke="#D9762A" stroke-width="1"/><ellipse cx="17" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/><ellipse cx="47" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/></svg>';
 const DUCK_MINI='<svg viewBox="0 0 64 64"><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><circle cx="25" cy="32" r="4" fill="#3A2A20"/><circle cx="40" cy="32" r="4" fill="#3A2A20"/><path d="M25 43 q7 7 15 0 q-2 7 -7.5 7 q-5.5 0 -7.5 -7z" fill="#F2913C"/></svg>';

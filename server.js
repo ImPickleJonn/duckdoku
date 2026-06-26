@@ -55,34 +55,36 @@ function reportEvent(event, info) {
 }
 
 // ----- SKU catalog (server is source of truth) -----
-// 3 boosters: Place-a-Duck (free single-cell duck), Hint (highlight a valid
-// move), Undo (revert last placement). Sold as small packs + value bundles.
-// Telegram Stars: 1 Star ~= $0.013. Smallest purchase >= 50 Stars (no 1-star
-// paywall). grant.boosters keys MUST match the client BOOSTERS ids.
+// Gold is the single in-game currency: it is earned by playing and spent on
+// boosters (Hint / Undo / Place a Duck), heart refills, and sticker packs.
+// Real money (Telegram Stars) buys GOLD, never boosters directly. Bundles add
+// a few free Golden sticker packs on top. Telegram Stars: 1 Star ~= $0.013,
+// smallest purchase >= 50 Stars (no 1-star paywall). grant schema the client
+// understands: { gold?:number, packs?:{ basic?:number, golden?:number } }.
 const SKUS = {
-  hint_pack: {
-    id: 'hint_pack', title: 'Hints x5', description: '5 Hints. Highlights a duck you can place right now.',
-    price: 60, priceUsd: '$0.79', grant: { boosters: { hint: 5 } },
+  gold_small: {
+    id: 'gold_small', title: 'Pouch of Gold', description: '250 gold coins. Spend on boosters and sticker packs.',
+    price: 60, priceUsd: '$0.79', grant: { gold: 250 },
   },
-  undo_pack: {
-    id: 'undo_pack', title: 'Undos x5', description: '5 Undos. Take back your last placement.',
-    price: 60, priceUsd: '$0.79', grant: { boosters: { undo: 5 } },
+  gold_med: {
+    id: 'gold_med', title: 'Sack of Gold', description: '800 gold coins. Better value.',
+    price: 159, priceUsd: '$1.99', grant: { gold: 800 },
   },
-  placeduck_pack: {
-    id: 'placeduck_pack', title: 'Place a Duck x5', description: '5 magic single ducks you can drop on any empty cell.',
-    price: 90, priceUsd: '$1.19', grant: { boosters: { placeduck: 5 } },
+  gold_large: {
+    id: 'gold_large', title: 'Treasure Chest', description: '2000 gold coins. Best value.',
+    price: 349, priceUsd: '$4.49', grant: { gold: 2000 },
   },
-  helper_bundle: {
-    id: 'helper_bundle', title: 'Helper Bundle', description: '10 Hints, 10 Undos and 10 Place a Duck. Best starter value.',
-    price: 199, priceUsd: '$2.59', grant: { boosters: { hint: 10, undo: 10, placeduck: 10 } },
+  starter_bundle: {
+    id: 'starter_bundle', title: 'Starter Bundle', description: '600 gold plus 1 Golden sticker pack.',
+    price: 199, priceUsd: '$2.59', grant: { gold: 600, packs: { golden: 1 } },
   },
-  pond_bundle: {
-    id: 'pond_bundle', title: 'Big Pond Bundle', description: '30 Hints, 30 Undos and 30 Place a Duck.',
-    price: 499, priceUsd: '$6.49', grant: { boosters: { hint: 30, undo: 30, placeduck: 30 } },
+  collector_bundle: {
+    id: 'collector_bundle', title: 'Collector Bundle', description: '1800 gold plus 3 Golden sticker packs.',
+    price: 499, priceUsd: '$6.49', grant: { gold: 1800, packs: { golden: 3 } },
   },
   test_purchase: {
-    id: 'test_purchase', title: 'Test Purchase (admin)', description: 'Admin-only 1-star smoke test. Grants 1 Hint.',
-    price: 1, priceUsd: '$0.01', grant: { boosters: { hint: 1 } }, adminOnly: true,
+    id: 'test_purchase', title: 'Test Purchase (admin)', description: 'Admin-only 1-star smoke test. Grants 50 gold.',
+    price: 1, priceUsd: '$0.01', grant: { gold: 50 }, adminOnly: true,
   },
 };
 

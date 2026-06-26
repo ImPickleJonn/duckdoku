@@ -14,5 +14,8 @@ brand/appicon/
 assets/store/_shots.png
 assets/store/*-raw.png
 _animshots/
+_econshots/
+_notifgen.log
+_syncadjust.log
 _shotsrv.log
 _aabbuild.log

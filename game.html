@@ -235,11 +235,11 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 body.nav-on #navBar{display:flex;}
 body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(--nav-h) + var(--safe-bot) + 6px);}
 .navtab{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;color:var(--ink-soft);}
-.navico{width:30px;height:30px;display:flex;align-items:center;justify-content:center;transition:transform .16s;}
+.navico{width:30px;height:30px;display:flex;align-items:center;justify-content:center;transition:transform .16s;color:var(--ink-soft);}
 .navico svg{width:28px;height:28px;}
 .navlbl{font-size:3vw;font-weight:900;color:var(--ink-soft);line-height:1;}
 .navtab.active .navlbl{color:#fff;}
-.navtab.active .navico{transform:scale(1.04);}
+.navtab.active .navico{transform:scale(1.04);color:#fff;}
 /* center Start tab: standard icon+label tab (duck on top, small label under), like Shop/Album */
 .navStart .navico{width:32px;height:32px;}
 .navStart .navico .bicon{width:32px;height:32px;display:block;}
@@ -618,7 +618,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 <nav id="navBar">
   <div id="navPill"></div>
   <button class="navtab" id="navShop" aria-label="Shop">
-    <span class="navico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8.5h16l-1 11.5a1.5 1.5 0 0 1-1.5 1.4H6.5A1.5 1.5 0 0 1 5 20L4 8.5z" fill="#FFD23F" stroke="#C9781E" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.4 10.5V8a3.6 3.6 0 0 1 7.2 0v2.5" fill="none" stroke="#C9781E" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+    <span class="navico"><svg viewBox="0 0 24 24" fill="none"><path d="M4.4 8.6h15.2l-1 11.3a1.6 1.6 0 0 1-1.6 1.5H7A1.6 1.6 0 0 1 5.4 19.9L4.4 8.6z" fill="currentColor"/><path d="M8.4 9.2V7.6a3.6 3.6 0 0 1 7.2 0v1.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
     <span class="navlbl" data-i="navshop">Shop</span>
   </button>
   <button class="navtab navStart active" id="navStart" aria-label="Play">
@@ -626,7 +626,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
     <span class="navlbl" data-i="navstart">Start</span>
   </button>
   <button class="navtab navAlbum locked" id="navAlbum" aria-label="Album">
-    <span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/></svg></span>
+    <span class="navico"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3.4" y="3.4" width="7.7" height="7.7" rx="1.9"/><rect x="12.9" y="3.4" width="7.7" height="7.7" rx="1.9"/><rect x="3.4" y="12.9" width="7.7" height="7.7" rx="1.9"/><rect x="12.9" y="12.9" width="7.7" height="7.7" rx="1.9"/></svg></span>
     <i class="navLk"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4" fill="#fff"/><path d="M7.6 10.5V7.6a4.4 4.4 0 0 1 8.8 0v2.9" fill="none" stroke="#fff" stroke-width="2.6"/></svg></i>
     <span class="navlbl" data-i="navalbum">Album</span>
   </button>
@@ -1358,7 +1358,7 @@ function updateNav(scr){const nav=$('navBar');if(!nav)return;const top=(scr==='h
   const map={home:'navStart',shop:'navShop',album:'navAlbum'},id=map[scr];if(id&&$(id))$(id).classList.add('active');
   renderAlbumBtn();positionNavPill();requestAnimationFrame(positionNavPill);}
 let _navPillReady=false;
-function positionNavPill(){const bar=$('navBar'),pill=$('navPill');if(!bar||!pill)return;const a=bar.querySelector('.navtab.active');if(!a||!a.offsetWidth)return;const ico=a.querySelector('.navico')||a,lbl=a.querySelector('.navlbl');const top=a.offsetTop+ico.offsetTop,bot=lbl?(a.offsetTop+lbl.offsetTop+lbl.offsetHeight):(top+ico.offsetHeight);const cx=a.offsetLeft+a.offsetWidth/2,cy=(top+bot)/2,W=Math.min(64,a.offsetWidth-8),H=(bot-top)+14;if(!_navPillReady)pill.style.transition='none';pill.style.width=W+'px';pill.style.height=H+'px';pill.style.left=(cx-W/2)+'px';pill.style.top=(cy-H/2)+'px';pill.style.opacity='1';if(!_navPillReady){void pill.offsetWidth;pill.style.transition='';_navPillReady=true;}}
+function positionNavPill(){const bar=$('navBar'),pill=$('navPill');if(!bar||!pill)return;const a=bar.querySelector('.navtab.active');if(!a||!a.offsetWidth)return;const ico=a.querySelector('.navico')||a,lbl=a.querySelector('.navlbl');const top=a.offsetTop+ico.offsetTop,bot=lbl?(a.offsetTop+lbl.offsetTop+lbl.offsetHeight):(top+ico.offsetHeight);const cx=a.offsetLeft+a.offsetWidth/2,cy=(top+bot)/2,W=Math.min(78,a.offsetWidth-6),H=(bot-top)+14;if(!_navPillReady)pill.style.transition='none';pill.style.width=W+'px';pill.style.height=H+'px';pill.style.left=(cx-W/2)+'px';pill.style.top=(cy-H/2)+'px';pill.style.opacity='1';if(!_navPillReady){void pill.offsetWidth;pill.style.transition='';_navPillReady=true;}}
 try{window.addEventListener('resize',function(){positionNavPill();});}catch(e){}
 function navAlbumLockMsg(){showTip($('navAlbum'),L("Unlocks at level ","Откроется на уровне ")+ALBUM_UNLOCK_LEVEL,false);}
 // small speech-bubble tooltip anchored to a button; below=true points down (top buttons), else up (bottom nav).

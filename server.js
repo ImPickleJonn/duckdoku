@@ -71,20 +71,20 @@ const SKUS = {
     price: 159, priceUsd: '$1.99', grant: { gold: 800 },
   },
   gold_large: {
-    id: 'gold_large', kind: 'gold', title: 'Treasure Chest', description: '2000 gold coins. Best value.',
+    id: 'gold_large', kind: 'gold', title: 'Duckload of Gold', description: '2000 gold coins. The biggest hoard.',
     price: 349, priceUsd: '$4.49', grant: { gold: 2000 },
   },
   starter_bundle: {
-    id: 'starter_bundle', kind: 'bundle', title: 'Starter Bundle', description: '600 gold plus 1 Golden sticker pack.',
-    price: 199, priceUsd: '$2.59', grant: { gold: 600, packs: { golden: 1 } },
+    id: 'starter_bundle', kind: 'bundle', title: 'Starter Bundle', description: '600 gold plus 3 Hint and 1 Place a Duck.',
+    price: 199, priceUsd: '$2.59', grant: { gold: 600, boosters: { hint: 3, placeduck: 1 } },
   },
   duckling_bundle: {
-    id: 'duckling_bundle', kind: 'bundle', title: 'Duckling Bundle', description: '1200 gold plus 2 Golden sticker packs.',
-    price: 349, priceUsd: '$4.49', grant: { gold: 1200, packs: { golden: 2 } },
+    id: 'duckling_bundle', kind: 'bundle', title: 'Duckling Bundle', description: '1200 gold plus 6 Hint and 3 Place a Duck.',
+    price: 349, priceUsd: '$4.49', grant: { gold: 1200, boosters: { hint: 6, placeduck: 3 } },
   },
   collector_bundle: {
-    id: 'collector_bundle', kind: 'bundle', title: 'Collector Bundle', description: '1800 gold plus 3 Golden sticker packs.',
-    price: 499, priceUsd: '$6.49', grant: { gold: 1800, packs: { golden: 3 } },
+    id: 'collector_bundle', kind: 'bundle', title: 'Collector Bundle', description: '1800 gold plus 12 Hint and 6 Place a Duck.',
+    price: 499, priceUsd: '$6.49', grant: { gold: 1800, boosters: { hint: 12, placeduck: 6 } },
   },
   test_purchase: {
     id: 'test_purchase', title: 'Test Purchase (admin)', description: 'Admin-only 1-star smoke test. Grants 50 gold.',

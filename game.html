@@ -222,20 +222,42 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .navtab.active{color:var(--orange);}
 .navtab.active .navlbl{color:var(--orange);}
 .navtab.active .navico{transform:translateY(-2px) scale(1.06);}
-/* center Start tab: raised circular duck */
-.navStart .navico{width:54px;height:54px;border-radius:50%;background:#fff;border:3px solid var(--gold);box-shadow:0 4px 0 var(--shadow);margin-top:-24px;}
-.navStart .navico svg{width:44px;height:44px;}
+/* center Start tab: raised circular duck = the LIVE keyed idle face (never SVG) */
+.navStart .navico{width:54px;height:54px;border-radius:50%;background:#fff;border:3px solid var(--gold);box-shadow:0 4px 0 var(--shadow);margin-top:-24px;overflow:hidden;}
+.navStart .navico .bicon{width:46px;height:46px;display:block;}
 .navStart.active .navico{border-color:var(--orange);}
-/* locked album tab: padlock badge + "reach level" bubble */
+/* locked album tab: padlock badge + greyed icon (tooltip shows only on tap) */
 .navtab.navAlbum .navLk{display:none;position:absolute;top:6px;left:calc(50% + 7px);width:18px;height:18px;}
 .navtab.navAlbum.locked .navico svg{filter:grayscale(.55);opacity:.55;}
 .navtab.navAlbum.locked .navLk{display:block;}
-.navtab.navAlbum .navSoon{display:none;}
-.navtab.navAlbum.locked .navSoon{display:block;}
-.navSoon{position:absolute;top:-17px;left:50%;transform:translateX(-50%);white-space:nowrap;z-index:4;font-style:normal;
-  background:#fff;color:var(--ink);font-size:2.7vw;font-weight:900;padding:3px 8px 4px;border-radius:11px;
-  border:1.6px solid #EBDDC4;box-shadow:0 3px 6px rgba(150,110,90,.22);}
-.navSoon::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:5px solid transparent;border-top-color:#fff;border-bottom:0;}
+/* locked DAILY button (homebar): greyed out; tooltip on tap */
+#btnHomeDaily.locked svg{filter:grayscale(1);opacity:.5;}
+/* tap tooltip ("Unlocks at level N") for locked nav/daily buttons */
+.floatTip{position:fixed;z-index:96;transform:translate(-50%,-100%);background:#fff;color:var(--ink);font-style:normal;
+  font-size:3.3vw;font-weight:900;padding:6px 12px;border-radius:12px;border:1.6px solid #EBDDC4;
+  box-shadow:0 5px 12px rgba(150,110,90,.3);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;}
+.floatTip.on{opacity:1;}
+.floatTip.below{transform:translate(-50%,0);}
+.floatTip::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-top-color:#fff;border-bottom:0;}
+.floatTip.below::after{bottom:auto;top:-6px;border-top:0;border-bottom-color:#fff;}
+/* SHOP gold-pack cards (gold icon + amount + price only) */
+.gpGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:2px 0 4px;}
+.gpack{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card);border-radius:18px;padding:14px 6px 12px;box-shadow:0 3px 0 var(--shadow);}
+.gpack:active{transform:translateY(2px);box-shadow:0 1px 0 var(--shadow);}
+.gpcoin{width:42px;height:42px;}.gpcoin svg{width:100%;height:100%;}
+.gpamt{font-size:4.8vw;color:var(--ink);line-height:1;}
+.gpbuy{display:flex;align-items:center;justify-content:center;gap:4px;background:var(--orange);color:#fff;border-radius:13px;padding:8px;font-size:3.6vw;box-shadow:0 3px 0 var(--orange-d);width:100%;}
+.gpbuy .star{width:15px;height:15px;flex:none;}
+/* SHOP bundle cards (gold + boosters: icons + amounts, like RTW) */
+.bundle{display:flex;flex-direction:column;gap:10px;background:var(--card);border-radius:18px;padding:14px;margin:10px 0;box-shadow:0 3px 0 var(--shadow);}
+.bundle:active{transform:translateY(2px);box-shadow:0 1px 0 var(--shadow);}
+.bundle .btitle{font-size:4.6vw;color:var(--ink);text-align:center;}
+.bcontents{display:flex;justify-content:center;gap:20px;}
+.bcitem{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bcico{width:40px;height:40px;display:flex;}.bcico svg{width:100%;height:100%;}.bcico .bicon{width:100%;height:100%;display:block;}
+.bcn{font-size:3.7vw;color:var(--ink);font-weight:900;}
+.bbuy{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--orange);color:#fff;border-radius:14px;padding:11px;font-size:4.2vw;box-shadow:0 3px 0 var(--orange-d);}
+.bbuy .star{width:16px;height:16px;flex:none;}
 #lbList{max-height:60vh;overflow-y:auto;text-align:left;}
 .lbrow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:11px 14px;margin:7px 0;box-shadow:0 3px 0 var(--shadow);}
 .lbrank{width:30px;height:30px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:4vw;color:#6b4a2a;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);}
@@ -539,7 +561,6 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
       <div class="topright"><button class="goldpill" id="shopGold"><span class="cicon"></span><span class="goldval">0</span></button><button class="iconbtn" id="shopGear" aria-label="settings"><svg viewBox="0 0 24 24" fill="#6E4F44" fill-rule="evenodd"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button></div>
     </div>
     <div class="shop-scroll">
-      <p class="shopsub" data-i="shopsub">Boosters and gold. No ads, ever.</p>
       <div class="shopSecTitle" data-i="goldpacks">Gold</div>
       <div id="shopGoldBox" class="shopBox"></div>
       <div class="shopSecTitle" data-i="bundles">Bundles</div>
@@ -556,11 +577,10 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
     <span class="navlbl" data-i="navshop">Shop</span>
   </button>
   <button class="navtab navStart active" id="navStart" aria-label="Play">
-    <span class="navico navduck"><svg viewBox="0 0 64 64"><ellipse cx="32" cy="39" rx="22" ry="20" fill="#FFD23F"/><circle cx="25" cy="33" r="3.6" fill="#3A2A20"/><circle cx="39" cy="33" r="3.6" fill="#3A2A20"/><path d="M25 44 q7 6.5 14 0 q-2 6.5 -7 6.5 q-5 0 -7 -6.5z" fill="#F2913C"/><ellipse cx="22" cy="40" rx="3.4" ry="2.2" fill="#F2A0A0" opacity=".55"/><ellipse cx="42" cy="40" rx="3.4" ry="2.2" fill="#F2A0A0" opacity=".55"/></svg></span>
+    <span class="navico navduck"><canvas class="bicon" data-bk="idle" width="80" height="80"></canvas></span>
     <span class="navlbl" data-i="navstart">Start</span>
   </button>
   <button class="navtab navAlbum locked" id="navAlbum" aria-label="Album">
-    <i class="navSoon"><span data-i="navsoon">Reach level</span> <span id="navSoonLvl">10</span></i>
     <span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFE08A"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.7" fill="#FFD23F"/></svg></span>
     <i class="navLk"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" fill="#A98F84"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></i>
     <span class="navlbl" data-i="navalbum">Album</span>
@@ -907,6 +927,7 @@ function regionVar(i){return 'var(--r'+(i%10)+')';}
 const DUCK_SVG='<svg class="duckface" viewBox="0 0 64 64"><path d="M30 6c2-3 7-2 7 2 0 2-1 3-3 4" fill="#F2913C"/><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><ellipse cx="14" cy="40" rx="7" ry="9" fill="#FBC02D"/><circle cx="24" cy="32" r="5" fill="#fff"/><circle cx="25" cy="33" r="2.7" fill="#3A2A20"/><circle cx="41" cy="32" r="5" fill="#fff"/><circle cx="42" cy="33" r="2.7" fill="#3A2A20"/><path d="M24 43 q8 8 17 0 q-3 8 -8.5 8 q-5.5 0 -8.5 -8z" fill="#F2913C" stroke="#D9762A" stroke-width="1"/><ellipse cx="17" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/><ellipse cx="47" cy="44" rx="4.5" ry="3" fill="#F58CA8" opacity=".55"/></svg>';
 const DUCK_MINI='<svg viewBox="0 0 64 64"><ellipse cx="32" cy="38" rx="23" ry="21" fill="#FFD23F"/><circle cx="25" cy="32" r="4" fill="#3A2A20"/><circle cx="40" cy="32" r="4" fill="#3A2A20"/><path d="M25 43 q7 7 15 0 q-2 7 -7.5 7 q-5.5 0 -7.5 -7z" fill="#F2913C"/></svg>';
 const COIN_SVG='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#F4B731" stroke="#D9971F" stroke-width="1.6"/><circle cx="12" cy="12" r="6.6" fill="#FFD867" stroke="#D9971F" stroke-width="1.1"/><ellipse cx="9.3" cy="9" rx="2.1" ry="1.3" fill="#fff" opacity=".75"/></svg>';
+const STAR_SVG='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';
 const LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const ALBUM_UNLOCK_LEVEL=10; // Duck Album stays locked until the player reaches this level
 const PACK_SVG='<svg viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="16" rx="3" fill="#E8942F" stroke="#C9781E" stroke-width="1.4"/><path d="M4.5 9h15" stroke="#C9781E" stroke-width="1.3"/><path d="M12 4v16" stroke="#fff" stroke-width="1.1" opacity=".45"/><path d="M12 2.6l1.6 2.4H10.4z" fill="#FFD867"/></svg>';
@@ -979,7 +1000,9 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const winOn=$('scrimWin').classList.contains('on'),loseOn=$('scrimLose').classList.contains('on');
   const homeEl=document.getElementById('home'),homeOn=!!(homeEl&&homeEl.classList.contains('on'));
   const albumEl=document.getElementById('album'),albumOn=!!(albumEl&&albumEl.classList.contains('on'))||$('scrimReward').classList.contains('on')||$('scrimDaily').classList.contains('on'); // album/reward/daily prize icons reuse the SAME keyed booster faces
-  if(!gameOn&&!winOn&&!loseOn&&!homeOn&&!albumOn){if(_playing.size)reconcileClips(new Set());return;}
+  const shopEl=document.getElementById('shop'),shopOn=!!(shopEl&&shopEl.classList.contains('on'));
+  const navOn=document.body.classList.contains('nav-on'); // nav Start duck + shop bundle booster icons are live keyed faces, never SVG
+  if(!gameOn&&!winOn&&!loseOn&&!homeOn&&!albumOn&&!shopOn){if(_playing.size)reconcileClips(new Set());return;}
   const now=Date.now();
   if(now-lastFaceTs<33)return; lastFaceTs=now;
   const used=new Set();
@@ -989,12 +1012,13 @@ function faceLoop(){requestAnimationFrame(faceLoop);
   const boosterCv=gameOn?document.querySelector('#bsDuck canvas.bface'):null; // Place uses 'idle' (already kept alive for the grid ducks)
   const hintCv=gameOn?document.querySelector('#bsHint canvas.bface'):null;if(hintCv&&boosterActive)used.add('bsthint');
   if(winOn)used.add('win');if(loseOn)used.add('sad');if(albumOn){used.add('idle');used.add('bsthint');}
+  if(navOn)used.add('idle');if(shopOn)used.add('bsthint'); // nav Start duck (idle) + shop bundle hint icons (bsthint)
   // keep exactly the on-screen clips decoding (the home draws its mode in its own tick)
-  const want=new Set(used);if(homeOn)want.add(_homeMode||'idle');reconcileClips(want);
+  const want=new Set(used);if(homeOn)want.add(_homeMode||'idle');if(navOn)want.add('idle');if(shopOn)want.add('bsthint');reconcileClips(want);
   used.forEach(s=>keyInto(s));
   if(gameOn&&gstate)for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]!==DUCK)continue;const el=cellEls[r]&&cellEls[r][c];if(!el)continue;const cv=el.querySelector('canvas.duckface');if(!cv)continue;const fx=faceFx.get(r*100+c);drawFace(cv,fx?fx.state:'idle');}
   if(boosterActive){if(boosterCv)drawFace(boosterCv,'idle');if(hintCv)drawFace(hintCv,'bsthint');} // draw only during the loop window; freezes static otherwise
-  if(albumOn)document.querySelectorAll('.bicon').forEach(cv=>{const k=cv.getAttribute('data-bk');if(k)drawFace(cv,k);}); // album/reward prize icons = exactly the in-game keyed booster faces
+  if(albumOn||navOn)document.querySelectorAll('.bicon').forEach(cv=>{const k=cv.getAttribute('data-bk');if(k)drawFace(cv,k);}); // album/reward prize icons + nav Start duck + shop bundle icons = the in-game keyed booster faces
   if(gameOn&&gstate){const pf=document.querySelector('.pface canvas');if(pf)drawFace(pf,'idle');}
   if(winOn)drawFace($('winCele'),'win');
   if(loseOn)drawFace($('loseFace'),'sad');}
@@ -1124,7 +1148,7 @@ function continueLevel(){if(!spendGold(CONTINUE_COST)){needGold();return;}booste
 function grantReward(g){if(!g)return;const msgs=[];
   if(g.gold){save.gold=(save.gold||0)+g.gold;msgs.push('+'+g.gold+' '+L("gold","золота"));}
   if(g.packs){save.freePacks=save.freePacks||{basic:0,golden:0};for(const k in g.packs)save.freePacks[k]=(save.freePacks[k]||0)+(g.packs[k]||0);}
-  if(g.boosters){for(const k in g.boosters)save.gold=(save.gold||0)+(g.boosters[k]||0)*(BOOSTER_COST[k]||0);} // legacy booster SKUs -> gold
+  if(g.boosters){grantFreeBoosters(g.boosters);const nm={hint:L('Hint','Подсказка'),placeduck:L('Place a Duck','Утка'),undo:L('Undo','Назад')};for(const k in g.boosters){if(g.boosters[k])msgs.push('+'+g.boosters[k]+' '+nm[k]);}} // bundles grant FREE boosters (save.freeBoosters, spent before gold)
   persist();updateGoldHud();renderBoosters();if($('album').classList.contains('on'))renderAlbum();
   if(msgs.length)toast(msgs.join('   '));}
 function ftExcludedByDucks(r,c){for(let i=0;i<N;i++){if(gstate[r][i]===DUCK||gstate[i][c]===DUCK)return true;}const reg=puzzle.region[r][c];for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++)if(gstate[rr][cc]===DUCK&&puzzle.region[rr][cc]===reg)return true;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const rr=r+dr,cc=c+dc;if(rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===DUCK)return true;}return false;}
@@ -1144,7 +1168,13 @@ function updateNav(scr){const nav=$('navBar');if(!nav)return;const top=(scr==='h
   ['navStart','navShop','navAlbum'].forEach(id=>{const b=$(id);if(b)b.classList.remove('active');});
   const map={home:'navStart',shop:'navShop',album:'navAlbum'},id=map[scr];if(id&&$(id))$(id).classList.add('active');
   renderAlbumBtn();}
-function navAlbumLockMsg(){toast(L("Reach Level ","Дойди до уровня ")+ALBUM_UNLOCK_LEVEL+L(" to unlock the Duck Album",", чтобы открыть Альбом"));haptic('err');}
+function navAlbumLockMsg(){showTip($('navAlbum'),L("Unlocks at level ","Откроется на уровне ")+ALBUM_UNLOCK_LEVEL,false);}
+// small speech-bubble tooltip anchored to a button; below=true points down (top buttons), else up (bottom nav).
+let _tipT=null;
+function showTip(anchor,text,below){if(!anchor)return;let tip=$('floatTip');if(!tip){tip=document.createElement('div');tip.id='floatTip';tip.className='floatTip';document.body.appendChild(tip);}
+  tip.textContent=text;tip.classList.toggle('below',!!below);
+  const r=anchor.getBoundingClientRect();tip.style.left=(r.left+r.width/2)+'px';tip.style.top=(below?(r.bottom+9):(r.top-9))+'px';
+  tip.classList.add('on');haptic('err');clearTimeout(_tipT);_tipT=setTimeout(()=>{tip.classList.remove('on');},2000);}
 let cellEls=[];
 function buildGrid(){const g=$('grid');g.style.gridTemplateColumns='repeat('+N+',1fr)';g.style.gridTemplateRows='repeat('+N+',1fr)';
   g.style.gap=(N>=8?'4px':N>=7?'5px':'6px');g.innerHTML='';cellEls=[];
@@ -1268,19 +1298,28 @@ const IAP=(function(){
 // album/reward booster icons render the SAME live keyed faces as the in-game boosters
 // (Place='idle' duck head, Hint='bsthint' bulb) via faceLoop -> .bicon canvases.
 function boosterIcon(k){if(k==='hint')return '<canvas class="bicon" data-bk="bsthint" width="80" height="80"></canvas>';if(k==='undo')return '<svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.4" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>';return '<canvas class="bicon" data-bk="idle" width="80" height="80"></canvas>';}
-function isBundleSku(s){return s.kind==='bundle'||!!(s.grant&&s.grant.packs);}
+function isBundleSku(s){return s.kind==='bundle'||!!(s.grant&&s.grant.boosters)||!!(s.grant&&s.grant.packs);}
 function skuIcon(s){return isBundleSku(s)?GOLD_PACK_SVG:COIN_SVG;}
-function skuRowHtml(s){const native=IAP.isNative();const star='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';
-  const priceLbl=native?('<span class="susd">'+((IAP.priceFor&&IAP.priceFor(s.id))||s.priceUsd||'')+'</span>'):(s.price+' '+star);
-  return '<div class="sku" data-sku="'+s.id+'"><div class="sicon">'+skuIcon(s)+'</div><div class="smeta"><div class="stitle">'+s.title+'</div><div class="sdesc">'+s.description+'</div></div><button class="sbuy" data-buy="'+s.id+'">'+priceLbl+'</button></div>';}
+// price label: the Stars star sits to the LEFT of the amount (native shows the localized USD).
+function priceTag(s){const native=IAP.isNative();if(native)return '<span class="susd">'+((IAP.priceFor&&IAP.priceFor(s.id))||s.priceUsd||'')+'</span>';return STAR_SVG+'<span>'+s.price+'</span>';}
+function skuRowHtml(s){
+  return '<div class="sku" data-sku="'+s.id+'"><div class="sicon">'+skuIcon(s)+'</div><div class="smeta"><div class="stitle">'+s.title+'</div><div class="sdesc">'+s.description+'</div></div><button class="sbuy" data-buy="'+s.id+'">'+priceTag(s)+'</button></div>';}
+// GOLD pack card: gold icon + amount + price only (no title/description).
+function goldCardHtml(s){const amt=(s.grant&&s.grant.gold)||0;
+  return '<button class="gpack" data-buy="'+s.id+'"><div class="gpcoin">'+COIN_SVG+'</div><div class="gpamt">'+amt.toLocaleString('en-US')+'</div><div class="gpbuy">'+priceTag(s)+'</div></button>';}
+// BUNDLE card: gold + boosters with their icons + amounts (icons are the live keyed booster faces).
+function bundleCardHtml(s){const g=s.grant||{};
+  let items='<div class="bcitem"><span class="bcico">'+COIN_SVG+'</span><span class="bcn">'+((g.gold||0).toLocaleString('en-US'))+'</span></div>';
+  if(g.boosters)['placeduck','hint','undo'].forEach(k=>{if(g.boosters[k])items+='<div class="bcitem"><span class="bcico">'+boosterIcon(k)+'</span><span class="bcn">x'+g.boosters[k]+'</span></div>';});
+  return '<button class="bundle" data-buy="'+s.id+'"><div class="btitle">'+s.title+'</div><div class="bcontents">'+items+'</div><div class="bbuy">'+priceTag(s)+'</div></button>';}
 // MODAL shop (in-game quick top-up): flat list of every SKU.
 function renderShop(){const list=$('skuList');if(!list)return;if(!SKUS_CACHE||!SKUS_CACHE.length){list.innerHTML='<p>'+L("Shop opens soon","Магазин скоро")+'</p>';return;}
   list.innerHTML=SKUS_CACHE.map(skuRowHtml).join('');}
-// FULL-SCREEN shop (bottom nav): gold packs section + bundles section.
+// FULL-SCREEN shop (bottom nav): gold packs (3 cards) + bundles (gold + boosters).
 function renderShopScreen(){const gb=$('shopGoldBox'),bb=$('shopBundleBox');if(!gb||!bb)return;
   if(!SKUS_CACHE||!SKUS_CACHE.length){gb.innerHTML='<p style="color:var(--ink-soft);text-align:center">'+L("Shop opens soon","Магазин скоро")+'</p>';bb.innerHTML='';return;}
-  gb.innerHTML=SKUS_CACHE.filter(s=>!isBundleSku(s)).map(skuRowHtml).join('');
-  bb.innerHTML=SKUS_CACHE.filter(isBundleSku).map(skuRowHtml).join('');}
+  gb.innerHTML='<div class="gpGrid">'+SKUS_CACHE.filter(s=>!isBundleSku(s)).map(goldCardHtml).join('')+'</div>';
+  bb.innerHTML=SKUS_CACHE.filter(isBundleSku).map(bundleCardHtml).join('');}
 let _shopReturn='home';
 function openShop(){closeAll();renderShop();openScrim('scrimShop');MX.track('Shop Opened',{surface:'modal'});if(!SKUS_CACHE)loadSkus().then(renderShop);}
 function openShopScreen(){_shopReturn=(curScreen()==='game')?'game':'home';renderShopScreen();updateGoldHud();show('shop');MX.track('Shop Opened',{surface:'screen'});if(!SKUS_CACHE)loadSkus().then(renderShopScreen);}
@@ -1461,11 +1500,11 @@ function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach
 /* ---------- home + misc ---------- */
 function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();}
 function albumUnlocked(){return (save.levelsDone||0)>=ALBUM_UNLOCK_LEVEL-1;}
-function renderAlbumBtn(){const t=$('navAlbum');if(!t)return;t.classList.toggle('locked',!albumUnlocked());const lv=$('navSoonLvl');if(lv)lv.textContent=ALBUM_UNLOCK_LEVEL;} // bottom-nav Album tab: .locked shows the padlock badge + "Reach level N" bubble + dims the icon
+function renderAlbumBtn(){const t=$('navAlbum');if(!t)return;t.classList.toggle('locked',!albumUnlocked());} // bottom-nav Album tab: .locked shows the padlock badge + dims the icon (tooltip shows only on tap)
 function ymd(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 /* ---------- Daily Reward: a 7-day grid that repeats inside a 30-day streak (RTW model) ---------- */
 const CHECK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
-const DAILY_UNLOCK_LEVEL=10,DAILY_STREAK_MAX=30,DAILY_REST_DAYS=3;
+const DAILY_UNLOCK_LEVEL=7,DAILY_STREAK_MAX=30,DAILY_REST_DAYS=3;
 const DAILY=[{gold:50},{free:{hint:1}},{gold:100},{free:{placeduck:1}},{gold:150},{free:{hint:2}},{gold:300,pack:'golden'}]; // Day 7 = gold + Golden album pack
 const DAILY_MILESTONES={15:{gold:400,pack:'basic'},30:{gold:1000,pack:'golden'}}; // streak bonuses on top of the daily
 function dailyRec(){if(!save.daily)save.daily={day:0,last:'',streak:0,lastN:0,restUntil:0};return save.daily;}
@@ -1504,7 +1543,7 @@ function dailyClaim(){if(!dailyClaimable())return;const r=dailyTick();const i=r.
   const t=[];if(rw.gold)t.push('+'+rw.gold+' '+L('gold','золота'));if(rw.free){const k=Object.keys(rw.free)[0];t.push('+'+rw.free[k]+' '+(k==='hint'?L('Hint','Подсказка'):L('Place','Утка')));}if(rw.pack)t.push('+1 '+(rw.pack==='golden'?L('Golden pack','Золотой набор'):L('Pack','Набор')));
   if(ms){if(ms.gold)t.push('+'+ms.gold+' '+L('gold','золота'));if(ms.pack)t.push('+1 '+L('pack','набор'));}
   toast(t.join('   '));}
-function updDailyDot(){const b=$('btnHomeDaily');if(!b)return;const dot=$('dailyDot');if(dot)dot.style.display=(dailyUnlocked()&&dailyClaimable())?'block':'none';}
+function updDailyDot(){const b=$('btnHomeDaily');if(!b)return;b.classList.toggle('locked',!dailyUnlocked());const dot=$('dailyDot');if(dot)dot.style.display=(dailyUnlocked()&&dailyClaimable())?'block':'none';}
 function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;const y=new Date(Date.now()-86400000);const yest=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();save.streak=(save.lastPlayYMD===yest)?(save.streak||0)+1:1;save.lastPlayYMD=today;persist();}
 function startPlay(){touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
 /* ---------- OWNER / ADMIN (settings) ---------- */
@@ -1534,7 +1573,7 @@ function bind(){
   $('btnPlay').onclick=startPlay;
   $('btnHomeGear').onclick=()=>openSettings(false);
   $('btnHomeLB').onclick=openLeaderboard;
-  $('btnHomeDaily').onclick=()=>{if(!dailyUnlocked()){toast(L('Reach Level ','Дойди до уровня ')+DAILY_UNLOCK_LEVEL+L(' to unlock daily rewards',' для ежедневных наград'));haptic('err');return;}openDaily();};
+  $('btnHomeDaily').onclick=()=>{if(!dailyUnlocked()){showTip($('btnHomeDaily'),L('Unlocks at level ','Откроется на уровне ')+DAILY_UNLOCK_LEVEL,true);return;}openDaily();};
   $('dailyClose').onclick=()=>closeScrim('scrimDaily');
   $('lbClose').onclick=()=>closeScrim('scrimLB');
   $('btnBack').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};

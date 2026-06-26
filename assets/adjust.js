@@ -18,7 +18,7 @@
 (function (global) {
   var ADJUST_CONFIG = {
     appToken: '7tm4lwjur2f4',                 // Duckdoku (Adjust) — Android + iOS
-    fbAppId:  '__FACEBOOK_APP_ID__',          // <- paste from Facebook
+    fbAppId:  '2510536786035302',             // Duckdoku Facebook app (Meta attribution)
     environment: 'production',                 // 'production' or 'sandbox' (test)
     logLevel: 'SUPPRESS',                      // 'VERBOSE' while testing
     events: {                                  // <- paste each token from Adjust

@@ -7,7 +7,7 @@ const SA = JSON.parse(fs.readFileSync('C:/Users/jonnw/Desktop/dd-secrets/play-se
 const AAB = process.argv[2];
 const TRACKS = (process.argv[3] || 'alpha,beta').split(',');
 const STATUS = process.argv[4] || 'completed'; // 'completed' = submit for review/publish to testers; 'draft' = save without submitting
-const NOTE = 'New: a friendly step by step tutorial that teaches you to solve, not just tap, plus a Tutorial button in Settings to replay it anytime. Cleaner win and lose screens and lots of polish.';
+const NOTE = 'Behind the scenes improvements to analytics and attribution, plus stability fixes and polish.';
 const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
 function jwt() { const now = Math.floor(Date.now() / 1000); const u = b64({ alg: 'RS256', typ: 'JWT' }) + '.' + b64({ iss: SA.client_email, scope: 'https://www.googleapis.com/auth/androidpublisher', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3000 }); return u + '.' + crypto.createSign('RSA-SHA256').update(u).sign(SA.private_key).toString('base64url'); }
 function req(method, url, body, tok, ctype) {

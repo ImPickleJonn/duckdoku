@@ -806,7 +806,9 @@ function haptic(k){
   try{if(TG&&TG.HapticFeedback){const H=TG.HapticFeedback;
     if(k==='light')H.impactOccurred('light');else if(k==='med')H.impactOccurred('medium');else if(k==='heavy')H.impactOccurred('heavy');
     else if(k==='ok')H.notificationOccurred('success');else if(k==='err')H.notificationOccurred('error');return;}}catch(e){}
-  // native (Capacitor) / web fallback: Telegram is absent, so use the Vibration API
+  // native (Capacitor): use the Haptics plugin (navigator.vibrate is unreliable in the Android WebView)
+  try{const C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.Haptics){const H=C.Plugins.Haptics;if(k==='ok')H.notification({type:'SUCCESS'});else if(k==='err')H.notification({type:'ERROR'});else H.impact({style:k==='heavy'?'HEAVY':k==='med'?'MEDIUM':'LIGHT'});return;}}catch(e){}
+  // web fallback: the Vibration API
   try{if(navigator.vibrate){const ms=k==='err'?[16,38,16]:k==='ok'?[12,28,12]:k==='med'?22:k==='heavy'?32:10;navigator.vibrate(ms);}}catch(e){}}
 
 /* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
@@ -1432,7 +1434,7 @@ function toast(m){if(!m)return;const el=$('toast');el.textContent=m;el.classList
 let actx=null,audioOn=save.sound;
 let hapticsOn=(save.haptics!==false); // vibration on by default; toggled in Settings
 function ac(){if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}return actx;}
-function blip(f,d,type,v){if(!audioOn)return;const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.value=v||0.05;o.connect(g);g.connect(a.destination);const n=a.currentTime;g.gain.exponentialRampToValueAtTime(0.0001,n+d);o.start(n);o.stop(n+d);}
+function blip(f,d,type,v){if(!audioOn)return;const a=ac();if(!a)return;if(a.state==='suspended'){try{a.resume();}catch(e){}}const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.value=v||0.05;o.connect(g);g.connect(a.destination);const n=a.currentTime;g.gain.exponentialRampToValueAtTime(0.0001,n+d);o.start(n);o.stop(n+d);}
 function soundTick(){blip(300,0.05,'sine',0.035);}
 function soundPlace(){blip(523,0.1,'triangle',0.06);setTimeout(()=>blip(784,0.08,'triangle',0.05),70);}
 function soundBad(){blip(170,0.18,'sawtooth',0.05);}

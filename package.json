@@ -16,6 +16,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@capacitor/haptics": "^6.0.3",
     "@capacitor/push-notifications": "^6.0.5",
     "com.adjust.sdk": "^5.6.0",
     "cordova-plugin-purchase": "^13.17.2",

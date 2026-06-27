@@ -192,7 +192,10 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 #ftueGotitWrap.on{display:flex;animation:gotitpop .34s cubic-bezier(.34,1.56,.64,1);}
 #ftueGotit{width:min(78vw,360px);pointer-events:auto;}
 @keyframes gotitpop{0%{transform:scale(.62);opacity:0;}60%{opacity:1;}100%{transform:scale(1);opacity:1;}}
-#handhint{position:fixed;z-index:88;width:62px;pointer-events:none;display:none;}
+#handhint{position:fixed;z-index:90;width:62px;pointer-events:none;display:none;}
+#handhint.gotit{left:calc(50% - 13px)!important;right:auto;top:auto!important;bottom:calc(var(--safe-bot) + 34px);}
+#handhint.gotit img{animation:fingerTapBig .75s ease-in-out infinite;}
+@keyframes fingerTapBig{0%,100%{transform:translateY(-5px) scale(1.05)}50%{transform:translateY(7px) scale(.88)}}
 #handhint img{width:100%;height:auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));transform-origin:20% 15%;animation:fingerTapImg 1.5s ease-in-out infinite;}
 @keyframes fingerTapImg{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-1px,2px) scale(.975)}} /* very subtle idle tap */
 
@@ -384,9 +387,9 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .wingold{display:inline-flex;align-items:center;gap:6px;background:#3b2f25;color:#FFD867;border-radius:16px;padding:6px 15px;font-size:4.6vw;font-weight:900;margin:4px auto 8px;}
 .wingold svg{width:22px;height:22px;}
 /* full-screen dark level-win celebration (full-body trumpet duck) */
-.winscrim,.losescrim{background:rgba(16,11,9,.95);}
+.winscrim,.losescrim{background:#000;}
 .wincol{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:420px;padding:16px;text-align:center;}
-.wincele{width:min(80vw,360px);aspect-ratio:1;display:block;margin-bottom:-4px;}
+.wincele{width:min(100vw,460px);aspect-ratio:1;display:block;margin-bottom:-4px;}
 .winscrim h2,.losescrim h2{color:#fff;text-shadow:0 2px 0 var(--orange-d);font-size:9vw;margin:0;}
 .winscrim p,.losescrim p{color:#E9D9C9;margin:2px 0 8px;}
 .winscrim .btn,.losescrim .btn{width:100%;max-width:320px;}
@@ -786,8 +789,8 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   <video id="fvsad" loop muted playsinline preload="auto"><source src="assets/ducks/face-sad.mp4?v=042" type="video/mp4"></video>
   <video id="fvbsthint" loop muted playsinline preload="auto"><source src="assets/ducks/bst-hint.mp4?v=042" type="video/mp4"></video>
   <video id="fvbstundo" loop muted playsinline preload="auto"><source src="assets/ducks/bst-undo.mp4?v=042" type="video/mp4"></video>
-  <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/victory-1.mp4" type="video/mp4"></video>
-  <video id="fvlose" loop muted playsinline preload="auto"><source src="assets/ducks/defeat-1.mp4" type="video/mp4"></video>
+  <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/raw/victory-1.mp4" type="video/mp4"></video>
+  <video id="fvlose" loop muted playsinline preload="auto"><source src="assets/ducks/raw/defeat-1.mp4" type="video/mp4"></video>
 </div>
 
 <div class="fx" id="fx"></div>
@@ -856,7 +859,7 @@ function haptic(k){
   try{if(navigator.vibrate){const ms=tier==='error'?[16,38,16]:tier==='success'?[12,28,12]:tier==='medium'?18:tier==='heavy'?28:8;navigator.vibrate(ms);}}catch(e){}}
 
 /* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
-const DD_VERSION='0.4.3';
+const DD_VERSION='0.4.4';
 function _mxHost(){try{const tg=TG;if(tg&&typeof tg.initData==='string'&&tg.initData.length>0)return'telegram';return'web';}catch(e){return'web';}}
 const MX={ready:false,token:'',_did:'',_super:{},_pre:[],
   _enc(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}catch(_){try{return btoa(JSON.stringify(o));}catch(e){return'';}}},
@@ -873,6 +876,20 @@ const MX={ready:false,token:'',_did:'',_super:{},_pre:[],
   incr(p){if(this.token&&this._did)this._send('https://api.mixpanel.com/engage',{$token:this.token,$distinct_id:this._did,$add:p});},
 };
 let _lastOpen=0;
+/* Campaign/source attribution from the Telegram deep link (?startapp=camp<Source>, e.g. campBoinkers).
+   First-touch persisted (localStorage + save so it cloud-syncs to players.save); exposed to Mixpanel as super + profile prop. */
+let _ddCampNew=false;
+function _ddCampaign(){
+  try{
+    var raw=''; try{ raw=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.start_param)||''; }catch(_){}
+    var src=''; var m=/^camp([A-Za-z0-9_-]{1,40})$/i.exec(String(raw||'')); if(m) src=m[1];
+    var first=''; try{ first=localStorage.getItem('dd.camp')||''; }catch(_){}
+    if(!first && typeof save!=='undefined' && save && save.campaign) first=save.campaign;
+    if(src && !first){ first=src; _ddCampNew=true; try{ localStorage.setItem('dd.camp',first); }catch(_){} try{ if(typeof save!=='undefined' && save){ save.campaign=first; save.campaignAt=Date.now(); persist(); } }catch(_){} }
+    if(src){ try{ localStorage.setItem('dd.camp_last',src); }catch(_){} }
+    return first||src||'';
+  }catch(_){ return ''; }
+}
 function mxBoot(){
   const u=TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user;
   let did=u&&u.id?String(u.id):''; if(!did){try{did=localStorage.getItem('dd.anon')||('anon-'+MX._iid());localStorage.setItem('dd.anon',did);}catch(e){did='anon-'+MX._iid();}}
@@ -880,6 +897,7 @@ function mxBoot(){
   fetch(API_BASE+'/api/flags').then(r=>r.json()).then(j=>{
     MX.init(j.mixpanel_token||'',did,profile);
     if(j.country)MX.setSuper({geo_country:j.country});
+    try{ var _c=_ddCampaign(); if(_c){ MX.setSuper({campaign:_c}); MX.setProfile({campaign:_c}); if(_ddCampNew)MX.track('Campaign Arrival',{campaign:_c}); } }catch(_){}
     const d=new Date();MX.track('Session Start',{level:(save&&save.levelsDone+1)||1,day_of_week:d.getUTCDay(),hour_utc:d.getUTCHours()});
     mxAppOpen('cold');
   }).catch(()=>{ MX.init('',did,profile); });
@@ -1134,7 +1152,8 @@ function initFaces(){
 }
 function faceCheck(){if(faceVid.idle&&faceVid.idle.readyState>=2&&!faceVideosReady){faceVideosReady=true;if(gstate&&$('game').classList.contains('on'))renderBoard();}}
 function keyInto(state){const v=faceVid[state],cv=faceKeyed[state];if(!v||v.readyState<2)return false;const S=cv.width,ctx=cv.getContext('2d',{willReadFrequently:true});ctx.clearRect(0,0,S,S);
-  ctx.drawImage(v,0,0,S,S);let im;try{im=ctx.getImageData(0,0,S,S);}catch(e){return false;}const d=im.data;
+  ctx.drawImage(v,0,0,S,S);if(state==='win'||state==='lose'){try{const cc=ctx.getImageData(2,2,1,1).data;const el=document.getElementById(state==='win'?'scrimWin':'scrimLose');if(el)el.style.background='rgb('+cc[0]+','+cc[1]+','+cc[2]+')';}catch(e){}return true;} // raw on-blue clip: paint the scrim its own blue so the duck bg is seamless
+  let im;try{im=ctx.getImageData(0,0,S,S);}catch(e){return false;}const d=im.data;
   for(let i=0;i<d.length;i+=4){const r=d[i],g=d[i+1],b=d[i+2];
     if(b>80&&b>r*1.18&&b>g*1.10){d[i+3]=0;} // blue -> transparent
     else if(b>70&&b>r*1.05&&b>g){d[i+3]=Math.max(0,d[i+3]-110);d[i]=Math.min(d[i],g);} // soft edge + despill
@@ -1162,7 +1181,7 @@ function blobLoadFaces(){
 // CELEBRATION rotation: a DIFFERENT full-body clip each time, keyed onto #winCele / #loseCele.
 // WIN = 10 victory clips (victory-1..10.mp4), LOSE = 5 defeat clips (defeat-1..5.mp4). Persisted cycle.
 function makeRotator(clipKey,prefix,count,saveKey){
-  const blobs=[]; const url=n=>'assets/ducks/'+prefix+'-'+(n+1)+'.mp4';
+  const blobs=[]; const url=n=>'assets/ducks/raw/'+prefix+'-'+(n+1)+'.mp4';
   function preload(){for(let n=0;n<count;n++){if(blobs[n])continue;fetch(url(n)).then(r=>r.ok?r.blob():Promise.reject()).then(b=>{blobs[n]=URL.createObjectURL(b);}).catch(()=>{});}}
   function setN(n){const v=faceVid[clipKey];if(!v)return;const apply=(src)=>{if(v.src===src)return;v.src=src;try{v.load();}catch(e){}if(_playing.has(clipKey)){try{const p=v.play&&v.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}};
     if(blobs[n]){apply(blobs[n]);return;}
@@ -1764,10 +1783,10 @@ function ftueAllowOnly(cells){ftueAnchorDucks();ftue.allowOnly=new Set();cells.f
 function showCoachHTML(which,html,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=html+(withLamp?' '+LAMP_SVG:'');el.style.removeProperty('--tail');el.style.removeProperty('font-size');const c=which==='top'?$('coachTop'):$('coachBot');c.classList.remove('tipbub','tip-up');c.removeAttribute('style');c.classList.add('on');}
 function showCoach(which,spec,withLamp){showCoachHTML(which,bub(spec),withLamp);}
 function hideCoach(which){(which==='top'?$('coachTop'):$('coachBot')).classList.remove('on');}
-function handAt(b,dy){const h=$('handhint');h.style.display='block';h.style.left=(b.left+b.width*0.5-13)+'px';h.style.top=(b.top+b.height*0.5-26+(dy||0))+'px';}
+function handAt(b,dy){const h=$('handhint');h.classList.remove('gotit');h.style.display='block';h.style.left=(b.left+b.width*0.5-13)+'px';h.style.top=(b.top+b.height*0.5-26+(dy||0))+'px';}
 function handOver(r,c){const el=cellEl(r,c);if(el)handAt(el.getBoundingClientRect());}
 function handOverEl(el,dy){if(el)handAt(el.getBoundingClientRect(),dy);} // point the finger at an arbitrary element (dy nudges it lower, e.g. below the Got it button so the label stays readable)
-function handHide(){$('handhint').style.display='none';}
+function handHide(){const h=$('handhint');h.classList.remove('gotit');h.style.display='none';}
 function showGotit(){const w=$('ftueGotitWrap');if(!w)return;$('ftueGotit').textContent=L('Got it!','Понятно!');w.classList.add('on');}
 function hideGotit(){const w=$('ftueGotitWrap');if(w)w.classList.remove('on');}
 function ftueAllMarked(){return (ftue.markTargets||[]).every(([r,c])=>gstate[r][c]!==EMPTY);}
@@ -1775,7 +1794,7 @@ function ftueNextHand(){const n=(ftue.markTargets||[]).find(([r,c])=>gstate[r][c
 // Beat A: place the first duck (guided).
 function ftueStep0(){ftue.step=0;ftueDim(true);ftue.target=ftue.duck1.slice();ftueSpot([ftue.target]);showCoach('top',FT.place);hideCoach('bot');hideGotit();handOver(ftue.target[0],ftue.target[1]);}
 // Beat B: praise + a "Got it!" button the player taps (no dim, full board visible).
-function ftueStepWellDone(){ftue.step=1;ftueDim(false);handHide();ftueAllowOnly([]); /* block board taps */ showCoach('top',FT.wellDone);hideCoach('bot');showGotit();setTimeout(()=>{if(ftue&&ftue.step===1)handOverEl($('ftueGotit'),40);},380);} /* finger points up at Got it from BELOW the button so the label stays clear */
+function ftueStepWellDone(){ftue.step=1;ftueDim(false);handHide();ftueAllowOnly([]); /* block board taps */ showCoach('top',FT.wellDone);hideCoach('bot');showGotit();setTimeout(()=>{if(ftue&&ftue.step===1){const h=$('handhint');h.style.left='';h.style.top='';h.style.display='block';h.classList.add('gotit');}},380);} /* finger points up at Got it from BELOW the button so the label stays clear */
 // Beat C: exclude the first duck's whole row + column (the cross / T).
 function ftueStepRowCol(){ftue.step=2;ftueDim(true);handHide();hideGotit();
   const [dr,dc]=ftue.duck1;const cells=[];

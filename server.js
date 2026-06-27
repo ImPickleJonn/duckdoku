@@ -810,6 +810,34 @@ app.post('/api/broadcast', async (req, res) => {
   })().catch(() => {});
 });
 
+// ----- Partner cross-promo: verify a user finished a level in Duckdoku (e.g. CompletedLevel=7) -----
+//   GET /api/partner/user?partnerName=X&apiKey=K&userTelegramId=189133&CompletedLevel=7
+//   -> {"completed":true,"messages":[],"FromPartner":true,"CompletedLevel":true}  (mirrors RTW)
+//   levelsDone = highest level COMPLETED, so CompletedLevel=N => levelsDone>=N. Keys via env PARTNER_KEYS={"X":"<secret>"}.
+function partnerKeys() { const m = {}; try { if (process.env.PARTNER_KEYS) Object.assign(m, JSON.parse(process.env.PARTNER_KEYS)); } catch (e) {} return m; }
+app.get('/api/partner/user', async (req, res) => {
+  const q = req.query || {};
+  const keys = partnerKeys();
+  const pName = String(q.partnerName || '');
+  if (!pName || !keys[pName] || String(q.apiKey || '') !== String(keys[pName])) return res.status(403).json({ completed: false, messages: ['invalid partnerName or apiKey'] });
+  const uid = String(q.userTelegramId || '').trim();
+  if (!uid || !/^\d+$/.test(uid)) return res.status(400).json({ completed: false, messages: ['missing or invalid userTelegramId'] });
+  let key = null, val = NaN, mode = null;
+  for (const k in q) { if (/^completed.*level$/i.test(k)) { key = k; val = parseInt(q[k], 10); mode = 'completed'; break; } }
+  if (!key) for (const k in q) { if (/^reach.*level$/i.test(k)) { key = k; val = parseInt(q[k], 10); mode = 'reach'; break; } }
+  let done = 0, isUser = false;
+  try {
+    if (dbPool) {
+      const r = await dbPool.query('SELECT save FROM players WHERE tg_id = $1', [uid]);
+      if (r.rows && r.rows.length) { isUser = true; let s = r.rows[0].save; if (typeof s === 'string') { try { s = JSON.parse(s); } catch (_) { s = {}; } } done = Number(s && s.levelsDone) || 0; }
+    }
+  } catch (e) {}
+  const hasCheck = !!(key && Number.isFinite(val));
+  const passed = hasCheck ? (mode === 'completed' ? (done >= val) : ((done + 1) >= val)) : false;   // no check => never reward
+  const out = { completed: passed, messages: hasCheck ? [] : ['specify ReachLevel=N or CompletedLevel=N'], FromPartner: isUser };
+  if (key) out[key] = passed;
+  res.json(out);
+});
 app.get('/healthz', (req, res) => res.json({ ok: true, dbReady }));
 
 initSchema().finally(() => {

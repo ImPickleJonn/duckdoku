@@ -128,6 +128,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .qboard.dim::after{content:"";position:absolute;inset:0;background:rgba(30,22,20,.82);border-radius:22px;z-index:5;}
 .qboard.dim .qcell{pointer-events:none;}
 .qcell.spot{z-index:10!important;outline:3px solid var(--gold);box-shadow:0 0 16px 3px rgba(255,210,63,.85);pointer-events:auto!important;}
+.qcell.ftueanchor{z-index:10!important;} /* a placed duck rides above the tutorial dim (no outline) so the lesson's anchor cell stays visible */
 #app.tutdim{background:#241B19;}
 #app.tutdim .topbar,#app.tutdim .statusrow,#app.tutdim .chips,#app.tutdim .boosters{opacity:.22;pointer-events:none;}
 /* ---- hint overlay (Meowdoku-style: darken, pill, spotlight, Apply) ---- */
@@ -175,15 +176,22 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .coach{position:fixed;left:0;right:0;z-index:84;display:none;justify-content:center;padding:0 18px;pointer-events:none;}
 .coach.on{display:flex;}
 #coachTop{top:calc(var(--safe-top) + 14vh);} #coachBot{bottom:calc(var(--safe-bot) + 16px);}
-.coach .bubble{background:var(--card);color:var(--ink);border-radius:20px;padding:14px 18px;font-size:4vw;max-width:440px;box-shadow:0 6px 0 var(--shadow);text-align:center;pointer-events:auto;display:flex;align-items:center;gap:10px;justify-content:center;}
-/* FTUE hint coach as a compact speech-bubble tooltip anchored to the Hint booster (top set inline by positionHintTip) */
+.coach .bubble{background:var(--card);color:var(--ink);border-radius:20px;padding:14px 18px;font-size:4vw;max-width:440px;box-shadow:0 6px 0 var(--shadow);text-align:center;pointer-events:auto;line-height:1.42;}
+/* (legacy) compact speech-bubble tooltip variant, retained as a style only */
 .coach.tipbub{bottom:auto;}
 .coach.tipbub .bubble{position:relative;display:block;white-space:nowrap;gap:0;line-height:1.3;font-size:3.4vw;padding:9px 15px;max-width:none;border-radius:16px;box-shadow:0 4px 0 var(--shadow);}
 .coach.tipbub .bubble::after{content:"";position:absolute;left:var(--tail,50%);transform:translateX(-50%);border:8px solid transparent;top:-8px;border-bottom-color:var(--card);border-top:0;}
 .coach.tipbub.tip-up .bubble::after{top:auto;bottom:-8px;border-top-color:var(--card);border-bottom:0;}
 .coach .bubble .hl{color:var(--red);}
-.coach .bubble .lampicon{width:30px;height:30px;flex:none;}
+.coach .bubble .lampicon{width:28px;height:28px;vertical-align:middle;margin-left:5px;}
 .coach .gotit{margin-top:12px;}
+/* tutorial: hide ALL hud chrome (keep their layout space so the board stays centered) */
+#app.tut .topbar,#app.tut .statusrow,#app.tut .chips,#app.tut .boosters{visibility:hidden!important;}
+/* "Got it!" CTA shown right after the first guided placement */
+#ftueGotitWrap{position:fixed;left:0;right:0;bottom:calc(var(--safe-bot) + 42px);z-index:86;display:none;justify-content:center;padding:0 18px;pointer-events:none;}
+#ftueGotitWrap.on{display:flex;animation:gotitpop .34s cubic-bezier(.34,1.56,.64,1);}
+#ftueGotit{width:min(78vw,360px);pointer-events:auto;}
+@keyframes gotitpop{0%{transform:scale(.62);opacity:0;}60%{opacity:1;}100%{transform:scale(1);opacity:1;}}
 #handhint{position:fixed;z-index:88;width:62px;pointer-events:none;display:none;}
 #handhint img{width:100%;height:auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));transform-origin:20% 15%;animation:fingerTapImg 1.05s ease-in-out infinite;}
 @keyframes fingerTapImg{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-3px,4px) scale(.92)}}
@@ -635,6 +643,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 <!-- coach bubbles + hand -->
 <div class="coach" id="coachTop"><div class="bubble" id="coachTopB"></div></div>
 <div class="coach" id="coachBot"><div class="bubble" id="coachBotB"></div></div>
+<div id="ftueGotitWrap"><button class="btn play" id="ftueGotit" data-i="gotit">Got it!</button></div>
 <div id="handhint"><img src="assets/ui/finger.png" alt=""></div>
 
 <!-- IAP loader: dim + spinner from the Buy tap until the native store / Telegram payment sheet appears -->
@@ -801,15 +810,49 @@ function syncAppHeight(){try{const h=TG&&(TG.viewportStableHeight||TG.viewportHe
 if(TG){ syncAppHeight(); TG.onEvent&&TG.onEvent('viewportChanged',syncAppHeight); }
 const initData=TG&&TG.initData?TG.initData:'';
 const API_BASE=(function(){const h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h.endsWith('.onrender.com'))return '';return 'https://duckdoku.onrender.com';})();
+let _haptics;
+function getHaptics(){if(_haptics!==undefined)return _haptics;_haptics=false;try{const C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()){_haptics=(C.Plugins&&C.Plugins.Haptics)||(C.registerPlugin&&C.registerPlugin('Haptics'))||false;}}catch(e){}return _haptics;}
+let _soft;
+function getSoftHaptic(){if(_soft!==undefined)return _soft;_soft=false;try{const C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.SoftHaptic)_soft=C.Plugins.SoftHaptic;}catch(e){}return _soft;}
+let _selArmed=false,_lastTick=0;
+function _hapTier(k){
+  if(k==='duck'||k==='med')return 'medium';
+  if(k==='win'||k==='ok')return 'success';
+  if(k==='wrong'||k==='lose'||k==='err')return 'error';
+  if(k==='heavy')return 'heavy';
+  return 'tick'; // 'light' + generic/frequent taps
+}
 function haptic(k){
   if(typeof hapticsOn!=='undefined'&&!hapticsOn)return;
-  try{if(TG&&TG.HapticFeedback){const H=TG.HapticFeedback;
-    if(k==='light')H.impactOccurred('light');else if(k==='med')H.impactOccurred('medium');else if(k==='heavy')H.impactOccurred('heavy');
-    else if(k==='ok')H.notificationOccurred('success');else if(k==='err')H.notificationOccurred('error');return;}}catch(e){}
-  // native (Capacitor): use the Haptics plugin (navigator.vibrate is unreliable in the Android WebView)
-  try{const C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.Haptics){const H=C.Plugins.Haptics;if(k==='ok')H.notification({type:'SUCCESS'});else if(k==='err')H.notification({type:'ERROR'});else H.impact({style:k==='heavy'?'HEAVY':k==='med'?'MEDIUM':'LIGHT'});return;}}catch(e){}
+  const tier=_hapTier(k);
+  // coalesce the soft tick: the swipe-paint loop fires it per cell, so without this a fast swipe
+  // would stack into a continuous buzz. 60ms keeps deliberate taps crisp while gentling fast swipes.
+  if(tier==='tick'){const now=Date.now();if(now-_lastTick<60)return;_lastTick=now;}
+  // native (Capacitor) FIRST: telegram-web-app.js also loads natively, so TG.HapticFeedback is a
+  // no-op stub that would swallow the call. getHaptics() is false on web/Telegram, so no regression.
+  try{const H=getHaptics();if(H){
+    if(tier==='tick'){const SH=getSoftHaptic();if(SH){try{SH.buzz({duration:16,amplitude:45});}catch(e){}}else{if(!_selArmed){try{H.selectionStart();}catch(e){}_selArmed=true;}H.selectionChanged();}} // faint tap (amp 45) -> selectionChanged fallback
+    else if(tier==='medium')H.impact({style:'MEDIUM'});
+    else if(tier==='success')H.notification({type:'SUCCESS'});
+    else if(tier==='error')H.notification({type:'ERROR'});
+    else H.impact({style:'HEAVY'});
+    return;}}catch(e){}
+  // Telegram Mini App: iOS Taptic is crisp+subtle (keep as-is); on Android impact/selection are a
+  // known dead bug, so route through the Vibration API (the TG Android WebView honors navigator.vibrate).
+  try{if(TG){const p=(TG.platform||'').toLowerCase(),isIOS=p==='ios',isAndroid=(p==='android'||p==='android_x');
+    const HF=TG.HapticFeedback,canTG=!!HF&&(!TG.isVersionAtLeast||TG.isVersionAtLeast('6.1'));
+    if(isIOS&&canTG){
+      if(tier==='tick')HF.impactOccurred('light');else if(tier==='medium')HF.impactOccurred('medium');
+      else if(tier==='success')HF.notificationOccurred('success');else if(tier==='error')HF.notificationOccurred('error');
+      else HF.impactOccurred('heavy');return;}
+    if(isAndroid){
+      if(navigator.vibrate){const v=tier==='medium'?18:tier==='success'?[0,15,40,25]:tier==='error'?[0,30,55,30,55,30]:tier==='heavy'?28:8;try{navigator.vibrate(v);}catch(e){}}
+      else if(canTG){if(tier==='success')HF.notificationOccurred('success');else if(tier==='error')HF.notificationOccurred('error');else HF.impactOccurred(tier==='medium'?'medium':'light');}
+      return;}
+    if(canTG){if(tier==='success')HF.notificationOccurred('success');else if(tier==='error')HF.notificationOccurred('error');else HF.impactOccurred(tier==='medium'?'medium':tier==='heavy'?'heavy':'light');return;}
+  }}catch(e){}
   // web fallback: the Vibration API
-  try{if(navigator.vibrate){const ms=k==='err'?[16,38,16]:k==='ok'?[12,28,12]:k==='med'?22:k==='heavy'?32:10;navigator.vibrate(ms);}}catch(e){}}
+  try{if(navigator.vibrate){const ms=tier==='error'?[16,38,16]:tier==='success'?[12,28,12]:tier==='medium'?18:tier==='heavy'?28:8;navigator.vibrate(ms);}}catch(e){}}
 
 /* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
 const DD_VERSION='0.4.3';
@@ -1185,9 +1228,9 @@ let ftue=null; // {active, step, target:[r,c], allowOnly:set}
 let gameLive=false; // a live (unfinished) normal level is resumable: Back -> home keeps it, Play returns to it
 function startLevel(m,idx){
   mode=m;levelIdx=idx||0;ended=false;boostersUsed=0;heartsLost=0;history=[];ftue=null;faceFx.clear();_boosterClock=Date.now();clearTimeout(_modalTimer);_progUntil=0;
-  document.getElementById('app').classList.remove('tutdim','hintmode');document.getElementById('qboard').classList.remove('dim');
+  document.getElementById('app').classList.remove('tutdim','hintmode','tut');document.getElementById('qboard').classList.remove('dim');
   hintActive=false;_hint=null;$('hintPill').classList.remove('on');$('hintApply').classList.remove('on');
-  $('coachTop').classList.remove('on');$('coachBot').classList.remove('on');$('handhint').style.display='none';
+  $('coachTop').classList.remove('on');$('coachBot').classList.remove('on');$('handhint').style.display='none';hideGotit();
   // Fresh random puzzle each time the level is started (so a retry is never memorized);
   // the level number only sets the size/difficulty via levelSize.
   N=levelSize(levelIdx);puzzle=randomizedLevel(levelIdx);heartsEnabled=true;
@@ -1236,7 +1279,7 @@ function onCellTap(r,c){
   const cur=gstate[r][c];
   if(cur===DUCK||cur===RED)return; // found ducks and wrong-guess red X are locked forever
   const now=Date.now();let isDouble=(lastTapCell===r*100+c)&&(now-lastTapTime<320);
-  if(ftue&&ftue.active&&(ftue.step===1||ftue.step===2))isDouble=false; // tutorial marking steps: single-tap only, no accidental wrong-duck
+  if(ftue&&ftue.active&&ftue.step!==0&&ftue.step!==3&&ftue.step!==5)isDouble=false; // double-tap (place) ONLY on placement beats; blocks accidental wrong-duck during marking beats AND the inter-beat gap (step -1)
   lastTapCell=r*100+c;lastTapTime=now;
   if(isDouble){ tryGuess(r,c); lastTapCell=null; }
   else { // single tap toggles the player's own X note
@@ -1249,18 +1292,18 @@ function tryGuess(r,c){
   // The duck hides in ONE specific cell per region (the unique solution).
   if(puzzle.solCols[r]===c){
     // correct: the duck is found and LOCKED forever (cannot be removed)
-    gstate[r][c]=DUCK;duckCount++;renderCell(r,c);onDuckFound();haptic('med');playSfx('duckfound');onFtueAction('duck',r,c);
+    gstate[r][c]=DUCK;duckCount++;renderCell(r,c);onDuckFound();haptic('duck');playSfx('duckfound');onFtueAction('duck',r,c);
     if(duckCount===N&&!ftue)onWin(); else if(duckCount===N&&ftue&&ftue.active)onFtueWin();
   } else {
     // wrong: leave a PERMANENT red X (locked) and lose a heart
-    gstate[r][c]=RED;heartBreakAt(r,c,function(){renderCell(r,c);});allDucksReact('sad',CRY_MS);shakeBoard();haptic('err');playSfx('loseheart');MX.track('Mistake Made',{level:levelIdx+1});
+    gstate[r][c]=RED;heartBreakAt(r,c,function(){renderCell(r,c);});allDucksReact('sad',CRY_MS);shakeBoard();haptic('wrong');playSfx('loseheart');MX.track('Mistake Made',{level:levelIdx+1});
     if(heartsEnabled){hearts--;heartsLost++;renderHearts();breakHeartIcon(hearts);if(hearts<=0)onLose();}
   }
 }
 function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),460);}if(gstate[r]&&gstate[r][c]===DUCK)duckReact(r,c,'oops',1000);});shakeBoard();}
 
 /* ---------- win / lose ---------- */
-function onWin(){ended=true;gameLive=false;nextWinVariant();allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;haptic('ok');soundWin();confettiRain();
+function onWin(){ended=true;gameLive=false;nextWinVariant();allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;haptic('win');soundWin();confettiRain();
   const stars=starsForWin();
   const praise=L(["Awesome!","Brilliant!","Quacktastic!","Well done!"][stars-1]||"Awesome!",["Отлично!","Блестяще!","Кряк-класс!","Молодец!"][stars-1]||"Отлично!");
   let goldGain=goldForWin(N);const tdy=ymd();if(save.lastGoldYMD!==tdy){goldGain+=dailyWinBonus();save.lastGoldYMD=tdy;}
@@ -1275,7 +1318,7 @@ function onWin(){ended=true;gameLive=false;nextWinVariant();allDucksReact('happy
   showModalSoon('scrimWin',WIN_MODAL_DELAY);} // let the board ducks celebrate first, then the victory screen
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
-function onLose(){ended=true;gameLive=false;nextLoseVariant();allDucksReact('sad',LOSE_MODAL_DELAY+800);MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('err');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
+function onLose(){ended=true;gameLive=false;nextLoseVariant();allDucksReact('sad',LOSE_MODAL_DELAY+800);MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('lose');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
   $('loseSub').textContent=L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");
   showModalSoon('scrimLose',LOSE_MODAL_DELAY);} // let the board ducks cry first, then the loss popup
 
@@ -1360,7 +1403,7 @@ function applyHint(){
   const h=_hint;if(!h){hideHint();return;}
   if(h.kind==='remove'){snapshot();const [r,c]=h.target;if(gstate[r][c]===MARK)gstate[r][c]=EMPTY;hideHint();playSfx('xremove');haptic('ok');return;}
   if(h.kind==='mark'){snapshot();(h.marks||[]).forEach(([r,c])=>{if(gstate[r][c]===EMPTY)gstate[r][c]=MARK;});hideHint();playSfx('xremove');haptic('ok');return;}
-  if(h.kind==='place'){const [r,c]=h.target;let won=false;if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;won=(duckCount===N);}hideHint();onDuckFound();pulseCell(r,c);updateCount();playSfx('duckfound');haptic('ok');if(won)onWin();return;}
+  if(h.kind==='place'){const [r,c]=h.target;let won=false;if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;won=(duckCount===N);}hideHint();onDuckFound();pulseCell(r,c);updateCount();playSfx('duckfound');haptic('duck');if(won)onWin();return;}
   hideHint();
 }
 function placeOneCorrect(){for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;renderCell(r,c);onDuckFound();pulseCell(r,c);return {r,c};}}return null;}
@@ -1451,7 +1494,7 @@ async function loadSfx(){if(_sfxLoaded)return;_sfxLoaded=true;const a=ac();if(!a
 function playSfx(k,v){if(!audioOn)return;const a=ac();if(!a)return;if(a.state==='suspended'){try{a.resume();}catch(e){}}const b=sfxBuf[k];if(!b){loadSfx();return;}try{if(k==='reveal'&&sfxNode.reveal){try{sfxNode.reveal.stop();}catch(e){}}const s=a.createBufferSource();s.buffer=b;const g=a.createGain();g.gain.value=(v!=null?v:(SFX_VOL[k]||0.7));s.connect(g);g.connect(a.destination);s.start();if(k==='reveal'){sfxNode.reveal=s;s.onended=()=>{if(sfxNode.reveal===s)sfxNode.reveal=null;};}}catch(e){}}
 // preload sfx on first interaction (autoplay policy) + a generic click on every button press
 window.addEventListener('pointerdown',()=>{ac();loadSfx();},{once:true,capture:true});
-document.addEventListener('pointerdown',e=>{const b=e.target&&e.target.closest&&e.target.closest('button');if(b&&!b.disabled)playSfx('ui');},true);
+document.addEventListener('pointerdown',e=>{const b=e.target&&e.target.closest&&e.target.closest('button');if(b&&!b.disabled){playSfx('ui');haptic('light');}},true);
 
 /* ---------- duck videos ---------- */
 let audioUnlocked=false;
@@ -1687,82 +1730,84 @@ function renderAlbum(){renderAlbumPacks();renderAlbumGrand();updateGoldHud();con
 
 function openAlbum(){show('album');renderAlbum();MX.track('Album Opened');}
 
-/* ================= FTUE (scripted first-run, matches Meowdoku) ================= */
+/* ================= FTUE (scripted first-run, Meowdoku-style guided flow) ================= */
 const FT={
-  s0:{en:"Double-tap a cell to place a duck here.",ru:"Дважды нажми на клетку, чтобы поставить утку.",hl:["Double-tap","Дважды нажми"]},
-  s1a:{en:"A duck rules its whole row and column.",ru:"Утка занимает весь свой ряд и столбец.",hl:["row and column","ряд и столбец"]},
-  s1b:{en:"Tap each cell in its row to rule them out.",ru:"Отметь крестиком клетки в его ряду.",hl:["row","ряду"]},
-  s2b:{en:"Now do the same down its column.",ru:"Теперь то же самое в его столбце.",hl:["column","столбце"]},
-  s3:{en:"Place the next duck. One duck per color!",ru:"Поставь следующую утку. Одна на каждый цвет!",hl:["per color","на каждый цвет"]},
-  s4b:{en:"Find the last ducks! Tap here for a hint.",ru:"Найди оставшихся уток! Нажми тут для подсказки.",hl:["hint","подсказки"]},
+  place:{en:"Double-tap a cell to place a duck here.",ru:"Дважды нажми на клетку, чтобы поставить утку.",hl:["Double-tap","Дважды нажми"]},
+  wellDone:{en:"Well done! Only one duck per color.",ru:"Молодец! Одна утка на каждый цвет.",hl:["color","цвет"]},
+  rowcol:{en:"Nice! Ducks can't be in the same row or column.",ru:"Отлично! Утки не могут быть в одном ряду или столбце.",hl:["same row or column","в одном ряду или столбце"]},
+  rowcolBot:{en:"Tap empty cells to exclude them.",ru:"Нажимай на пустые клетки, чтобы исключить их."},
+  adjacent:{en:"No ducks can be adjacent to each other.",ru:"Утки не могут стоять рядом друг с другом.",hl:["adjacent","рядом"]},
+  adjacentBot:{en:"Swipe across these cells to exclude them.",ru:"Проведи по этим клеткам, чтобы исключить их."},
+  findLast:{en:"Find the last duck!",ru:"Найди последнюю утку!",hl:["last duck","последнюю утку"]},
+  hintCard:{en:"Tap here for a hint.",ru:"Нажми тут для подсказки.",hl:["hint","подсказки"]},
 };
 function bub(spec){let s=spec[LANG]||spec.en;(spec.hl||[]).forEach(h=>{if(s.indexOf(h)>=0)s=s.replace(h,'<span class="hl">'+h+'</span>');});return s;}
 function startFTUE(){
   mode='levels';levelIdx=0;ended=false;boostersUsed=0;heartsLost=0;history=[];faceFx.clear();_boosterClock=Date.now();clearTimeout(_modalTimer);_progUntil=0;
   MX.track('Tutorial Started');
-  N=4;puzzle=generatePuzzle(4,4242);puzzle.colors=levelPalette(0,4,(Math.random()*1e9)>>>0);heartsEnabled=true;
+  // Hand-crafted 4x4 so every teaching beat is TRUE: place duck1=(0,1); X its row+column and the
+  // Orange region {(2,0),(2,1)} collapses to one cell -> duck2=(2,0); teach adjacency; find the last two.
+  N=4;puzzle={N:4,region:[[0,0,1,1],[0,0,1,1],[2,2,1,1],[3,3,3,3]],solCols:[1,3,0,2]};
+  puzzle.colors=levelPalette(0,4,(Math.random()*1e9)>>>0);heartsEnabled=true;
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
   buildGrid();renderAll();show('game');playSfx('reveal');gameLive=false; // the tutorial is not resumable (scripted step state)
-  ftue={active:true,step:0};
+  $('app').classList.add('tut');hideGotit();
+  ftue={active:true,step:0,duck1:[0,1],duck2:[2,0]};
   ftueStep0();
 }
 function ftueDim(on){$('app').classList.toggle('tutdim',on);$('qboard').classList.toggle('dim',on);}
-function ftueSpot(cells){cellEls.forEach(row=>row.forEach(el=>el.classList.remove('spot')));ftue.allowOnly=new Set();cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el)el.classList.add('spot');ftue.allowOnly.add(r*100+c);});}
-function showCoach(which,spec,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=bub(spec)+(withLamp?' '+LAMP_SVG:'');el.style.removeProperty('--tail');el.style.removeProperty('font-size');const c=which==='top'?$('coachTop'):$('coachBot');c.classList.remove('tipbub','tip-up');c.removeAttribute('style');c.classList.add('on');}
-// Anchor the FTUE hint coach as a small speech-bubble tooltip under the Hint booster (flips above if it would clip the bottom).
-function positionHintTip(){const hint=$('bsHint'),cb=$('coachBot'),bub=$('coachBotB');if(!hint||!cb||!bub)return;
-  cb.style.bottom='auto';cb.style.top='0';cb.classList.remove('tip-up');
-  // keep the tooltip a single line: shrink the font if it would overflow the viewport
-  bub.style.removeProperty('font-size');
-  const maxw=window.innerWidth-24,bw=bub.getBoundingClientRect().width;
-  if(bw>maxw){const base=parseFloat(getComputedStyle(bub).fontSize);bub.style.fontSize=(base*maxw/bw).toFixed(1)+'px';}
-  const hr=hint.getBoundingClientRect(),bh=bub.getBoundingClientRect().height;
-  let top=hr.bottom+13;if(top+bh>window.innerHeight-8){top=hr.top-bh-13;cb.classList.add('tip-up');}
-  cb.style.top=top+'px';
-  const br=bub.getBoundingClientRect(),hintCx=hr.left+hr.width/2;
-  bub.style.setProperty('--tail',Math.max(14,Math.min(br.width-14,hintCx-br.left))+'px');}
+function ftueLock(){if(ftue){ftue.step=-1;ftue.allowOnly=new Set();}} // between beats: lock the step + block ALL board taps so a fast double-tap in the gap can't fire a wrong guess
+function ftueAnchorDucks(){cellEls.forEach((row,r)=>row.forEach((el,c)=>{el.classList.remove('spot','ftueanchor');if(gstate[r]&&gstate[r][c]===DUCK)el.classList.add('ftueanchor');}));} // placed ducks ride ABOVE the dim so the cells the lesson references stay clearly visible
+function ftueSpot(cells){ftueAnchorDucks();ftue.allowOnly=new Set();cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el)el.classList.add('spot');ftue.allowOnly.add(r*100+c);});}
+function ftueAllowOnly(cells){ftueAnchorDucks();ftue.allowOnly=new Set();cells.forEach(([r,c])=>ftue.allowOnly.add(r*100+c));} // gate taps WITHOUT the loud gold outline
+function showCoachHTML(which,html,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=html+(withLamp?' '+LAMP_SVG:'');el.style.removeProperty('--tail');el.style.removeProperty('font-size');const c=which==='top'?$('coachTop'):$('coachBot');c.classList.remove('tipbub','tip-up');c.removeAttribute('style');c.classList.add('on');}
+function showCoach(which,spec,withLamp){showCoachHTML(which,bub(spec),withLamp);}
 function hideCoach(which){(which==='top'?$('coachTop'):$('coachBot')).classList.remove('on');}
 function handOver(r,c){const el=cellEl(r,c);if(!el){return;}const b=el.getBoundingClientRect();const h=$('handhint');h.style.display='block';h.style.left=(b.left+b.width*0.5-13)+'px';h.style.top=(b.top+b.height*0.5-26)+'px';}
 function handHide(){$('handhint').style.display='none';}
-function ftueStep0(){ // place the first duck (most-constrained region's solution cell)
-  ftue.step=0;ftueDim(true);
-  const sizes={};for(let r=0;r<N;r++)for(let c=0;c<N;c++)sizes[puzzle.region[r][c]]=(sizes[puzzle.region[r][c]]||0)+1;
-  let best=0,bestSz=99;for(let r=0;r<N;r++){const reg=puzzle.region[r][puzzle.solCols[r]];if(sizes[reg]<bestSz){bestSz=sizes[reg];best=r;}}
-  ftue.target=[best,puzzle.solCols[best]];
-  ftueSpot([ftue.target]);showCoach('top',FT.s0);hideCoach('bot');handOver(ftue.target[0],ftue.target[1]);
-}
+function showGotit(){const w=$('ftueGotitWrap');if(!w)return;$('ftueGotit').textContent=L('Got it!','Понятно!');w.classList.add('on');}
+function hideGotit(){const w=$('ftueGotitWrap');if(w)w.classList.remove('on');}
 function ftueAllMarked(){return (ftue.markTargets||[]).every(([r,c])=>gstate[r][c]!==EMPTY);}
 function ftueNextHand(){const n=(ftue.markTargets||[]).find(([r,c])=>gstate[r][c]===EMPTY);if(n)handOver(n[0],n[1]);else handHide();}
-function ftueStep1(){ // X the placed duck's ROW
-  ftue.step=1;ftueDim(true);handHide();
-  const [dr,dc]=ftue.lastDuck;const cells=[];for(let c=0;c<N;c++)if(c!==dc&&gstate[dr][c]===EMPTY)cells.push([dr,c]);
-  ftue.markTargets=cells.slice();ftueSpot(cells.length?cells:[[dr,(dc+1)%N]]);
-  showCoach('top',FT.s1a);showCoach('bot',FT.s1b);if(cells[0])handOver(cells[0][0],cells[0][1]);
-}
-function ftueStep2(){ // X the placed duck's COLUMN
-  ftue.step=2;ftueDim(true);handHide();hideCoach('top');
-  const [dr,dc]=ftue.lastDuck;const cells=[];for(let r=0;r<N;r++)if(r!==dr&&gstate[r][dc]===EMPTY)cells.push([r,dc]);
-  ftue.markTargets=cells.slice();ftueSpot(cells.length?cells:[[(dr+1)%N,dc]]);
-  showCoach('bot',FT.s2b);if(cells[0])handOver(cells[0][0],cells[0][1]);
-}
-function ftueStep3(){ // place the SECOND duck (one per color)
-  ftue.step=3;ftueDim(true);handHide();hideCoach('bot');
-  let t=null;for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK){t=[r,c];break;}}
-  ftue.target=t||ftue.lastDuck;ftueSpot([ftue.target]);showCoach('top',FT.s3);handOver(ftue.target[0],ftue.target[1]);
-}
-function ftueStep4(){ // free finish + tappable hint card
-  ftue.step=4;ftueDim(false);handHide();cellEls.forEach(row=>row.forEach(el=>el.classList.remove('spot')));ftue.allowOnly=null;
-  hideCoach('top');showCoach('bot',FT.s4b,false);const cb=$('coachBot');cb.classList.add('tipbub');cb.style.pointerEvents='auto';positionHintTip();
-  $('coachBotB').onclick=()=>{const mv=computeHint();if(mv)pulseCell(mv.r,mv.c);};
-}
+// Beat A: place the first duck (guided).
+function ftueStep0(){ftue.step=0;ftueDim(true);ftue.target=ftue.duck1.slice();ftueSpot([ftue.target]);showCoach('top',FT.place);hideCoach('bot');hideGotit();handOver(ftue.target[0],ftue.target[1]);}
+// Beat B: praise + a "Got it!" button the player taps (no dim, full board visible).
+function ftueStepWellDone(){ftue.step=1;ftueDim(false);handHide();ftueAllowOnly([]); /* block board taps */ showCoach('top',FT.wellDone);hideCoach('bot');showGotit();}
+// Beat C: exclude the first duck's whole row + column (the cross / T).
+function ftueStepRowCol(){ftue.step=2;ftueDim(true);handHide();hideGotit();
+  const [dr,dc]=ftue.duck1;const cells=[];
+  for(let c=0;c<N;c++)if(c!==dc&&gstate[dr][c]===EMPTY)cells.push([dr,c]);
+  for(let r=0;r<N;r++)if(r!==dr&&gstate[r][dc]===EMPTY)cells.push([r,dc]);
+  ftue.markTargets=cells.slice();if(!cells.length){ftueLock();setTimeout(ftueStepSecondDuck,300);return;} // nothing to exclude -> advance (never spotlight a locked duck)
+  ftueSpot(cells);showCoach('top',FT.rowcol);showCoach('bot',FT.rowcolBot);handOver(cells[0][0],cells[0][1]);}
+// Beat D: only the last cell of one color is left -> place the second duck.
+function ftueStepSecondDuck(){ftue.step=3;ftueDim(true);handHide();hideCoach('bot');
+  const [r2,c2]=ftue.duck2;const g=puzzle.region[r2][c2];ftue.target=ftue.duck2.slice();ftueSpot([ftue.target]);
+  showCoachHTML('top',L('Only the last ','Остался только последний ')+colorPill(g)+L(' remains. ','. ')+'<span class="hl">'+L('Double-tap','Дважды нажми')+'</span>'+L(' to place a duck.',', чтобы поставить утку.'));
+  handOver(r2,c2);}
+// Beat E: exclude the cells touching the second duck (swipe across them).
+function ftueStepAdjacent(){ftue.step=4;ftueDim(true);handHide();hideCoach('top');
+  const [dr,dc]=ftue.duck2;const cells=[];
+  for(let rr=dr-1;rr<=dr+1;rr++)for(let cc=dc-1;cc<=dc+1;cc++){if((rr!==dr||cc!==dc)&&rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===EMPTY)cells.push([rr,cc]);}
+  ftue.markTargets=cells.slice();if(!cells.length){ftueLock();setTimeout(ftueStepFinish,300);return;} // nothing adjacent to exclude -> advance (never spotlight a locked duck)
+  ftueSpot(cells);showCoach('top',FT.adjacent);showCoach('bot',FT.adjacentBot);handOver(cells[0][0],cells[0][1]);}
+// Beat F: auto-clear the now-obvious cells, then "find the last duck" with a tappable hint card.
+function ftueStepFinish(){ftue.step=5;ftueDim(false);handHide();hideCoach('top');
+  const rem=[];for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK)rem.push([r,c]);}
+  const remSet=new Set(rem.map(([r,c])=>r*100+c));
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]===EMPTY&&!remSet.has(r*100+c)){gstate[r][c]=MARK;renderCell(r,c);}}
+  ftueAllowOnly(rem); // only the real duck cells respond (no wrong guesses possible)
+  showCoach('top',FT.findLast);showCoachHTML('bot',bub(FT.hintCard),true);$('coachBot').style.pointerEvents='auto';
+  $('coachBotB').onclick=()=>{const mv=computeHint();if(mv){(mv.cells||(mv.target?[mv.target]:[])).forEach(([r,c])=>pulseCell(r,c));haptic('light');}};}
 function onFtueAction(kind,r,c){
   if(!ftue||!ftue.active)return;
-  if(ftue.step===0){handHide();if(kind==='duck'){ftue.step=-1;ftue.lastDuck=[r,c];setTimeout(ftueStep1,420);}return;} // finger hides on the FIRST tap of the double-tap
-  if(ftue.step===1&&kind==='mark'){if(ftueAllMarked()){ftue.step=-1;handHide();setTimeout(ftueStep2,420);}else ftueNextHand();}
-  else if(ftue.step===2&&kind==='mark'){if(ftueAllMarked()){ftue.step=-1;handHide();setTimeout(ftueStep3,420);}else ftueNextHand();}
-  else if(ftue.step===3){handHide();if(kind==='duck'){ftue.step=-1;setTimeout(ftueStep4,420);}}
+  if(ftue.step===0){if(kind==='duck'){ftueLock();handHide();setTimeout(ftueStepWellDone,460);}return;} // keep the finger guiding until the duck is actually placed
+  if(ftue.step===2&&kind==='mark'){if(ftueAllMarked()){ftueLock();handHide();setTimeout(ftueStepSecondDuck,440);}else ftueNextHand();}
+  else if(ftue.step===4&&kind==='mark'){if(ftueAllMarked()){ftueLock();handHide();setTimeout(ftueStepFinish,440);}else ftueNextHand();}
+  else if(ftue.step===3&&kind==='duck'){ftueLock();handHide();setTimeout(ftueStepAdjacent,460);}
+  // step 5 = free finish; tryGuess fires onFtueWin when all ducks are placed.
 }
-function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();$('coachBotB').onclick=null;MX.track('Tutorial Won');nextWinVariant();
+function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;MX.track('Tutorial Won');nextWinVariant(); // keep .tut: the hud stays hidden through the win celebration; startLevel (Next level) restores it
   allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;
   save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);persist();
   ended=true;haptic('ok');soundWin();confettiRain();
@@ -1858,7 +1903,8 @@ function bind(){
   $('lbClose').onclick=()=>closeScrim('scrimLB');
   // Back -> home, but a live (unfinished) level stays resumable: tapping Play returns to the exact state.
   // Leaving the tutorial abandons it (its scripted step state is not resumable).
-  $('btnBack').onclick=()=>{if(ftue){ftue=null;gameLive=false;}ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
+  $('btnBack').onclick=()=>{if(ftue){ftue=null;gameLive=false;}ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;$('app').classList.remove('tut');show('home');refreshHome();};
+  $('ftueGotit').onclick=()=>{hideGotit();if(ftue&&ftue.active&&ftue.step===1)ftueStepRowCol();};
   $('btnGear').onclick=()=>openSettings(true);
   $('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
   $('hintApply').onclick=applyHint;
@@ -1891,7 +1937,7 @@ function bind(){
   $('setContact').onclick=()=>{try{openExternal('https://t.me/ImPickleJonn');}catch(e){}};
   $('setRestart').onclick=()=>{closeScrim('scrimSet');startLevel('levels',levelIdx);};
   // ----- bottom nav -----
-  $('navStart').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();show('home');refreshHome();};
+  $('navStart').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;$('app').classList.remove('tut');show('home');refreshHome();};
   $('navShop').onclick=openShopScreen;
   $('navAlbum').onclick=()=>{if(!albumUnlocked()){navAlbumLockMsg();return;}openAlbum();};
   $('shopBack').onclick=exitShop;

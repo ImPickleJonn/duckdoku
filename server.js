@@ -313,12 +313,33 @@ app.post('/api/write-access', (req, res) => {
   res.json({ ok: true });
 });
 
-// Public leaderboard: top players by highest level reached.
-app.get('/api/leaderboard', (req, res) => {
+// Public leaderboard: highest level REACHED. Source of truth is the DURABLE Postgres players table
+// (merged with the live in-memory map for freshness) — the old version read only the in-memory map,
+// which Render wipes on every deploy, so most players vanished after a redeploy. Only players who
+// actually reached the unlock level appear (matches the client gate), shown as the level they reached
+// (levelsDone + 1, the same number the rest of the game shows). Cached ~60s.
+const LEADERBOARD_UNLOCK_LEVEL = 13; // MUST match the client const; only players who reached it are ranked
+let _lbCache = { ts: 0, top: [] };
+app.get('/api/leaderboard', async (req, res) => {
+  const now = Date.now();
+  if (now - _lbCache.ts < 60000) return res.json({ top: _lbCache.top });
+  const byUid = new Map(); // uid -> { name, done (=levelsDone) }
+  if (dbReady && dbPool) {
+    try {
+      const q = await dbPool.query('SELECT tg_id, first_name, username, save FROM players');
+      for (const row of q.rows) {
+        let sv = row.save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { sv = {}; } }
+        const done = Number(sv && sv.levelsDone) || 0;
+        byUid.set(String(row.tg_id), { name: row.first_name || row.username || 'Duck', done });
+      }
+    } catch (e) { console.error('[lb] db query:', e.message); }
+  }
+  for (const [uid, s] of users) { const done = s.levelsDone || 0; const prev = byUid.get(String(uid)); if (!prev || done > prev.done) byUid.set(String(uid), { name: s.name || s.first || (prev && prev.name) || 'Duck', done }); }
   const arr = [];
-  for (const [, s] of users) { const lvl = s.levelsDone || 0; if (lvl > 0) arr.push({ name: s.name || s.first || 'Duck', level: lvl }); }
+  for (const [, v] of byUid) { if (v.done >= LEADERBOARD_UNLOCK_LEVEL - 1) arr.push({ name: v.name, level: v.done + 1 }); }
   arr.sort((a, b) => b.level - a.level);
-  res.json({ top: arr.slice(0, 50) });
+  _lbCache = { ts: now, top: arr.slice(0, 50) };
+  res.json({ top: _lbCache.top });
 });
 
 // ---- Adjust SERVER CALLBACK (install / attribution). In Adjust: Data management

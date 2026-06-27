@@ -193,8 +193,8 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 #ftueGotit{width:min(78vw,360px);pointer-events:auto;}
 @keyframes gotitpop{0%{transform:scale(.62);opacity:0;}60%{opacity:1;}100%{transform:scale(1);opacity:1;}}
 #handhint{position:fixed;z-index:88;width:62px;pointer-events:none;display:none;}
-#handhint img{width:100%;height:auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));transform-origin:20% 15%;animation:fingerTapImg 1.05s ease-in-out infinite;}
-@keyframes fingerTapImg{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-3px,4px) scale(.92)}}
+#handhint img{width:100%;height:auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));transform-origin:20% 15%;animation:fingerTapImg 1.5s ease-in-out infinite;}
+@keyframes fingerTapImg{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-1px,2px) scale(.975)}} /* very subtle idle tap */
 
 /* ---------- MODALS ---------- */
 .scrim{position:fixed;inset:0;background:rgba(40,28,24,.5);display:none;align-items:center;justify-content:center;z-index:90;padding:18px;}
@@ -715,6 +715,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   <div class="setrow"><span data-i="haptics">Vibration</span><button class="iconbtn" id="setHaptics"><svg id="setHapticsIcon" viewBox="0 0 24 24" fill="#6E4F44"><rect x="7" y="3.5" width="10" height="17" rx="2.6"/><rect x="9.4" y="6" width="5.2" height="11" rx="1" fill="#FBF3E2"/><path d="M3.5 9v6M20.5 9v6" stroke="#6E4F44" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
   <button class="btn alt" id="setRestore" data-i="restore" style="color:#fff">Restore purchases</button>
   <button class="btn play" id="setRestart" data-i="restart">Restart level</button>
+  <button class="btn play" id="setTutorial" data-i="tutorial" style="display:none;background:var(--blue);box-shadow:0 5px 0 var(--blue-d)">Tutorial</button>
   <div class="setlinks">
     <button class="setlink" id="setPrivacy" data-i="privacy">Privacy Policy</button>
     <span class="setdot">.</span>
@@ -891,12 +892,12 @@ function mxAppOpen(kind){const now=Math.floor(Date.now()/1000);let since=0;try{c
 /* ---------- i18n ---------- */
 const I18N={
   en:{play:"Play",zen:"Zen",daily:"Daily",shop:"Shop",howto:"How to play",undo:"Undo",hint:"Hint",placeduck:"Place",
-    next:"Next level",home:"Home",retry:"Try again",levelup:"Level up!",keepgoing:"Keep going",gotit:"Got it",
+    next:"Next level",home:"Home",retry:"Try again",levelup:"Level up!",keepgoing:"Keep going",gotit:"Got it",tutorial:"Tutorial",
     adventure:"Adventure",shopsub:"Gold for boosters, sticker packs and more. No ads, ever.",album:"Duck Album",newstickers:"New stickers!",tagline:"A cozy duck logic puzzle",
     settings:"Settings",sound:"Sound",restart:"Restart level",leaderboard:"Leaderboard",lbsub:"Who reached the highest level.",
     navshop:"Shop",navstart:"Start",navalbum:"Album",navsoon:"Reach level",haptics:"Vibration",restore:"Restore purchases",privacy:"Privacy Policy",contact:"Contact us",goldpacks:"Gold",bundles:"Bundles",buygold:"Buy Gold!",duckloadbundle:"Duckload Bundle!"},
   ru:{play:"Играть",zen:"Дзен",daily:"Ежедневный",shop:"Магазин",howto:"Как играть",undo:"Назад",hint:"Подсказка",placeduck:"Утка",
-    next:"Дальше",home:"Домой",retry:"Заново",levelup:"Новый уровень!",keepgoing:"Играть",gotit:"Понятно",
+    next:"Дальше",home:"Домой",retry:"Заново",levelup:"Новый уровень!",keepgoing:"Играть",gotit:"Понятно",tutorial:"Обучение",
     adventure:"Кампания",shopsub:"Золото для бустеров и наборов наклеек. Без рекламы.",album:"Альбом уток",newstickers:"Новые наклейки!",tagline:"Уютный пазл с уткой",
     settings:"Настройки",sound:"Звук",restart:"Заново",leaderboard:"Таблица лидеров",lbsub:"Кто дошёл до самого высокого уровня.",
     navshop:"Магазин",navstart:"Старт",navalbum:"Альбом",navsoon:"Дойди до уровня",haptics:"Вибрация",restore:"Восстановить покупки",privacy:"Конфиденциальность",contact:"Связаться",goldpacks:"Золото",bundles:"Наборы",buygold:"Купить золото!",duckloadbundle:"Утиный набор!"},
@@ -1752,7 +1753,7 @@ function startFTUE(){
   gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
   buildGrid();renderAll();show('game');playSfx('reveal');gameLive=false; // the tutorial is not resumable (scripted step state)
   $('app').classList.add('tut');hideGotit();
-  ftue={active:true,step:0,duck1:[0,1],duck2:[2,0]};
+  ftue={active:true,step:0,duck1:[0,1],duck2:[2,0],replay:!!save.tutorialDone}; // replay = launched from the Settings > Tutorial button (progress already done)
   ftueStep0();
 }
 function ftueDim(on){$('app').classList.toggle('tutdim',on);$('qboard').classList.toggle('dim',on);}
@@ -1763,7 +1764,9 @@ function ftueAllowOnly(cells){ftueAnchorDucks();ftue.allowOnly=new Set();cells.f
 function showCoachHTML(which,html,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=html+(withLamp?' '+LAMP_SVG:'');el.style.removeProperty('--tail');el.style.removeProperty('font-size');const c=which==='top'?$('coachTop'):$('coachBot');c.classList.remove('tipbub','tip-up');c.removeAttribute('style');c.classList.add('on');}
 function showCoach(which,spec,withLamp){showCoachHTML(which,bub(spec),withLamp);}
 function hideCoach(which){(which==='top'?$('coachTop'):$('coachBot')).classList.remove('on');}
-function handOver(r,c){const el=cellEl(r,c);if(!el){return;}const b=el.getBoundingClientRect();const h=$('handhint');h.style.display='block';h.style.left=(b.left+b.width*0.5-13)+'px';h.style.top=(b.top+b.height*0.5-26)+'px';}
+function handAt(b,dy){const h=$('handhint');h.style.display='block';h.style.left=(b.left+b.width*0.5-13)+'px';h.style.top=(b.top+b.height*0.5-26+(dy||0))+'px';}
+function handOver(r,c){const el=cellEl(r,c);if(el)handAt(el.getBoundingClientRect());}
+function handOverEl(el,dy){if(el)handAt(el.getBoundingClientRect(),dy);} // point the finger at an arbitrary element (dy nudges it lower, e.g. below the Got it button so the label stays readable)
 function handHide(){$('handhint').style.display='none';}
 function showGotit(){const w=$('ftueGotitWrap');if(!w)return;$('ftueGotit').textContent=L('Got it!','Понятно!');w.classList.add('on');}
 function hideGotit(){const w=$('ftueGotitWrap');if(w)w.classList.remove('on');}
@@ -1772,7 +1775,7 @@ function ftueNextHand(){const n=(ftue.markTargets||[]).find(([r,c])=>gstate[r][c
 // Beat A: place the first duck (guided).
 function ftueStep0(){ftue.step=0;ftueDim(true);ftue.target=ftue.duck1.slice();ftueSpot([ftue.target]);showCoach('top',FT.place);hideCoach('bot');hideGotit();handOver(ftue.target[0],ftue.target[1]);}
 // Beat B: praise + a "Got it!" button the player taps (no dim, full board visible).
-function ftueStepWellDone(){ftue.step=1;ftueDim(false);handHide();ftueAllowOnly([]); /* block board taps */ showCoach('top',FT.wellDone);hideCoach('bot');showGotit();}
+function ftueStepWellDone(){ftue.step=1;ftueDim(false);handHide();ftueAllowOnly([]); /* block board taps */ showCoach('top',FT.wellDone);hideCoach('bot');showGotit();setTimeout(()=>{if(ftue&&ftue.step===1)handOverEl($('ftueGotit'),20);},380);} /* finger points to Got it (nudged below the label) once it has popped in */
 // Beat C: exclude the first duck's whole row + column (the cross / T).
 function ftueStepRowCol(){ftue.step=2;ftueDim(true);handHide();hideGotit();
   const [dr,dc]=ftue.duck1;const cells=[];
@@ -1807,10 +1810,11 @@ function onFtueAction(kind,r,c){
   else if(ftue.step===3&&kind==='duck'){ftueLock();handHide();setTimeout(ftueStepAdjacent,460);}
   // step 5 = free finish; tryGuess fires onFtueWin when all ducks are placed.
 }
-function onFtueWin(){ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;MX.track('Tutorial Won');nextWinVariant(); // keep .tut: the hud stays hidden through the win celebration; startLevel (Next level) restores it
+function onFtueWin(){const replay=!!(ftue&&ftue.replay);ftue.active=false;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;MX.track(replay?'Tutorial Replayed':'Tutorial Won');nextWinVariant(); // keep .tut: the hud stays hidden through the win celebration; startLevel (Next level) / home restores it
   allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;
-  save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);persist();
   ended=true;haptic('ok');soundWin();confettiRain();
+  if(replay){gameLive=false;setTimeout(()=>{$('app').classList.remove('tut');show('home');refreshHome();},WIN_MODAL_DELAY+700);return;} // replay from Settings: celebrate, then back home (progress untouched, no level-2 detour)
+  save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);persist();
   $('winTitle').textContent=L("Awesome!","Отлично!");$('winSub').textContent=L("You learned to play. Now the real puzzles begin.","Ты научился играть. Теперь начинаются настоящие головоломки.");
   $('btnNext').textContent=t('next');showModalSoon('scrimWin',WIN_MODAL_DELAY);}
 
@@ -1881,9 +1885,10 @@ function admDoWipe(){
   try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem('dd.anon');localStorage.removeItem('dd.lastOpen');}catch(e){}
   setTimeout(()=>location.reload(),300);
 }
-function openSettings(inGame){setSoundIcon();setHapticIcon();const v=$('setVer');if(v)v.textContent='v'+DD_VERSION;
+function openSettings(inGame,fromHome){setSoundIcon();setHapticIcon();const v=$('setVer');if(v)v.textContent='v'+DD_VERSION;
   // in-game settings = sound + haptics + restart + version only; restore/privacy/contact live on the home settings.
   $('setRestart').style.display=inGame?'':'none';
+  {const tb=$('setTutorial');if(tb)tb.style.display=fromHome?'':'none';} // "Tutorial" replay button: HOME settings only (not in-game, not shop)
   $('setRestore').style.display=inGame?'none':'';
   const sl=document.querySelector('#scrimSet .setlinks');if(sl)sl.style.display=inGame?'none':'';
   try{$('setAdmin').style.display=isAdmin()?'':'none';}catch(e){}openScrim('scrimSet');}
@@ -1896,7 +1901,7 @@ function setHapticIcon(){const i=$('setHapticsIcon');if(i)i.style.opacity=haptic
 /* ---------- wire up ---------- */
 function bind(){
   $('btnPlay').onclick=startPlay;
-  $('btnHomeGear').onclick=()=>openSettings(false);
+  $('btnHomeGear').onclick=()=>openSettings(false,true);
   $('btnHomeLB').onclick=()=>{if(!lbUnlocked()){showTip($('btnHomeLB'),L('Unlocks at level ','Откроется на уровне ')+LEADERBOARD_UNLOCK_LEVEL,true);return;}openLeaderboard();};
   $('btnHomeDaily').onclick=()=>{if(!dailyUnlocked()){showTip($('btnHomeDaily'),L('Unlocks at level ','Откроется на уровне ')+DAILY_UNLOCK_LEVEL,true);return;}openDaily();};
   $('dailyClose').onclick=()=>closeScrim('scrimDaily');
@@ -1905,7 +1910,7 @@ function bind(){
   // Leaving the tutorial abandons it (its scripted step state is not resumable).
   $('btnBack').onclick=()=>{if(ftue){ftue=null;gameLive=false;}ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;$('app').classList.remove('tut');show('home');refreshHome();};
   $('ftueGotit').onclick=()=>{hideGotit();if(ftue&&ftue.active&&ftue.step===1)ftueStepRowCol();};
-  $('btnGear').onclick=()=>openSettings(true);
+  $('btnGear').onclick=()=>openSettings(true,false);
   $('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
   $('hintApply').onclick=applyHint;
   $('bbBuy').onclick=confirmBoosterBuy;$('bbClose').onclick=()=>closeScrim('scrimBuy');
@@ -1936,12 +1941,13 @@ function bind(){
   $('setPrivacy').onclick=()=>{try{openExternal('https://duckdoku.com/privacy');}catch(e){}}; // CF static (always-on, clean URL); NOT API_BASE (Render 404s extensionless + cold-starts)
   $('setContact').onclick=()=>{try{openExternal('https://t.me/ImPickleJonn');}catch(e){}};
   $('setRestart').onclick=()=>{closeScrim('scrimSet');startLevel('levels',levelIdx);};
+  $('setTutorial').onclick=()=>{closeScrim('scrimSet');startFTUE();};
   // ----- bottom nav -----
   $('navStart').onclick=()=>{ftue=null;ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;$('app').classList.remove('tut');show('home');refreshHome();};
   $('navShop').onclick=openShopScreen;
   $('navAlbum').onclick=()=>{if(!albumUnlocked()){navAlbumLockMsg();return;}openAlbum();};
   $('shopBack').onclick=exitShop;
-  $('shopGear').onclick=()=>openSettings(false);
+  $('shopGear').onclick=()=>openSettings(false,false);
   $('albumBack').onclick=()=>{show('home');refreshHome();};
   $('homeGold').onclick=openShopScreen;$('gameGold').onclick=openShop;$('albumGold').onclick=openShopScreen;$('shopGold').onclick=openShopScreen;
   // buy delegation for both shop surfaces (rows carry data-buy)

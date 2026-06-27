@@ -1775,7 +1775,7 @@ function ftueNextHand(){const n=(ftue.markTargets||[]).find(([r,c])=>gstate[r][c
 // Beat A: place the first duck (guided).
 function ftueStep0(){ftue.step=0;ftueDim(true);ftue.target=ftue.duck1.slice();ftueSpot([ftue.target]);showCoach('top',FT.place);hideCoach('bot');hideGotit();handOver(ftue.target[0],ftue.target[1]);}
 // Beat B: praise + a "Got it!" button the player taps (no dim, full board visible).
-function ftueStepWellDone(){ftue.step=1;ftueDim(false);handHide();ftueAllowOnly([]); /* block board taps */ showCoach('top',FT.wellDone);hideCoach('bot');showGotit();setTimeout(()=>{if(ftue&&ftue.step===1)handOverEl($('ftueGotit'),20);},380);} /* finger points to Got it (nudged below the label) once it has popped in */
+function ftueStepWellDone(){ftue.step=1;ftueDim(false);handHide();ftueAllowOnly([]); /* block board taps */ showCoach('top',FT.wellDone);hideCoach('bot');showGotit();setTimeout(()=>{if(ftue&&ftue.step===1)handOverEl($('ftueGotit'),40);},380);} /* finger points up at Got it from BELOW the button so the label stays clear */
 // Beat C: exclude the first duck's whole row + column (the cross / T).
 function ftueStepRowCol(){ftue.step=2;ftueDim(true);handHide();hideGotit();
   const [dr,dc]=ftue.duck1;const cells=[];

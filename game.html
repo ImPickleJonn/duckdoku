@@ -395,6 +395,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 .winscrim h2,.losescrim h2{color:#fff;text-shadow:0 2px 0 var(--orange-d);font-size:9vw;margin:0;}
 .winscrim p,.losescrim p{color:#E9D9C9;margin:2px 0 8px;}
 .winscrim .btn,.losescrim .btn{width:100%;max-width:320px;}
+#btnLoseHome{max-width:236px;margin-top:14px;}
 
 #album{background:var(--bg);justify-content:flex-start;padding-left:0;padding-right:0;}
 .album-scroll{width:100%;max-width:480px;margin:0 auto;flex:1;overflow-y:auto;padding:2px 14px calc(var(--safe-bot) + 24px);-webkit-overflow-scrolling:touch;}
@@ -791,8 +792,8 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   <video id="fvsad" loop muted playsinline preload="auto"><source src="assets/ducks/face-sad.mp4?v=042" type="video/mp4"></video>
   <video id="fvbsthint" loop muted playsinline preload="auto"><source src="assets/ducks/bst-hint.mp4?v=042" type="video/mp4"></video>
   <video id="fvbstundo" loop muted playsinline preload="auto"><source src="assets/ducks/bst-undo.mp4?v=042" type="video/mp4"></video>
-  <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/raw/victory-1.mp4" type="video/mp4"></video>
-  <video id="fvlose" loop muted playsinline preload="auto"><source src="assets/ducks/raw/defeat-1.mp4" type="video/mp4"></video>
+  <video id="fvwin" loop muted playsinline preload="auto"><source src="assets/ducks/raw/victory-1.mp4?v=blk1" type="video/mp4"></video>
+  <video id="fvlose" loop muted playsinline preload="auto"><source src="assets/ducks/raw/defeat-1.mp4?v=blk1" type="video/mp4"></video>
 </div>
 
 <div class="fx" id="fx"></div>
@@ -1185,7 +1186,7 @@ function blobLoadFaces(){
 // CELEBRATION rotation: a DIFFERENT full-body clip each time, keyed onto #winCele / #loseCele.
 // WIN = 10 victory clips (victory-1..10.mp4), LOSE = 5 defeat clips (defeat-1..5.mp4). Persisted cycle.
 function makeRotator(clipKey,prefix,count,saveKey){
-  const blobs=[]; const url=n=>'assets/ducks/raw/'+prefix+'-'+(n+1)+'.mp4';
+  const blobs=[]; const url=n=>'assets/ducks/raw/'+prefix+'-'+(n+1)+'.mp4?v=blk1';
   function preload(){for(let n=0;n<count;n++){if(blobs[n])continue;fetch(url(n)).then(r=>r.ok?r.blob():Promise.reject()).then(b=>{blobs[n]=URL.createObjectURL(b);}).catch(()=>{});}}
   function setN(n){const v=faceVid[clipKey];if(!v)return;const apply=(src)=>{if(v.src===src)return;v.src=src;try{v.load();}catch(e){}if(_playing.has(clipKey)){try{const p=v.play&&v.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}};
     if(blobs[n]){apply(blobs[n]);return;}
@@ -1328,6 +1329,9 @@ function tryGuess(r,c){
 function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),460);}if(gstate[r]&&gstate[r][c]===DUCK)duckReact(r,c,'oops',1000);});shakeBoard();}
 
 /* ---------- win / lose ---------- */
+const WIN_SUBS=[["You solved it. The duck is delighted.","Ты решил. Утка в восторге."],["Every duck found its perfect spot.","Каждая утка нашла своё место."],["Flawless logic. The pond is proud.","Безупречная логика. Пруд гордится."],["The whole pond is throwing a party.","Весь пруд устроил вечеринку."],["Not a single feather out of place.","Ни одного пёрышка не на месте."],["Smart moves. The duck approves.","Умные ходы. Утка одобряет."],["That was absolutely quacktastic.","Это было просто кряк-классно."],["You cracked it. The ducks cheer.","Ты справился. Утки ликуют."],["Puzzle solved without a ruffle.","Решено без единой заминки."],["The duck salutes your brain.","Утка салютует твоему уму."]];
+const LOSE_SUBS=[["No worries. Try the puzzle again.","Ничего страшного. Попробуй снова."],["So close. Give it another waddle.","Так близко. Попробуй ещё разок."],["Even ducks slip on the pond.","Даже утки скользят по пруду."],["Shake off those feathers and retry.","Отряхни пёрышки и попробуй снова."],["The duck still believes in you.","Утка всё ещё в тебя верит."],["Almost had it. One more go?","Почти получилось. Ещё разок?"],["Ruffled, but not done. Try again.","Взъерошен, но не сдался. Ещё раз."],["A little splash. Back in you go.","Небольшой всплеск. Давай ещё раз."],["The pond awaits your comeback.","Пруд ждёт твоего возвращения."],["Dust off and dive back in.","Соберись и ныряй обратно."]];
+function pickSub(a){return a[Math.floor(Math.random()*a.length)];}
 function onWin(){ended=true;gameLive=false;nextWinVariant();allDucksReact('happy',WIN_MODAL_DELAY+1200);_progUntil=Date.now()+WIN_MODAL_DELAY+1200;haptic('win');soundWin();confettiRain();
   const stars=starsForWin();
   const praise=L(["Awesome!","Brilliant!","Quacktastic!","Well done!"][stars-1]||"Awesome!",["Отлично!","Блестяще!","Кряк-класс!","Молодец!"][stars-1]||"Отлично!");
@@ -1338,13 +1342,13 @@ function onWin(){ended=true;gameLive=false;nextWinVariant();allDucksReact('happy
   try{if(window.DuckAdjust)DuckAdjust.fire('levelComplete');}catch(e){}
   $('winTitle').textContent=praise;
   $('winGold').innerHTML=COIN_SVG+'<span>+'+goldGain+'</span>';
-  $('winSub').textContent=L("You solved it. The duck is delighted.","Ты решил. Утка в восторге.");
+  {const ws=pickSub(WIN_SUBS);$('winSub').textContent=L(ws[0],ws[1]);}
   $('btnNext').textContent=t('next');
   showModalSoon('scrimWin',WIN_MODAL_DELAY);} // let the board ducks celebrate first, then the victory screen
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
 function onLose(){ended=true;gameLive=false;nextLoseVariant();allDucksReact('sad',LOSE_MODAL_DELAY+800);MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('lose');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
-  $('loseSub').textContent=L("No worries. Try the puzzle again.","Ничего страшного. Попробуй снова.");
+  {const ls=pickSub(LOSE_SUBS);$('loseSub').textContent=L(ls[0],ls[1]);}
   showModalSoon('scrimLose',LOSE_MODAL_DELAY);} // let the board ducks cry first, then the loss popup
 
 /* ---------- gold helpers ---------- */

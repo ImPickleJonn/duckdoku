@@ -912,6 +912,23 @@ function mxBoot(){
 function mxAppOpen(kind){const now=Math.floor(Date.now()/1000);let since=0;try{const p=+localStorage.getItem('dd.lastOpen')||0;since=p?now-p:0;localStorage.setItem('dd.lastOpen',String(now));}catch(e){}
   MX.track('AppOpenedOrRestored',{restore_type:kind,since_last_open_sec:since,is_returning:since>=72000,level:(save&&save.levelsDone+1)||1});}
 
+// ---- Telegram write-access (bots now need explicit permission to DM). Ask at most once / 24h. ----
+function reportWriteAccess(allows){try{if(!initData)return;fetch(API_BASE+'/api/write-access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:initData,allowsWrite:!!allows})}).catch(function(){});}catch(e){}}
+function verifyAllowedMessaging(){try{
+  if(!TG||!TG.initDataUnsafe||!TG.initDataUnsafe.user)return; // web / native: no Mini App DM permission to ask about
+  var u=TG.initDataUnsafe.user, allows=!!u.allows_write_to_pm;
+  reportWriteAccess(allows);
+  if(allows)return; // already allowed (granted before, or the user has started / messaged the bot)
+  var k='dd.writeAskedAt', last=0; try{last=+localStorage.getItem(k)||0;}catch(e){}
+  if(last&&(Date.now()-last)/3600000<24)return; // asked within the last 24h, do not nag
+  try{localStorage.setItem(k,String(Date.now()));}catch(e){}
+  if(typeof TG.requestWriteAccess==='function'){TG.requestWriteAccess(function(granted){
+    try{MX.track(granted?'RequestWriteAccess_Granted':'RequestWriteAccess_Denied');}catch(e){}
+    reportWriteAccess(!!granted);
+  });}
+}catch(e){}}
+
+
 /* ---------- i18n ---------- */
 const I18N={
   en:{play:"Play",zen:"Zen",daily:"Daily",shop:"Shop",howto:"How to play",undo:"Undo",hint:"Hint",placeduck:"Place",
@@ -2011,7 +2028,8 @@ function fcmInit(){
 function boot(){applyI18n();document.querySelectorAll('.cicon').forEach(e=>{e.innerHTML=COIN_SVG;});bind();bindPaint();fillHow();refreshHome();updateGoldHud();initFaces();mxBoot();fcmInit();
   try{if(window.DuckAdjust){DuckAdjust.init();DuckAdjust.fire('appOpen');}}catch(e){}
   loadSkus();pollPurchases();cloudLoad();
-  if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,lang:LANG,levelsDone:(save&&save.levelsDone)||0,tz:-(new Date().getTimezoneOffset()/60)})}).catch(()=>{});}catch(e){}}
+  if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,lang:LANG,levelsDone:(save&&save.levelsDone)||0,tz:-(new Date().getTimezoneOffset()/60),allowsWrite:!!(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.allows_write_to_pm)})}).catch(()=>{});}catch(e){}}
+  try{setTimeout(verifyAllowedMessaging,1500);}catch(e){}
   // first launch ever on this device: skip the home screen, drop straight into the tutorial level
   try{if(!localStorage.getItem('dd.launched')&&!save.tutorialDone){startPlay();}localStorage.setItem('dd.launched','1');}catch(e){}
   updateNav(curScreen()); // show the bottom nav on whatever screen we boot into (home, or game during the first-run tutorial)

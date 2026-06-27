@@ -296,7 +296,20 @@ app.post('/api/heartbeat', (req, res) => {
     first: user.first_name,
     name: user.first_name || user.username || 'Duck',
   });
+  if (body.allowsWrite === true || body.allowsWrite === false) { const s = users.get(user.id); if (s) { s.allowsWrite = body.allowsWrite; if (body.allowsWrite) s.optOut = false; } }
   lbSaveSoon();
+  res.json({ ok: true });
+});
+
+// Telegram write-access: the Mini App reports whether the bot is allowed to DM this user.
+app.post('/api/write-access', (req, res) => {
+  const body = req.body || {};
+  const user = validateInitData(body.initData);
+  if (!user) return res.status(401).json({ error: 'invalid initData' });
+  const allows = body.allowsWrite === true;
+  const s = noteUser(user.id, { chatId: user.id, allowsWrite: allows });
+  if (s && allows) s.optOut = false; // granted -> the bot may DM again
+  reportEvent('write_access', { userId: user.id, allows });
   res.json({ ok: true });
 });
 
@@ -609,7 +622,7 @@ const NOTIF_MAX_PER_PASS = 25;
 function nowYMD() { return new Date().toISOString().slice(0, 10); }
 function inQuiet(s) { const off = Number(s.tz) || 0; const h = (((new Date().getUTCHours()) + off) % 24 + 24) % 24; return h < 9 || h >= 22; }
 function notifCan(s, key) {
-  if (!s || s.optOut || !s.chatId) return false;
+  if (!s || s.optOut || !s.chatId || s.allowsWrite === false) return false;
   if (inQuiet(s)) return false;
   if (Date.now() - (s.lastNotifTs || 0) < NOTIF_MIN_SPACING_MS) return false;
   if (s.notifYMD === nowYMD() && (s.notifN || 0) >= NOTIF_CAP_DAY) return false;
@@ -685,7 +698,7 @@ function statsText() {
 async function handleCommand(m) {
   const txt = String(m.text || '').trim(); const uid = m.from && m.from.id; const chat = m.chat.id;
   const lang = ((m.from && m.from.language_code) || 'en').slice(0, 2) === 'ru' ? 'ru' : 'en';
-  noteUser(uid, { chatId: chat, lang, lastActive: Date.now(), first: m.from && m.from.first_name });
+  { const _s = noteUser(uid, { chatId: chat, lang, lastActive: Date.now(), first: m.from && m.from.first_name, allowsWrite: true }); if (_s) _s.optOut = false; } // messaged the bot -> bot may DM
   const cmd = (txt.match(/^\/([a-z]+)/) || [, ''])[1];
   if (cmd === 'start') return tg('sendMessage', { chat_id: chat, text: welcomeText(m.from && (m.from.first_name || m.from.username)), reply_markup: playKb(lang) });
   if (cmd === 'help' || cmd === 'howto' || cmd === 'how') return tg('sendMessage', { chat_id: chat, text: BOTMSG.help[lang], reply_markup: playKb(lang) });
@@ -792,7 +805,7 @@ app.post('/api/broadcast', async (req, res) => {
   if (!item && b.media) item = { id: 'broadcast', kind: b.kind || 'animation', media: b.media, en: (b.cap && b.cap.en) || '', ru: (b.cap && b.cap.ru) || (b.cap && b.cap.en) || '' };
   if (!item) return res.status(400).json({ error: 'pass id, or media + cap' });
   const opt = new Set(); const recip = new Map(); // chatId -> lang
-  for (const [uid, s] of users) { if (s.optOut) { opt.add(String(uid)); continue; } if (s.chatId) recip.set(String(s.chatId), s.lang === 'ru' ? 'ru' : 'en'); }
+  for (const [uid, s] of users) { if (s.optOut || s.allowsWrite === false) { opt.add(String(uid)); continue; } if (s.chatId) recip.set(String(s.chatId), s.lang === 'ru' ? 'ru' : 'en'); }
   if (dbReady && dbPool) {
     try { const q = await dbPool.query('SELECT tg_id, lang FROM players'); for (const r of q.rows) { const id = String(r.tg_id); if (opt.has(id) || recip.has(id)) continue; recip.set(id, r.lang === 'ru' ? 'ru' : 'en'); } } catch (e) {}
   }

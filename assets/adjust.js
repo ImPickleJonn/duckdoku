@@ -34,6 +34,18 @@
   function filled(v) { return typeof v === 'string' && v && v.indexOf('__') !== 0; }
   function isNative() { try { return !!(global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform()); } catch (e) { return false; } }
   var ready = false;
+  // paid/FB install source -> campaign. First-touch in dd.camp (so mxBoot picks it up next session);
+  // bridged live to Mixpanel via window._ddOnAttribution (defined in game.html).
+  function _onAttribution(at){
+    try{
+      if(!at) return;
+      var net=String(at.network||''), camp=String(at.campaign||'');
+      var label=camp||net; if(!label) return;
+      var existing=''; try{ existing=localStorage.getItem('dd.camp')||''; }catch(_){}
+      if(!existing){ try{ localStorage.setItem('dd.camp',label); }catch(_){} }
+      try{ if(typeof global._ddOnAttribution==='function') global._ddOnAttribution(existing||label, net, camp); }catch(_){}
+    }catch(e){}
+  }
 
   var DuckAdjust = {
     init: function () {
@@ -48,6 +60,7 @@
         try { if (cfg.setLogLevel && Cfg['LogLevel' + ADJUST_CONFIG.logLevel] !== undefined) cfg.setLogLevel(Cfg['LogLevel' + ADJUST_CONFIG.logLevel]); } catch (e) {}
         // Facebook / Meta attribution link.
         try { if (cfg.setFbAppId && filled(ADJUST_CONFIG.fbAppId)) cfg.setFbAppId(ADJUST_CONFIG.fbAppId); } catch (e) {}
+        try { var _cb=function(at){ try{ _onAttribution(at); }catch(e){} }; if(cfg.setAttributionCallback) cfg.setAttributionCallback(_cb); else if(cfg.setAttributionCallbackListener) cfg.setAttributionCallbackListener(_cb); } catch (e) {}   // paid/FB install source -> Mixpanel campaign
         A.initSdk(cfg);
         ready = true;
         // iOS 14.5+: ask for App Tracking so IDFA attribution can run (no-op on Android).

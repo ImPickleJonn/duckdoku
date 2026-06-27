@@ -695,12 +695,29 @@ function statsText() {
   for (const [, s] of users) { if (now - (s.lastActive || 0) < 86400000) active++; if (s.optOut) opted++; }
   return 'Duckdoku stats (in memory since last restart)\nKnown users: ' + total + '\nActive last 24h: ' + active + '\nOpted out: ' + opted;
 }
+// Bot deep-link campaign -> Mixpanel user profile (first-touch via $set_once). Lets
+// t.me/<bot>?start=camp<Source> attribute the SAME `campaign` user property the Mini App
+// startapp path sets. distinct_id = telegram id (matches the client MX distinct_id).
+function mpSetCampaign(tgId, label) {
+  try {
+    const token = process.env.MIXPANEL_TOKEN || '';
+    if (!token || !tgId || !label) return;
+    const payload = { $token: token, $distinct_id: String(tgId), $set_once: { campaign: label, campaign_via: 'bot_start' } };
+    const data = Buffer.from(JSON.stringify(payload)).toString('base64');
+    fetch('https://api.mixpanel.com/engage', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'data=' + encodeURIComponent(data) }).catch(() => {});
+  } catch (e) {}
+}
 async function handleCommand(m) {
   const txt = String(m.text || '').trim(); const uid = m.from && m.from.id; const chat = m.chat.id;
   const lang = ((m.from && m.from.language_code) || 'en').slice(0, 2) === 'ru' ? 'ru' : 'en';
   { const _s = noteUser(uid, { chatId: chat, lang, lastActive: Date.now(), first: m.from && m.from.first_name, allowsWrite: true }); if (_s) _s.optOut = false; } // messaged the bot -> bot may DM
   const cmd = (txt.match(/^\/([a-z]+)/) || [, ''])[1];
-  if (cmd === 'start') return tg('sendMessage', { chat_id: chat, text: welcomeText(m.from && (m.from.first_name || m.from.username)), reply_markup: playKb(lang) });
+  if (cmd === 'start') {
+    const sp = txt.replace(/^\/start(@\w+)?\s*/i, '');
+    const cm = /^camp([A-Za-z0-9_-]{1,40})$/i.exec(sp);
+    if (cm && uid) mpSetCampaign(uid, cm[1]);   /* ?start=camp<Source> bot deep-link -> Mixpanel user campaign */
+    return tg('sendMessage', { chat_id: chat, text: welcomeText(m.from && (m.from.first_name || m.from.username)), reply_markup: playKb(lang) });
+  }
   if (cmd === 'help' || cmd === 'howto' || cmd === 'how') return tg('sendMessage', { chat_id: chat, text: BOTMSG.help[lang], reply_markup: playKb(lang) });
   if (cmd === 'faq') return tg('sendMessage', { chat_id: chat, text: BOTMSG.faq[lang], reply_markup: playKb(lang) });
   if (cmd === 'about') return tg('sendMessage', { chat_id: chat, text: BOTMSG.about[lang], reply_markup: playKb(lang) });

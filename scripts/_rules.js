@@ -1,0 +1,28 @@
+const { chromium } = require('playwright');
+const PORT = process.argv[2]; const SHOT = process.argv[3]; const j = o => JSON.stringify(o);
+(async () => {
+  const b = await chromium.launch();
+  const p = await (await b.newContext({ viewport: { width: 412, height: 892 }, deviceScaleFactor: 2 })).newPage();
+  const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 140)));
+  await p.goto('http://127.0.0.1:' + PORT + '/game.html', { waitUntil: 'load' }); await p.waitForTimeout(3200);
+  await p.evaluate(() => { save.tutorialDone = true; save.levelsDone = 14; save.country = 'US'; save.name = 'Pickle'; save.avatar = 'avatar-3'; save.rulesHidden = false; persist(); ftue = null; cupClearOverlays && cupClearOverlays(); if (typeof TOURNEY !== 'undefined') TOURNEY.active = false; startLevel('levels', 5); });
+  await p.waitForTimeout(600);
+  const s1 = await p.evaluate(() => { const c = $('chips'), t = $('chipsToggle'); return { chipsShown: !!(c && c.offsetParent !== null && c.offsetHeight > 0), togglePresent: !!t, norules: $('app').classList.contains('norules') }; });
+  console.log('normal shown:', j(s1));
+  await p.screenshot({ path: SHOT + '/rules_shown.png' });
+  const s2 = await p.evaluate(() => { $('chipsToggle').click(); const c = $('chips'), tg = $('chipsToggle').querySelector('svg'); return { norules: $('app').classList.contains('norules'), chipsHidden: !(c.offsetHeight > 0), chevronRot: getComputedStyle(tg).transform !== 'none', saved: !!save.rulesHidden, toggleVisible: $('chipsToggle').offsetHeight > 0 }; });
+  console.log('after collapse:', j(s2));
+  await p.screenshot({ path: SHOT + '/rules_collapsed.png' });
+  const s3 = await p.evaluate(() => { $('chipsToggle').click(); return { norules: $('app').classList.contains('norules'), chipsShown: $('chips').offsetHeight > 0, saved: !!save.rulesHidden }; });
+  console.log('after expand:', j(s3));
+  const s4 = await p.evaluate(() => { save.rulesHidden = true; persist(); startLevel('levels', 6); return { norulesAfterNewLevel: $('app').classList.contains('norules'), chipsHidden: !($('chips').offsetHeight > 0) }; });
+  console.log('persist new level:', j(s4));
+  const s5 = await p.evaluate(() => { save.rulesHidden = false; persist(); beginTourneyRun(3); return { cup: $('app').classList.contains('cup'), wrapOrder: getComputedStyle($('chipswrap')).order, chipsShown: $('chips').offsetHeight > 0, togglePresent: !!$('chipsToggle') }; });
+  console.log('WC:', j(s5));
+  await p.waitForTimeout(400); await p.screenshot({ path: SHOT + '/rules_wc.png' });
+  const s6 = await p.evaluate(() => { $('chipsToggle').click(); return { norules: $('app').classList.contains('norules'), chipsHidden: !($('chips').offsetHeight > 0) }; });
+  console.log('WC collapse:', j(s6));
+  await p.screenshot({ path: SHOT + '/rules_wc_collapsed.png' });
+  console.log('pageerrors:', errs.length ? errs.slice(0, 4).join(' | ') : 'none');
+  await b.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

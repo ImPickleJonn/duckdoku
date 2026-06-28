@@ -88,6 +88,18 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 
 /* rules chips */
 .chips{width:100%;max-width:460px;display:flex;gap:0;margin-bottom:12px;background:var(--card);border-radius:18px;box-shadow:0 3px 0 var(--shadow);padding:9px 4px;}
+/* collapse toggle for the rules chips (a little chevron tab that is part of the card) */
+.chipswrap{width:100%;max-width:460px;display:flex;flex-direction:column;align-items:center;}
+/* expanded: a flush, shadowless extension of the rules card (same colour) so it reads as one piece */
+.rulestoggle{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--card);border-radius:12px 12px 0 0;padding:3px 24px 5px;margin-bottom:-3px;position:relative;z-index:1;cursor:pointer;}
+.rulestoggle svg{width:15px;height:15px;transition:transform .25s;opacity:.5;}
+.rulestoggle .rtlbl{display:none;font-size:8.5px;font-weight:900;letter-spacing:1px;color:var(--ink-soft);line-height:1;}
+.rulestoggle:active{transform:translateY(1px);}
+#app.norules #chips{display:none;}
+/* collapsed: a standalone floating pill, with a clear gap so it never sits on the progress/lives row */
+#app.norules .rulestoggle{margin-bottom:12px;border-radius:14px;padding:5px 18px 6px;box-shadow:0 2px 0 var(--shadow);}
+#app.norules .rulestoggle svg{transform:rotate(180deg);opacity:.6;}
+#app.norules .rulestoggle .rtlbl{display:block;}
 .chip{flex:1;display:flex;align-items:center;gap:6px;padding:2px 7px;font-size:2.65vw;color:var(--ink);font-weight:800;line-height:1.15;}
 .chip+.chip{border-left:2px solid var(--bg);}
 .chipvis{width:36px;height:36px;flex:none;}
@@ -132,10 +144,10 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .qcell.spot{z-index:10!important;outline:3px solid var(--gold);box-shadow:0 0 16px 3px rgba(255,210,63,.85);pointer-events:auto!important;}
 .qcell.ftueanchor{z-index:10!important;} /* a placed duck rides above the tutorial dim (no outline) so the lesson's anchor cell stays visible */
 #app.tutdim{background:#241B19;}
-#app.tutdim .topbar,#app.tutdim .statusrow,#app.tutdim .chips,#app.tutdim .boosters{opacity:.22;pointer-events:none;}
+#app.tutdim .topbar,#app.tutdim .statusrow,#app.tutdim .chips,#app.tutdim .rulestoggle,#app.tutdim .boosters{opacity:.22;pointer-events:none;}
 /* ---- hint overlay (Meowdoku-style: darken, pill, spotlight, Apply) ---- */
 #app.hintmode{background:#241B19;}
-#app.hintmode .topbar,#app.hintmode .statusrow,#app.hintmode .chips,#app.hintmode .boosters{opacity:.22;pointer-events:none;}
+#app.hintmode .topbar,#app.hintmode .statusrow,#app.hintmode .chips,#app.hintmode .rulestoggle,#app.hintmode .boosters{opacity:.22;pointer-events:none;}
 .qcell.hintx{z-index:10!important;outline:3px solid var(--heart);box-shadow:0 0 12px 2px rgba(240,84,76,.7);pointer-events:none;}
 .qcell.hintx svg{opacity:.9;}
 #hintPill{position:fixed;left:50%;top:calc(var(--safe-top) + 124px);transform:translateX(-50%);width:min(90vw,420px);background:#FFFDF8;color:var(--ink);border-radius:18px;padding:15px 18px;font-size:4vw;font-weight:800;text-align:left;line-height:1.36;box-shadow:0 10px 30px rgba(0,0,0,.42);z-index:88;display:none;}
@@ -188,7 +200,7 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 .coach .bubble .lampicon{width:28px;height:28px;vertical-align:middle;margin-left:5px;}
 .coach .gotit{margin-top:12px;}
 /* tutorial: hide ALL hud chrome (keep their layout space so the board stays centered) */
-#app.tut .topbar,#app.tut .statusrow,#app.tut .chips,#app.tut .boosters{visibility:hidden!important;}
+#app.tut .topbar,#app.tut .statusrow,#app.tut .chips,#app.tut .rulestoggle,#app.tut .boosters{visibility:hidden!important;}
 /* "Got it!" CTA shown right after the first guided placement */
 #ftueGotitWrap{position:fixed;left:0;right:0;bottom:calc(var(--safe-bot) + 42px);z-index:86;display:none;justify-content:center;padding:0 18px;pointer-events:none;}
 #ftueGotitWrap.on{display:flex;animation:gotitpop .34s cubic-bezier(.34,1.56,.64,1);}
@@ -597,8 +609,8 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 
     <div class="gspace"></div>
 
-    <div class="wcgoal" id="wcGoal"><svg class="goalsvg" viewBox="0 0 240 120"><defs><pattern id="wcnet" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M5.5 0V11M0 5.5H11" stroke="#fff" stroke-opacity=".30" stroke-width="1.1"/></pattern><linearGradient id="wcpost" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d4dbe4"/></linearGradient></defs><ellipse cx="120" cy="112" rx="103" ry="7" fill="rgba(0,0,0,.16)"/><path class="gnet" d="M36 104V32H204V104Z" fill="url(#wcnet)"/><path d="M36 32L50 18H190L204 32" fill="none" stroke="#c9d1db" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M50 18V96" stroke="#dfe5ec" stroke-width="2" opacity=".45"/><path d="M190 18V96" stroke="#dfe5ec" stroke-width="2" opacity=".45"/><path d="M36 104V38a6 6 0 0 1 6-6H198a6 6 0 0 1 6 6V104" fill="none" stroke="url(#wcpost)" stroke-width="9" stroke-linecap="round"/><path d="M36 104V38a6 6 0 0 1 6-6H198a6 6 0 0 1 6 6V104" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity=".75"/></svg><div class="goaltext" id="goalText">GOAL!</div></div>
-    <div class="chips" id="chips"></div>
+    <div class="wcgoal" id="wcGoal"><svg class="goalsvg" viewBox="0 0 240 120"><defs><pattern id="wcnet" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M5.5 0V11M0 5.5H11" stroke="#fff" stroke-opacity=".30" stroke-width="1.1"/></pattern><linearGradient id="wcpost" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d4dbe4"/></linearGradient></defs><ellipse cx="120" cy="108" rx="103" ry="7" fill="rgba(0,0,0,.16)"/><path class="gnet" d="M36 104V32H204V104Z" fill="url(#wcnet)"/><path d="M36 32L50 18H190L204 32" fill="none" stroke="#c9d1db" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M50 18V96" stroke="#dfe5ec" stroke-width="2" opacity=".45"/><path d="M190 18V96" stroke="#dfe5ec" stroke-width="2" opacity=".45"/><path d="M36 104V38a6 6 0 0 1 6-6H198a6 6 0 0 1 6 6V104" fill="none" stroke="url(#wcpost)" stroke-width="9" stroke-linecap="round"/><path d="M36 104V38a6 6 0 0 1 6-6H198a6 6 0 0 1 6 6V104" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity=".75"/></svg><div class="goaltext" id="goalText">GOAL!</div></div>
+    <div class="chipswrap" id="chipswrap"><button class="rulestoggle" id="chipsToggle" aria-label="toggle rules"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg><span class="rtlbl">RULES</span></button><div class="chips" id="chips"></div></div>
 
     <div class="statusrow" id="statusrow">
       <div class="progress">
@@ -1542,7 +1554,7 @@ function pressTile(r,c){const el=cellEl(r,c);if(!el)return;el.style.animation='n
 function heartBreakAt(r,c,onReveal){const el=cellEl(r,c);if(!el)return;const d=document.createElement('div');d.className='hbreak';d.innerHTML='<svg viewBox="0 0 32 32"><path class="hbl" fill="#F0544C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" d="'+HEART_L+'"/><path class="hbr" fill="#F0544C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" d="'+HEART_R+'"/></svg>';el.appendChild(d);if(onReveal)setTimeout(()=>{try{onReveal();}catch(e){}},950);setTimeout(()=>{try{d.remove();}catch(e){}},1300);}
 function breakHeartIcon(idx){const h=$('hearts');if(!h||idx<0)return;const svg=h.children[idx];if(svg){svg.classList.add('hbrk');setTimeout(()=>{try{svg.classList.remove('hbrk');}catch(e){}},560);}}
 function updateCount(){$('countVal').textContent=duckCount+'/'+N;const f=$('pfill');if(f)f.style.width=(N?Math.round(duckCount/N*100):0)+'%';}
-function renderHud(){$('toptitle').textContent=(typeof TOURNEY!=='undefined'&&TOURNEY.active)?(L("World Cup","Кубок")+"  "+((typeof TOURNEY!=='undefined'&&TOURNEY.goals)||0)+L(" goals"," голов")):(L("Level ","Уровень ")+(levelIdx+1));updateCount();renderHearts();renderChips();}
+function renderHud(){$('toptitle').textContent=(typeof TOURNEY!=='undefined'&&TOURNEY.active)?(L("World Cup","Кубок")+"  "+((typeof TOURNEY!=='undefined'&&TOURNEY.goals)||0)+L(" goals"," голов")):(L("Level ","Уровень ")+(levelIdx+1));updateCount();renderHearts();renderChips();applyRulesHidden();}
 function miniGrid(g){const cell=11,gap=2.5,pad=1,sz=3*cell+2*gap+2*pad;let s='<svg class="chipvis" viewBox="0 0 '+sz+' '+sz+'">';
   for(let r=0;r<3;r++)for(let c=0;c<3;c++){const x=pad+c*(cell+gap),y=pad+r*(cell+gap),v=g[r][c],cx=x+cell/2,cy=y+cell/2;
     s+='<rect x="'+x+'" y="'+y+'" width="'+cell+'" height="'+cell+'" rx="3" fill="#E7D5B5"/>';
@@ -1555,6 +1567,8 @@ function renderChips(){const c=$('chips');const items=[
     {g:[['d','x','x'],['x','',''],['x','','']],t:L("1 Duck per column and row","1 на столбец и ряд")},
     {g:[['x','x','x'],['x','d','x'],['x','x','x']],t:L("Ducks cannot touch","Утки не касаются")}];
   c.innerHTML=items.map(it=>'<div class="chip">'+miniGrid(it.g)+'<span class="chiptxt">'+it.t+'</span></div>').join('');}
+function applyRulesHidden(){const a=$('app');if(a)a.classList.toggle('norules',!!(save&&save.rulesHidden));}
+function toggleRules(){save.rulesHidden=!save.rulesHidden;persist();applyRulesHidden();try{haptic('light');}catch(e){}}
 function renderBoosters(){[['hint','cntHint','ownHint'],['placeduck','cntDuck','ownDuck']].forEach(([k,priceId,ownId])=>{const free=(save.freeBoosters&&save.freeBoosters[k])||0;const oe=$(ownId);if(oe){oe.textContent=free;oe.classList.toggle('out',free<=0);}const pe=$(priceId);if(pe)pe.style.display='none';/* no per-use gold price on the booster; cost lives only in the buy modal */});}
 function renderAll(){renderBoard();renderHud();renderBoosters();updateGoldHud();}
 function pulseCell(r,c){const el=cellEl(r,c);if(!el)return;el.classList.add('spot');setTimeout(()=>el.classList.remove('spot'),1800);}
@@ -2008,6 +2022,7 @@ function bind(){
   $('btnBack').onclick=()=>{if(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof wcConfirmQuit==='function'){wcConfirmQuit();return;}if(ftue){ftue=null;gameLive=false;}ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;$('app').classList.remove('tut');show('home');refreshHome();};
   $('ftueGotit').onclick=()=>{hideGotit();if(ftue&&ftue.active&&ftue.step===1)ftueStepRowCol();};
   $('btnGear').onclick=()=>openSettings(true,false);
+  $('chipsToggle').onclick=toggleRules;{const _rl=$('chipsToggle').querySelector('.rtlbl');if(_rl)_rl.textContent=L('RULES','ПРАВИЛА');}
   $('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
   $('hintApply').onclick=applyHint;
   $('bbBuy').onclick=confirmBoosterBuy;$('bbClose').onclick=()=>closeScrim('scrimBuy');
@@ -2210,7 +2225,7 @@ boot();
 #app.cup .pface canvas{display:none;}                          /* (#2) static soccer ball instead of the duck on the progress bar */
 #app.cup .pface .pfaceball{display:block;}
 /* (#1,#2) reorder #game children: goal up top, rules pills below the boosters */
-#app.cup .topbar{order:0;} #app.cup #wcGoal{order:1;} #app.cup .statusrow{order:2;} #app.cup .boardwrap{order:3;} #app.cup #boosters{order:4;} #app.cup #chips{order:5;margin-top:8px;}
+#app.cup .topbar{order:0;} #app.cup #wcGoal{order:1;} #app.cup .statusrow{order:2;} #app.cup .boardwrap{order:3;} #app.cup #boosters{order:4;} #app.cup #chipswrap{order:5;margin-top:8px;}
 /* the soccer goal at the top */
 .wcgoal{display:none;position:relative;width:min(74vw,300px);margin:0 auto;}
 #app.cup #wcGoal{display:block;}

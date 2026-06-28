@@ -1,0 +1,7 @@
+const fs = require('fs'); let s = fs.readFileSync('game.html', 'utf8');
+const NEW = '<svg class="goalsvg" viewBox="0 0 240 120"><defs><pattern id="wcnet" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M5.5 0V11M0 5.5H11" stroke="#fff" stroke-opacity=".30" stroke-width="1.1"/></pattern><linearGradient id="wcpost" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d4dbe4"/></linearGradient></defs><ellipse cx="120" cy="108" rx="103" ry="7" fill="rgba(0,0,0,.16)"/><path class="gnet" d="M36 104V32H204V104Z" fill="url(#wcnet)"/><path d="M36 32L50 18H190L204 32" fill="none" stroke="#c9d1db" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M50 18V96" stroke="#dfe5ec" stroke-width="2" opacity=".45"/><path d="M190 18V96" stroke="#dfe5ec" stroke-width="2" opacity=".45"/><path d="M36 104V38a6 6 0 0 1 6-6H198a6 6 0 0 1 6 6V104" fill="none" stroke="url(#wcpost)" stroke-width="9" stroke-linecap="round"/><path d="M36 104V38a6 6 0 0 1 6-6H198a6 6 0 0 1 6 6V104" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity=".75"/></svg>';
+const re = /<svg class="goalsvg"[\s\S]*?<\/svg>/;
+if (!re.test(s)) { console.log('goalsvg NOT found'); process.exit(1); }
+s = s.replace(re, NEW);
+fs.writeFileSync('game.html', s);
+console.log('goal post upgraded; viewBox 240x120 present:', s.includes('viewBox="0 0 240 120"'));

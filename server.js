@@ -20,6 +20,7 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
+const { guestUid } = require('./tourney');   // stable synthetic id for anonymous native players
 
 const app = express();
 const PORT = process.env.PORT || process.argv[2] || 3000;
@@ -244,9 +245,19 @@ app.post('/api/poll-purchases', async (req, res) => {
   res.json({ purchases: drainPending(user.id) });
 });
 
+// a Telegram user (validated initData) OR an anonymous native player keyed by a stable device id.
+// Native players resolve to a synthetic id so their progress persists + ranks like everyone else.
+function resolveUser(body) {
+  const u = validateInitData(body && body.initData);
+  if (u) return u;
+  const gid = body && body.guestId;
+  if (gid && typeof gid === 'string' && gid.length >= 4 && gid.length <= 80) return { id: guestUid(gid), first_name: '', username: '', guest: true };
+  return null;
+}
+
 // Cross-device save (optional, DB-gated). Server is source of truth.
 app.post('/api/sync/load', async (req, res) => {
-  const user = validateInitData((req.body || {}).initData);
+  const user = resolveUser(req.body || {});
   if (!user) return res.status(401).json({ error: 'invalid initData' });
   if (!dbReady) return res.json({ save: null });
   try {
@@ -263,7 +274,7 @@ app.post('/api/sync/load', async (req, res) => {
 });
 app.post('/api/sync/save', async (req, res) => {
   const body = req.body || {};
-  const user = validateInitData(body.initData);
+  const user = resolveUser(body);
   if (!user) return res.status(401).json({ error: 'invalid initData' });
   if (!dbReady) return res.json({ ok: true, persisted: false });
   const save = body.save;
@@ -320,10 +331,9 @@ app.post('/api/write-access', (req, res) => {
 // (levelsDone + 1, the same number the rest of the game shows). Cached ~60s.
 const LEADERBOARD_UNLOCK_LEVEL = 13; // MUST match the client const; only players who reached it are ranked
 let _lbCache = { ts: 0, top: [] };
-app.get('/api/leaderboard', async (req, res) => {
-  const now = Date.now();
-  if (now - _lbCache.ts < 60000) return res.json({ top: _lbCache.top });
-  const byUid = new Map(); // uid -> { name, done (=levelsDone) }
+// build the ranked list FRESH from the durable players table + the live in-memory map (TG and native both live here)
+async function computeLeaderboard() {
+  const byUid = new Map(); // uid -> { name, done, avatar }
   if (dbReady && dbPool) {
     try {
       const q = await dbPool.query('SELECT tg_id, first_name, username, save FROM players');
@@ -336,10 +346,46 @@ app.get('/api/leaderboard', async (req, res) => {
   }
   for (const [uid, s] of users) { const done = s.levelsDone || 0; const prev = byUid.get(String(uid)); if (!prev || done > prev.done) byUid.set(String(uid), { name: s.name || s.first || (prev && prev.name) || 'Duck', done, avatar: s.avatar || (prev && prev.avatar) || null }); }
   const arr = [];
-  for (const [, v] of byUid) { if (v.done >= LEADERBOARD_UNLOCK_LEVEL - 1) arr.push({ name: v.name, level: v.done + 1, avatar: v.avatar || null }); }
+  for (const [uid, v] of byUid) { if (v.done >= LEADERBOARD_UNLOCK_LEVEL - 1) arr.push({ uid: String(uid), name: v.name, level: v.done + 1, avatar: v.avatar || null }); }
   arr.sort((a, b) => b.level - a.level);
-  _lbCache = { ts: now, top: arr.slice(0, 50) };
+  return arr;
+}
+// upsert the caller's own progress so VIEWING the board registers them (esp. native players). Merges into any existing save.
+async function selfRegister(user, body) {
+  if (!user || !dbReady || !dbPool) return;
+  const lvls = Math.max(0, Math.min(9999, Math.floor(Number(body.levelsDone) || 0)));
+  if (lvls <= 0) return;
+  try {
+    const ex = await dbPool.query('SELECT save FROM players WHERE tg_id = $1', [String(user.id)]);
+    let sv = ex.rows[0] && ex.rows[0].save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { sv = {}; } } sv = sv || {};
+    sv.levelsDone = Math.max(Number(sv.levelsDone) || 0, lvls);
+    if (body.name) sv.name = String(body.name).slice(0, 24);
+    if (body.avatar) sv.avatar = String(body.avatar).slice(0, 300);
+    await dbPool.query(
+      `INSERT INTO players (tg_id, first_name, username, save, updated_at) VALUES ($1,$2,$3,$4, now())
+       ON CONFLICT (tg_id) DO UPDATE SET save = $4, updated_at = now()`,
+      [String(user.id), user.first_name || null, user.username || null, JSON.stringify(sv)]);
+  } catch (e) { console.error('[lb] self-register:', e.message); }
+}
+app.get('/api/leaderboard', async (req, res) => {
+  const now = Date.now();
+  if (now - _lbCache.ts < 60000) return res.json({ top: _lbCache.top });
+  const arr = await computeLeaderboard();
+  _lbCache = { ts: now, top: arr.slice(0, 50).map(r => ({ name: r.name, level: r.level, avatar: r.avatar })) };
   res.json({ top: _lbCache.top });
+});
+// caller-aware view: self-registers the viewer, computes FRESH (refreshed on every view), flags MY row + returns my rank
+app.post('/api/leaderboard', async (req, res) => {
+  const body = req.body || {};
+  const caller = resolveUser(body);
+  await selfRegister(caller, body);
+  const cid = caller ? String(caller.id) : null;
+  const arr = await computeLeaderboard();
+  const top = arr.slice(0, 50).map((r, i) => ({ rank: i + 1, name: r.name, level: r.level, avatar: r.avatar, me: !!(cid && r.uid === cid) }));
+  let me = null;
+  if (cid) { const idx = arr.findIndex(r => r.uid === cid); me = idx >= 0 ? { found: true, rank: idx + 1, level: arr[idx].level } : { found: false, rank: 0, level: 0 }; }
+  _lbCache = { ts: 0, top: [] };   // invalidate the GET cache so the next anonymous view reflects this registration
+  res.json({ top, me });
 });
 
 // ---- Adjust SERVER CALLBACK (install / attribution). In Adjust: Data management

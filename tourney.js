@@ -254,4 +254,4 @@ function register(app, deps){
   console.log('[tourney] routes mounted (seed, submit, history, countries, country, flag, claim-name)');
 }
 
-module.exports = { register, scoreRoom, makeBot, ROUND_MS };
+module.exports = { register, scoreRoom, makeBot, ROUND_MS, guestUid };

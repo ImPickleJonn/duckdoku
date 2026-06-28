@@ -892,6 +892,7 @@ app.get('/api/partner/user', async (req, res) => {
 app.get('/healthz', (req, res) => res.json({ ok: true, dbReady }));
 
 initSchema().finally(() => {
+  try { require('./tourney').register(app, { dbPool, validateInitData, users, noteUser }); } catch (e) { console.error('[tourney] mount:', e.message); }
   lbLoad();
   app.listen(PORT, () => console.log(`Duckdoku server on :${PORT} (iap ${BOT_TOKEN ? 'on' : 'off'})`));
   if (BOT_TOKEN) {

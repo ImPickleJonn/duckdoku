@@ -1172,7 +1172,7 @@ const REDX_SVG='<svg class="xmark" viewBox="0 0 64 64" fill="none" stroke="#E043
 const LAMP_SVG='<svg class="lampicon" viewBox="0 0 24 24" fill="#FFD23F" stroke="#6E4F44" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.2 1 2.5h6c0-1.3.3-1.8 1-2.5A6 6 0 0 0 12 3z"/><path d="M9 18h6M10 21h4" stroke-width="2" stroke-linecap="round"/></svg>';
 function heartSvg(on){return '<svg viewBox="0 0 24 24" fill="'+(on?'#F0544C':'#E4D2CC')+'"><path d="M12 21s-7-4.4-9.5-9C1 8.4 3 5 6.4 5c2 0 3.4 1.4 5.6 3.6C14.2 6.4 15.6 5 17.6 5 21 5 23 8.4 21.5 12c-2.5 4.6-9.5 9-9.5 9z"/></svg>';}
 // World Cup lives = RED CARDS that fill up (3 cards = out). `on` = a card already earned (a life lost).
-function redCardSvg(on){return '<svg viewBox="0 0 24 24">'+(on?'<rect x="6.5" y="3" width="11" height="18" rx="2.2" fill="#E0322B" stroke="#9e1b15" stroke-width="1.4"/>':'<rect x="6.5" y="3" width="11" height="18" rx="2.2" fill="none" stroke="#cdbcb4" stroke-width="1.6" stroke-dasharray="2.6 2.6"/>')+'</svg>';}
+function redCardSvg(on){return '<svg viewBox="0 0 24 24">'+(on?'<rect x="6.5" y="3" width="11" height="18" rx="2.2" fill="#E0322B" stroke="#9e1b15" stroke-width="1.4" transform="rotate(13 12 12)"/>':'<rect x="6.5" y="3" width="11" height="18" rx="2.2" fill="none" stroke="#cdbcb4" stroke-width="1.6" stroke-dasharray="2.6 2.6" transform="rotate(13 12 12)"/>')+'</svg>';}
 function starSvg(on){return '<svg viewBox="0 0 24 24" fill="'+(on?'#FFD23F':'#5b4a3a')+'" stroke="#F4A92B" stroke-width="1"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>';}
 
 /* ---------- live in-grid duck head (blue-screen video, keyed onto cells) ---------- */
@@ -2329,8 +2329,7 @@ boot();
 .cirow .citx b{font-weight:900;color:var(--ink);font-size:14px;}
 .cirow .citx span{font-size:12.5px;color:var(--ink-soft);line-height:1.32;}
 .cigrp{display:flex;}.cigrp svg{width:21px;height:21px;margin-left:-7px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.15));}.cigrp svg:first-child{margin-left:0;}
-.cicards{display:flex;gap:3px;}.cicards svg{width:17px;height:23px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));}
-.cicards svg:nth-child(1){transform:rotate(-9deg);}.cicards svg:nth-child(3){transform:rotate(9deg);}
+.cicards{display:flex;gap:4px;}.cicards svg{width:18px;height:24px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));}
 .ciball-wrap{position:relative;width:48px;height:40px;}.ciball-wrap .ciball{width:40px;height:40px;object-fit:contain;}
 .ciball-wrap .ciflag{position:absolute;right:-2px;bottom:0;width:20px;height:14px;border-radius:3px;object-fit:cover;border:1.4px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3);}
 .citrophy svg{width:42px;height:42px;}
@@ -2713,7 +2712,7 @@ function openCupInfo(){
   const cc=(typeof myCountry==='function'&&myCountry())||'';
   const flag = cc ? '<img class="ciflag" src="'+CUP_FLAG(cc)+'">' : '';
   const DUCK='<svg viewBox="0 0 22 22"><circle cx="11" cy="11" r="9" fill="#FFD23F"/><circle cx="8.6" cy="9.4" r="1.5" fill="#5a4630"/><path d="M13 10.6h5l-2.4 2.3H13z" fill="#F2A03D"/></svg>';
-  const CARD='<svg viewBox="0 0 16 22"><rect x="2" y="1.5" width="12" height="19" rx="2.4" fill="#E0322B" stroke="#9e1b15" stroke-width="1.4"/></svg>';
+  const CARD='<svg viewBox="0 0 16 22"><rect x="2" y="1.5" width="12" height="19" rx="2.4" fill="#E0322B" stroke="#9e1b15" stroke-width="1.4" transform="rotate(12 8 11)"/></svg>';
   const BALL='<img class="ciball" src="'+WC_BALL_SRC+'" alt="">';
   const TROPHY='<svg viewBox="0 0 24 24"><path d="M7 3h10v3.5a5 5 0 0 1-10 0V3z" fill="#FFD23F" stroke="#E0A21E" stroke-width="1.2"/><path d="M7 4H4v1.4a3 3 0 0 0 3 3M17 4h3v1.4a3 3 0 0 1-3 3" fill="none" stroke="#E0A21E" stroke-width="1.4"/><rect x="10" y="11" width="4" height="3.2" fill="#E0A21E"/><rect x="7.5" y="14" width="9" height="3.2" rx="1.3" fill="#C98A1A"/></svg>';
   const rows=[

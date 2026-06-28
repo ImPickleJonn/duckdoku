@@ -330,13 +330,13 @@ app.get('/api/leaderboard', async (req, res) => {
       for (const row of q.rows) {
         let sv = row.save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { sv = {}; } }
         const done = Number(sv && sv.levelsDone) || 0;
-        byUid.set(String(row.tg_id), { name: row.first_name || row.username || 'Duck', done });
+        byUid.set(String(row.tg_id), { name: (sv && sv.name) || row.first_name || row.username || 'Duck', done, avatar: (sv && sv.avatar) || null });
       }
     } catch (e) { console.error('[lb] db query:', e.message); }
   }
-  for (const [uid, s] of users) { const done = s.levelsDone || 0; const prev = byUid.get(String(uid)); if (!prev || done > prev.done) byUid.set(String(uid), { name: s.name || s.first || (prev && prev.name) || 'Duck', done }); }
+  for (const [uid, s] of users) { const done = s.levelsDone || 0; const prev = byUid.get(String(uid)); if (!prev || done > prev.done) byUid.set(String(uid), { name: s.name || s.first || (prev && prev.name) || 'Duck', done, avatar: s.avatar || (prev && prev.avatar) || null }); }
   const arr = [];
-  for (const [, v] of byUid) { if (v.done >= LEADERBOARD_UNLOCK_LEVEL - 1) arr.push({ name: v.name, level: v.done + 1 }); }
+  for (const [, v] of byUid) { if (v.done >= LEADERBOARD_UNLOCK_LEVEL - 1) arr.push({ name: v.name, level: v.done + 1, avatar: v.avatar || null }); }
   arr.sort((a, b) => b.level - a.level);
   _lbCache = { ts: now, top: arr.slice(0, 50) };
   res.json({ top: _lbCache.top });

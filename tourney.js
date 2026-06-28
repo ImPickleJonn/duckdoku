@@ -53,6 +53,12 @@ function register(app, deps){
         CREATE INDEX IF NOT EXISTS tr_seed    ON tourney_runs(seed);
         CREATE INDEX IF NOT EXISTS tr_uid_ts  ON tourney_runs(tg_id, created_at DESC);
         CREATE INDEX IF NOT EXISTS tr_country  ON tourney_runs(country);
+        CREATE TABLE IF NOT EXISTS tourney_names (
+          name_lower TEXT PRIMARY KEY,
+          tg_id      BIGINT NOT NULL,
+          name       TEXT,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
       `);
       console.log('[tourney] schema ready');
     } catch (e) { console.error('[tourney] schema:', e.message); }
@@ -171,7 +177,28 @@ function register(app, deps){
     res.json({ ok: true, country: cc });
   });
 
-  console.log('[tourney] routes mounted (seed, submit, history, countries, country, flag)');
+  // reserve a UNIQUE duck name. ok:false + taken:true if another player already holds it (case-insensitive).
+  app.post('/api/tourney/claim-name', async (req, res) => {
+    const body = req.body || {};
+    const user = validateInitData(body.initData);
+    if (!user) return res.status(401).json({ error: 'invalid initData' });
+    const name = String(body.name || '').trim().slice(0, 16);
+    if (!name) return res.json({ ok: false });
+    const nl = name.toLowerCase();
+    if (!dbPool) return res.json({ ok: true, name });          // no DB -> accept (best effort)
+    try {
+      const q = await dbPool.query('SELECT tg_id FROM tourney_names WHERE name_lower = $1', [nl]);
+      if (q.rows.length && String(q.rows[0].tg_id) !== String(user.id)) return res.json({ ok: false, taken: true });
+      await dbPool.query('DELETE FROM tourney_names WHERE tg_id = $1 AND name_lower <> $2', [String(user.id), nl]);  // release my old name
+      await dbPool.query(
+        `INSERT INTO tourney_names (name_lower, tg_id, name) VALUES ($1,$2,$3)
+         ON CONFLICT (name_lower) DO UPDATE SET tg_id = EXCLUDED.tg_id, name = EXCLUDED.name`,
+        [nl, String(user.id), name]);
+      res.json({ ok: true, name });
+    } catch (e) { console.error('[tourney] claim-name:', e.message); res.json({ ok: true, name }); }  // fail open
+  });
+
+  console.log('[tourney] routes mounted (seed, submit, history, countries, country, flag, claim-name)');
 }
 
 module.exports = { register, scoreRoom, makeBot, ROUND_MS };

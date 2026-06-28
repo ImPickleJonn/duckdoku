@@ -831,7 +831,7 @@ async function configureBotProfile() {
 // via Telegram initData and removes their server-side data. The page at
 // /delete-account also clears on-device localStorage.
 app.post('/api/delete-account', async (req, res) => {
-  const user = validateInitData((req.body || {}).initData);
+  const user = resolveUser(req.body || {});
   if (!user) return res.status(401).json({ error: 'invalid initData' });
   try { users.delete(user.id); } catch (e) {}
   try { drainPending(user.id); } catch (e) {}

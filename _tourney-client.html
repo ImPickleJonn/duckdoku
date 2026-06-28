@@ -59,9 +59,30 @@
 .cupsticker{display:flex;flex-direction:column;align-items:center;gap:4px;margin:2px auto 2px;}
 .cupsticker .cstag{font-size:12px;font-weight:900;color:#FFE7A0;letter-spacing:.3px;}
 .cupsticker .csimg{width:76px;height:76px;border-radius:16px;object-fit:cover;border:3px solid #FFC23C;box-shadow:0 0 16px rgba(255,194,60,.6);animation:podPop .5s cubic-bezier(.2,1.3,.45,1) backwards;animation-delay:.9s;background:#3b2f25;}
+/* full-screen sticker reveal (champion claim) */
+#scrimSticker .wincol{justify-content:center;gap:14px;}
+.stkreveal{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;}
+.stkrtag{font-size:16px;font-weight:900;color:#FFE7A0;letter-spacing:.4px;text-align:center;}
+.stkrimg{width:min(64vw,272px);aspect-ratio:1;object-fit:cover;border-radius:28px;border:5px solid #FFC23C;box-shadow:0 0 40px rgba(255,194,60,.72);background:#3b2f25;animation:stkrPop .6s cubic-bezier(.2,1.4,.45,1) backwards;}
+@keyframes stkrPop{0%{transform:scale(.4) rotate(-12deg);opacity:0}60%{transform:scale(1.07) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.stkrname{font-size:20px;font-weight:900;color:#fff;text-align:center;}
+#scrimSticker #stkrGo{width:min(86vw,420px);margin-top:6px;}
 /* room board */
 .tbig{width:100%;max-width:320px;}
 #tResVid{width:min(64vw,240px);aspect-ratio:1;display:block;margin:0 auto -6px;border-radius:18px;background:#000;}
+/* kill the WebView's gray play-button overlay so the clip never shows a tap-to-play box */
+#tResVid::-webkit-media-controls-overlay-play-button,#tResVid::-webkit-media-controls-start-playback-button,#tResVid::-webkit-media-controls,.cupvid::-webkit-media-controls-overlay-play-button,.cupvid::-webkit-media-controls-start-playback-button{display:none!important;-webkit-appearance:none;}
+/* first-frame poster sits OVER the clip so a non-autoplaying WebView can never show a gray play box; it fades only once the clip is actually rolling */
+.cupvidwrap{position:relative;width:min(64vw,240px);aspect-ratio:1;margin:0 auto -6px;border-radius:18px;overflow:hidden;background:#1b150e;}
+.cupvidwrap #tResVid{width:100%;height:100%;margin:0;border-radius:0;display:block;background:#1b150e;opacity:0;transition:opacity .3s ease;}
+.cupvidwrap.playing #tResVid{opacity:1;}   /* invisible until it actually plays, so its gray load-placeholder can never show */
+/* still poster: hidden, shown ONLY as a fallback if a device cannot autoplay (never a gray box, never an endless spinner) */
+.cupvidposter{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#1b150e;z-index:2;opacity:0;transition:opacity .25s ease;pointer-events:none;}
+.cupvidwrap.posterfallback .cupvidposter{opacity:1;}
+/* fast loader: spins while the clip loads, fades out the moment it actually plays */
+.cupvidloader{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;background:#1b150e;transition:opacity .3s ease;}
+.cupvidloader::before{content:"";width:34px;height:34px;border-radius:50%;border:4px solid rgba(255,255,255,.16);border-top-color:#FFC23C;animation:wcspin .7s linear infinite;}
+.cupvidwrap.playing .cupvidloader,.cupvidwrap.posterfallback .cupvidloader{opacity:0;pointer-events:none;}
 .troom{width:100%;max-width:340px;display:flex;flex-direction:column;gap:6px;margin:6px 0;}
 .trow{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:14px;background:#f2efee;border:2px solid #e7ddd8;transition:transform .25s,background .25s;}
 .trow.me{background:#FFF4D6;border-color:var(--orange);}
@@ -178,7 +199,7 @@
 
 <!-- Room result (full screen, podium) -->
 <div class="scrim winscrim cupresult" id="scrimCupRes"><div class="wincol">
-  <video id="tResVid" class="cupvid" autoplay loop muted playsinline preload="auto" disablepictureinpicture x-webkit-airplay="deny"></video>
+  <div class="cupvidwrap" id="tResWrap"><video id="tResVid" class="cupvid" autoplay loop muted playsinline preload="auto" disablepictureinpicture x-webkit-airplay="deny"></video><img class="cupvidposter" id="tResPoster" alt=""><div class="cupvidloader" id="tResLoader"></div></div>
   <h2 id="tResTitle">Room finished</h2>
   <div class="cuppod" id="cupPod"></div>
   <div id="cupExtra"></div>
@@ -186,6 +207,14 @@
   <div class="tprize" id="tPrize"></div>
   <button class="btn" id="tResClose" style="background:var(--blue);box-shadow:0 5px 0 var(--blue-d);color:#fff;width:100%">Let's go!</button>
 </div></div>
+
+<!-- Champion sticker reveal (full screen, after Claim) -->
+<div class="scrim winscrim" id="scrimSticker"><div class="wincol"><div class="stkreveal">
+  <div class="stkrtag" id="stkrTag">NEW World Cup sticker!</div>
+  <img class="stkrimg" id="stkrImg" alt="">
+  <div class="stkrname" id="stkrName"></div>
+  <button class="btn" id="stkrGo" style="background:var(--blue);box-shadow:0 5px 0 var(--blue-d);color:#fff">Let's go!</button>
+</div></div></div>
 
 <!-- History -->
 <div class="scrim" id="scrimCupHist"><div class="modal modal-rel">
@@ -352,6 +381,7 @@ function beginTourneyRun(seed){
   document.getElementById('app').classList.remove('tutdim','hintmode','tut'); document.getElementById('qboard').classList.remove('dim');
   $('hintPill').classList.remove('on'); $('hintApply').classList.remove('on');
   heartsEnabled=true; hearts=3;                                         // 3 LIVES, carried across every board of the run
+  save.rulesHidden=true;                                                // World Cup: rules collapsed by default
   TOURNEY={ active:true, seed:(seed>>>0), start:Date.now(), goals:0, board:0 };
   document.getElementById('app').classList.add('cup');                  // (#13) green grass field + (#10) boosters visible
   show('game'); gameLive=true;
@@ -383,7 +413,7 @@ function wcAbortRun(){                                                  // leave
 }
 
 /* ---- the full-screen result + top-3 podium ---- */
-let _tRevealT=[]; let _cupResMode='run';
+let _tRevealT=[]; let _cupResMode='run'; let _wonSticker=null;
 const PLACE_REWARD = {1:{gold:100,sticker:true},2:{gold:50},3:{gold:25}};
 const STAR_MINI = '<svg class="podstar" viewBox="0 0 24 24" fill="#FF7AC8"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45L2.6 9.45l6.5-.95z"/></svg>';
 // every row gets a duck avatar: a chosen one, a real photo/style, or a deterministic duck by name (bots).
@@ -465,11 +495,18 @@ function renderCupExtra(board, myRank){
   }).join('');
 }
 // load + AUTOPLAY the result clip robustly (muted + autoplay + retry) so WebViews/Telegram never show the gray play button
-function cupVidLoad(src){ const v=$('tResVid'); if(!v) return; try{
+let _cupVidT=0;
+function cupVidLoad(src){ const v=$('tResVid'),wrap=$('tResWrap'),ps=$('tResPoster'); if(!v) return; try{
+  clearTimeout(_cupVidT);
+  if(wrap){ wrap.classList.remove('playing'); wrap.classList.remove('posterfallback'); }   // show the spinning loader while it loads
+  if(ps){ try{ ps.src=src.replace(/\.mp4.*/,'.jpg'); }catch(e){} }                          // first frame, used only as a last-resort fallback
   v.muted=true; v.defaultMuted=true; v.setAttribute('muted',''); v.setAttribute('autoplay',''); v.playsInline=true; v.setAttribute('playsinline',''); v.removeAttribute('controls');
   v.src=src; try{ v.load(); }catch(e){}
-  const go=()=>{ try{ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} };
+  const reveal=()=>{ clearTimeout(_cupVidT); if(wrap) wrap.classList.add('playing'); };     // clip is rolling -> fade the loader, show the clip
+  try{ v.addEventListener('playing', reveal, {once:true}); }catch(e){}
+  const go=()=>{ try{ const p=v.play(); if(p&&p.then) p.then(reveal).catch(()=>{}); }catch(e){} };
   go(); ['loadeddata','canplay','canplaythrough'].forEach(ev=>{ try{ v.addEventListener(ev, go, {once:true}); }catch(e){} });
+  _cupVidT=setTimeout(()=>{ if(wrap && !wrap.classList.contains('playing')) wrap.classList.add('posterfallback'); }, 2200);   // autoplay truly blocked -> still frame instead of spinning forever
 }catch(e){} }
 function resolveCupResult(res){
   _tRevealT.forEach(clearTimeout); _tRevealT=[];
@@ -482,9 +519,8 @@ function resolveCupResult(res){
   const prize=(res&&res.prize)||{};
   if(prize.gold){ addGold(prize.gold); }
   // only the CHAMPION (#1) wins a NEW World Cup sticker for the album (until the set is complete)
-  let wonSticker = (myRank===1) ? grantCupSticker() : null;
-  const cs=$('cupSticker');
-  if(cs){ if(wonSticker){ cs.style.display=''; cs.innerHTML='<div class="cstag">'+L('NEW World Cup sticker!','НОВАЯ наклейка Кубка!')+'</div><img class="csimg" src="assets/stickers/'+wonSticker.id+'.png?v='+DD_VERSION+'"><div class="cstag" style="color:#fff">'+stName(wonSticker)+'</div>'; } else { cs.style.display='none'; cs.innerHTML=''; } }
+  _wonSticker = (myRank===1) ? grantCupSticker() : null;   // #1 earns a sticker; revealed full-screen on Claim (no small chip)
+  const cs=$('cupSticker'); if(cs){ cs.style.display='none'; cs.innerHTML=''; }
   const myScore=((board.find(x=>x.me)||{}).score)||0;
   let pl = prize.gold ? (L('You won ','Ты выиграл ')+prize.gold+' '+L('gold','золота')) : L('No prize this match. Top 3 win gold; #1 wins a sticker.','Без приза. Топ 3 берут золото; 1 место получает наклейку.');
   if(myScore){ pl += '    +'+myScore+' '+L('goals for ','голов для ')+(CC_NAME[myCountry()]||myCountry()); }   // your ducks found feed your country's total
@@ -495,8 +531,18 @@ function resolveCupResult(res){
   if(won){ haptic('win'); confettiRain(); } else { try{haptic('light');}catch(e){} }
   _tRevealT.push(setTimeout(()=>{ try{haptic('light');}catch(e){} }, 350));
   _tRevealT.push(setTimeout(()=>{ try{haptic(won?'win':'light');}catch(e){} }, 750));
-  _cupResMode='run'; const rc=$('tResClose'); if(rc){ rc.textContent=L("Let's go!","Поехали!"); rc.style.display=''; }
+  _cupResMode='run'; const rc=$('tResClose'); if(rc){ rc.textContent= won ? L('Claim','Забрать') : L("Let's go!","Поехали!"); rc.style.display=''; }
 }
+// finish the result flow -> back to the country leaderboard
+function cupResultDone(){ closeScrim('scrimSticker'); closeScrim('scrimCupRes'); try{$('tResVid').pause&&$('tResVid').pause();}catch(e){} show('wc'); updWcScreen(); setTwcTab('cc'); refreshMyGoals(); if(typeof updCupBtn==='function')updCupBtn(); }
+// #1 reveal: full-screen sticker, then "Let's go!" continues
+function showStickerReveal(st){ if(!st){ cupResultDone(); return; } try{
+  $('stkrTag').textContent=L('NEW World Cup sticker!','НОВАЯ наклейка Кубка!');
+  const img=$('stkrImg'); if(img) img.src='assets/stickers/'+st.id+'.png?v='+DD_VERSION;
+  const nm=$('stkrName'); if(nm) nm.textContent=stName(st);
+  closeScrim('scrimCupRes'); try{$('tResVid').pause&&$('tResVid').pause();}catch(e){}
+  openScrim('scrimSticker'); try{ haptic('win'); confettiRain(); }catch(e){}
+}catch(e){ cupResultDone(); } }
 function localRoom(score,timeMs){ // offline fallback (no server): fabricate 4 ghosts, ranked by GOALS (ducks found)
   const ghosts=[]; for(let i=0;i<4;i++){ const sc=Math.floor(8+Math.random()*36); ghosts.push({name:['Pip','Coco','Dax','Olive'][i],country:['BR','FR','JP','US'][i],avatar:null,score:sc,time_ms:Math.floor(40000+Math.random()*70000)}); }
   const me={name:myName(),country:myCountry(),avatar:myAvatar(),score,time_ms:timeMs};
@@ -654,7 +700,8 @@ function wireCup(){
   w('thistClose', ()=>closeScrim('scrimCupHist'));
   w('nameSave', saveDuckName);
   w('nameDice', nameReroll);
-  w('tResClose', ()=>{ closeScrim('scrimCupRes'); try{$('tResVid').pause&&$('tResVid').pause();}catch(e){} if(_cupResMode==='hist'){ openCupHist(); return; } show('wc'); updWcScreen(); setTwcTab('cc'); refreshMyGoals(); if(typeof updCupBtn==='function')updCupBtn(); });
+  w('tResClose', ()=>{ if(_cupResMode==='hist'){ closeScrim('scrimCupRes'); try{$('tResVid').pause&&$('tResVid').pause();}catch(e){} openCupHist(); return; } if(_wonSticker){ const st=_wonSticker; _wonSticker=null; showStickerReveal(st); return; } cupResultDone(); });
+  w('stkrGo', cupResultDone);
   updCupBtn();
 }
 try{ wireCup(); }catch(e){ try{ document.addEventListener('DOMContentLoaded',wireCup); }catch(_){} }

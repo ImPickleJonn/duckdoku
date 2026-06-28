@@ -32,7 +32,10 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    registerPlugin(SoftHaptic.class); // must precede super.onCreate (bridge consumes plugins in load())
     super.onCreate(savedInstanceState);
+    // allow <video autoplay muted> to start without a tap (Android WebView blocks media autoplay by default)
+    try { getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false); } catch (Exception e) {}
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
       getWindow().getAttributes().layoutInDisplayCutoutMode =
@@ -59,8 +62,48 @@ public class MainActivity extends BridgeActivity {
 }
 `;
 
+// Custom low-amplitude vibration plugin. The @capacitor/haptics plugin's softest preset
+// (selectionChanged) is amplitude 100/255 -- still too strong for the frequent X-mark tick.
+// This exposes createOneShot(duration, amplitude) so JS can request a genuinely faint tap.
+const softSrc = `package ${appId};
+
+import android.content.Context;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+
+@CapacitorPlugin(name = "SoftHaptic")
+public class SoftHaptic extends Plugin {
+  @PluginMethod
+  public void buzz(PluginCall call) {
+    int duration = call.getInt("duration", 18);
+    int amplitude = call.getInt("amplitude", 50);
+    try {
+      Vibrator v = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+      if (v != null && v.hasVibrator()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          if (amplitude < 1) amplitude = 1;
+          if (amplitude > 255) amplitude = 255;
+          // no amplitude control -> keep the pulse very brief so it stays light
+          if (!v.hasAmplitudeControl() && duration > 10) duration = 10;
+          v.vibrate(VibrationEffect.createOneShot(duration, amplitude));
+        } else {
+          v.vibrate(duration);
+        }
+      }
+    } catch (Exception e) {}
+    call.resolve();
+  }
+}
+`;
+
 const javaRoot = path.join(A, 'app', 'src', 'main', 'java');
 const maPath = path.join(javaRoot, ...pkgParts, 'MainActivity.java');
+const softPath = path.join(javaRoot, ...pkgParts, 'SoftHaptic.java');
 
 // remove any stale MainActivity.java left at a different package path
 function rmStale(dir) {
@@ -75,4 +118,5 @@ rmStale(javaRoot);
 
 fs.mkdirSync(path.dirname(maPath), { recursive: true });
 fs.writeFileSync(maPath, maSrc, 'utf8');
-console.log('[patch-android] MainActivity set to immersive fullscreen.');
+fs.writeFileSync(softPath, softSrc, 'utf8');
+console.log('[patch-android] MainActivity set to immersive fullscreen + SoftHaptic plugin written.');

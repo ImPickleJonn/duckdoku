@@ -17,6 +17,15 @@ let html = fs.readFileSync(path.join(ROOT, 'game.html'), 'utf8');
 const before = html;
 html = html.replace(/const API_BASE=\(function\(\)\{[\s\S]*?\}\)\(\);/, "const API_BASE='" + API + "';");
 if (html === before) console.warn('WARN: API_BASE pattern not found, native build may call relative /api');
+// stamp the REAL build version (from android/app/build.gradle) into the settings display so it can never go stale
+try {
+  const gradle = fs.readFileSync(path.join(ROOT, 'android', 'app', 'build.gradle'), 'utf8');
+  const vn = (gradle.match(/versionName\s+"([^"]+)"/) || [])[1];
+  const vc = (gradle.match(/versionCode\s+(\d+)/) || [])[1];
+  if (vn) html = html.replace(/const DD_VERSION='[^']*';/, "const DD_VERSION='" + vn + "';");
+  if (vc) html = html.replace(/let DD_BUILD='[^']*';/, "let DD_BUILD='" + vc + "';");
+  console.log('stamped version', vn, '(' + vc + ')');
+} catch (e) { console.warn('WARN: could not stamp version:', e.message); }
 fs.writeFileSync(path.join(WWW, 'index.html'), html);
 
 // asset dirs the native app never loads at runtime, so shipping them just bloats

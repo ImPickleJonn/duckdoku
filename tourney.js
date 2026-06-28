@@ -31,8 +31,37 @@ function scoreRoom(me, ghosts){
   return { board, rank, goals, prize };
 }
 
+// ---- populated-leaderboard baseline (so the boards feel alive before real data accrues) ----
+const BASE_COUNTRIES = [
+  ['US',2200],['BR',2100],['IN',1950],['ID',1820],['RU',1700],['MX',1580],['TR',1460],['DE',1350],
+  ['GB',1250],['FR',1160],['PH',1080],['VN',1000],['TH',930],['JP',860],['KR',800],['EG',740],
+  ['IT',690],['ES',640],['PL',590],['UA',540],['AR',500],['NG',460],['PK',420],['CO',390],
+  ['BD',360],['SA',330],['MY',300],['IR',270],
+];
+const SEED_NAMES = ['Lucky Duck','Sir Quacks','Pip','Waddles','Bubbles','Nugget','Sunny','Pebbles','Coco','Mochi','Biscuit','Dax','Olive','Ziggy','Tofu','Maple','Pumpkin','Suzu','Boba','Yolko','Peep','Splash','Goldie','Captain Quack','Mallard','Quackers','Puddles','Marigold','Cricket','Bingo','Noodle','Pickles','Waffles','Sprout','Clover','Dibble','Pim','Quill','Hazel','Tater','Munchkin','Beans','Fizz','Gizmo','Snickers','Waddington','Quackford','Featherly','Doodle','Pumpernickel'];
+function _srng(s){ let x = (s >>> 0) || 1; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; }
+function seedMembers(cc, n){           // deterministic in-country members so every country's board is populated
+  let base = 0; for (const ch of cc) base = (base * 131 + ch.charCodeAt(0)) >>> 0;
+  const rnd = _srng(base + 17), out = [], used = new Set();
+  for (let i = 0; i < n; i++){
+    let nm, t = 0; do { nm = SEED_NAMES[Math.floor(rnd() * SEED_NAMES.length)]; if (rnd() < 0.35) nm += ' ' + (2 + Math.floor(rnd() * 97)); t++; } while (used.has(nm) && t < 8); used.add(nm);
+    const goals = Math.max(1, Math.round(150 * Math.pow(1 - i / (n + 6), 2.1) + rnd() * 10));
+    out.push({ name: nm, goals, seed: true });
+  }
+  return out.sort((a, b) => b.goals - a.goals);
+}
+function guestUid(gid){ let h = 0; const s = String(gid); for (let i = 0; i < s.length; i++) h = (Math.imul(h, 131) + s.charCodeAt(i)) >>> 0; return 9000000000000 + h; } // stable BIGINT-safe id for an anonymous (native) player
+
 function register(app, deps){
   const { dbPool, validateInitData, users, noteUser } = deps;
+  // a Telegram user, or an anonymous native player keyed by their stable device id
+  function resolveUser(body){
+    const u = validateInitData(body && body.initData);
+    if (u) return u;
+    const gid = body && body.guestId;
+    if (gid && typeof gid === 'string' && gid.length >= 4 && gid.length <= 80) return { id: guestUid(gid), first_name: '', username: '', guest: true };
+    return null;
+  }
 
   async function ensureSchema(){
     if (!dbPool) return;
@@ -90,7 +119,7 @@ function register(app, deps){
   // submit a finished run -> build the room, rank the player, award goals + prize, snapshot for history
   app.post('/api/tourney/submit', async (req, res) => {
     const body = req.body || {};
-    const user = validateInitData(body.initData);
+    const user = resolveUser(body);
     if (!user) return res.status(401).json({ error: 'invalid initData' });
     const seed = Math.floor(Number(body.seed) || 0);
     const score = Math.max(0, Math.min(999, Math.floor(Number(body.score) || 0)));   // GOALS (ducks found) this survival run
@@ -119,15 +148,15 @@ function register(app, deps){
 
   // a player's recent rooms (snapshotted boards) for the History tab
   app.post('/api/tourney/history', async (req, res) => {
-    const user = validateInitData((req.body || {}).initData);
+    const user = resolveUser(req.body || {});
     if (!user) return res.status(401).json({ error: 'invalid initData' });
     let runs = [];
     if (dbPool) {
       try {
         const q = await dbPool.query(
-          `SELECT seed, mistakes, time_ms, rank, goals, board, created_at
+          `SELECT seed, score, time_ms, rank, goals, board, created_at
              FROM tourney_runs WHERE tg_id = $1 ORDER BY created_at DESC LIMIT 30`, [String(user.id)]);
-        runs = (q.rows || []).map(r => ({ seed: String(r.seed), mistakes: r.mistakes, timeMs: r.time_ms, rank: r.rank, goals: r.goals, board: r.board, ts: r.created_at }));
+        runs = (q.rows || []).map(r => ({ seed: String(r.seed), score: r.score, timeMs: r.time_ms, rank: r.rank, goals: r.goals, board: r.board, ts: r.created_at }));
       } catch (e) { console.error('[tourney] history:', e.message); }
     }
     res.json({ runs });
@@ -138,15 +167,18 @@ function register(app, deps){
   app.get('/api/tourney/countries', async (req, res) => {
     const now = Date.now();
     if (now - _ccCache.ts < 60000) return res.json({ countries: _ccCache.list });
-    let list = [];
+    const tally = new Map(BASE_COUNTRIES);                       // cc -> total goals (seeded baseline)
+    const playersByCc = new Map();
     if (dbPool) {
       try {
         const q = await dbPool.query(
-          `SELECT country, SUM(goals)::int AS goals, COUNT(*)::int AS plays, COUNT(DISTINCT tg_id)::int AS players
-             FROM tourney_runs WHERE country IS NOT NULL GROUP BY country ORDER BY goals DESC, plays DESC LIMIT 60`);
-        list = (q.rows || []).map(r => ({ country: r.country, goals: r.goals, plays: r.plays, players: r.players }));
+          `SELECT country, SUM(score)::int AS score, COUNT(DISTINCT tg_id)::int AS players
+             FROM tourney_runs WHERE country IS NOT NULL GROUP BY country`);
+        for (const r of (q.rows || [])) { tally.set(r.country, (tally.get(r.country) || 0) + (r.score || 0)); playersByCc.set(r.country, r.players || 0); }
       } catch (e) { console.error('[tourney] countries:', e.message); }
     }
+    const list = [...tally.entries()].map(([country, goals]) => ({ country, goals, players: (playersByCc.get(country) || 0) }))
+      .sort((a, b) => b.goals - a.goals).slice(0, 25);            // top 25 only
     _ccCache = { ts: now, list };
     res.json({ countries: list });
   });
@@ -155,22 +187,24 @@ function register(app, deps){
   app.get('/api/tourney/country', async (req, res) => {
     const cc = String(req.query.cc || '').toUpperCase();
     if (!/^[A-Z]{2}$/.test(cc)) return res.json({ country: cc, players: [] });
-    let players = [];
+    const byName = new Map();                                    // name(lower) -> { name, goals }
     if (dbPool) {
       try {
         const q = await dbPool.query(
-          `SELECT tg_id, MAX(name) AS name, SUM(goals)::int AS goals, COUNT(*)::int AS plays
-             FROM tourney_runs WHERE country = $1 GROUP BY tg_id ORDER BY goals DESC, plays DESC LIMIT 50`, [cc]);
-        players = (q.rows || []).map(r => ({ name: r.name || 'Duck', goals: r.goals, plays: r.plays }));
+          `SELECT MAX(name) AS name, SUM(score)::int AS goals FROM tourney_runs
+             WHERE country = $1 GROUP BY tg_id ORDER BY SUM(score) DESC LIMIT 80`, [cc]);
+        for (const r of (q.rows || [])) { const nm = r.name || 'Duck'; byName.set(nm.toLowerCase(), { name: nm, goals: r.goals || 0 }); }
       } catch (e) { console.error('[tourney] in-country:', e.message); }
     }
+    for (const m of seedMembers(cc, 50)) { if (!byName.has(m.name.toLowerCase())) byName.set(m.name.toLowerCase(), { name: m.name, goals: m.goals }); } // seeded fill (real players win name ties)
+    const players = [...byName.values()].sort((a, b) => b.goals - a.goals).slice(0, 50).map((p, i) => ({ rank: i + 1, name: p.name, goals: p.goals }));
     res.json({ country: cc, players });
   });
 
   // set/update the player's country flag (first-time picker)
   app.post('/api/tourney/flag', async (req, res) => {
     const body = req.body || {};
-    const user = validateInitData(body.initData);
+    const user = resolveUser(body);
     if (!user) return res.status(401).json({ error: 'invalid initData' });
     const cc = String(body.country || '').toUpperCase();
     if (!/^[A-Z]{2}$/.test(cc)) return res.status(400).json({ error: 'bad country' });
@@ -182,7 +216,7 @@ function register(app, deps){
   // reserve a UNIQUE duck name. ok:false + taken:true if another player already holds it (case-insensitive).
   app.post('/api/tourney/claim-name', async (req, res) => {
     const body = req.body || {};
-    const user = validateInitData(body.initData);
+    const user = resolveUser(body);
     if (!user) return res.status(401).json({ error: 'invalid initData' });
     const name = String(body.name || '').trim().slice(0, 16);
     if (!name) return res.json({ ok: false });

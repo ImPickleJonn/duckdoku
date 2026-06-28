@@ -15,19 +15,19 @@ const BOT_NAMES = ['Lucky Duck','Sir Quacks','Pip','Waddles','Bubbles','Nugget',
 const BOT_CC   = ['BR','AR','US','GB','DE','FR','ES','IT','PT','NL','JP','KR','MX','TR','IN','NG','EG','SA','AU','CA','CO','PL','UA','SE'];
 function makeBot(seed, i){
   const r = srng(seed * 131 + i * 977 + 7);
-  const mistakes = r() < 0.5 ? 0 : (r() < 0.8 ? 1 : 2);     // mostly clean, occasionally slips
-  const time_ms  = Math.floor(35000 + r() * 90000);         // 35s..125s
-  return { name: BOT_NAMES[Math.floor(r() * BOT_NAMES.length)], country: BOT_CC[Math.floor(r() * BOT_CC.length)], avatar: null, mistakes, time_ms, bot: true };
+  const score    = Math.floor(8 + r() * 38);                // GOALS (ducks found) before 3 lives gone: 8..46
+  const time_ms  = Math.floor(60000 + r() * 240000);        // 1..5 min run
+  return { name: BOT_NAMES[Math.floor(r() * BOT_NAMES.length)], country: BOT_CC[Math.floor(r() * BOT_CC.length)], avatar: null, score, time_ms, bot: true };
 }
 
-// pure scorer: the player's run + the ghosts -> sorted board, the player's rank, country goals, prize
+// pure scorer: a SURVIVAL run ranked by GOALS (ducks found) DESC, faster time breaks ties.
 function scoreRoom(me, ghosts){
   const all = [{ ...me, me: true }, ...ghosts.map(g => ({ ...g, me: false }))];
-  all.sort((a, b) => (a.mistakes - b.mistakes) || (a.time_ms - b.time_ms) || (a.me ? 1 : -1));
+  all.sort((a, b) => ((b.score || 0) - (a.score || 0)) || (a.time_ms - b.time_ms) || (a.me ? 1 : -1));
   const rank = all.findIndex(x => x.me) + 1;
   const goals = rank === 1 ? 3 : rank === 2 ? 2 : rank === 3 ? 1 : 0;      // feeds the country World Cup standings
   const prize = rank === 1 ? { gold: 100, sticker: true } : rank === 2 ? { gold: 50 } : rank === 3 ? { gold: 25 } : {};
-  const board = all.map((x, i) => ({ rank: i + 1, name: x.name, country: x.country, avatar: x.avatar, mistakes: x.mistakes, timeMs: x.time_ms, me: !!x.me, bot: !!x.bot }));
+  const board = all.map((x, i) => ({ rank: i + 1, name: x.name, country: x.country, avatar: x.avatar, score: (x.score || 0), timeMs: x.time_ms, me: !!x.me, bot: !!x.bot }));
   return { board, rank, goals, prize };
 }
 
@@ -45,11 +45,13 @@ function register(app, deps){
           tg_id      BIGINT NOT NULL,
           name       TEXT, country TEXT, avatar TEXT,
           mistakes   INT NOT NULL DEFAULT 0,
+          score      INT NOT NULL DEFAULT 0,
           time_ms    INT NOT NULL DEFAULT 0,
           rank       INT, goals INT NOT NULL DEFAULT 0,
           board      JSONB,
           created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );
+        ALTER TABLE tourney_runs ADD COLUMN IF NOT EXISTS score INT NOT NULL DEFAULT 0;
         CREATE INDEX IF NOT EXISTS tr_seed    ON tourney_runs(seed);
         CREATE INDEX IF NOT EXISTS tr_uid_ts  ON tourney_runs(tg_id, created_at DESC);
         CREATE INDEX IF NOT EXISTS tr_country  ON tourney_runs(country);
@@ -71,11 +73,11 @@ function register(app, deps){
       try {
         // recent OTHER real runs on this seed (one per player, freshest first)
         const q = await dbPool.query(
-          `SELECT DISTINCT ON (tg_id) name, country, avatar, mistakes, time_ms, created_at
+          `SELECT DISTINCT ON (tg_id) name, country, avatar, score, time_ms, created_at
              FROM tourney_runs WHERE seed = $1 AND tg_id <> $2
              ORDER BY tg_id, created_at DESC`, [seed, String(excludeUid)]);
         const rows = (q.rows || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        for (const r of rows) { if (out.length >= n) break; out.push({ name: r.name || 'Duck', country: r.country, avatar: r.avatar, mistakes: r.mistakes, time_ms: r.time_ms }); }
+        for (const r of rows) { if (out.length >= n) break; out.push({ name: r.name || 'Duck', country: r.country, avatar: r.avatar, score: r.score, time_ms: r.time_ms }); }
       } catch (e) { console.error('[tourney] ghosts:', e.message); }
     }
     let i = 0; while (out.length < n) out.push(makeBot(seed, i++));   // cold-start fill with seeded bots
@@ -91,7 +93,7 @@ function register(app, deps){
     const user = validateInitData(body.initData);
     if (!user) return res.status(401).json({ error: 'invalid initData' });
     const seed = Math.floor(Number(body.seed) || 0);
-    const mistakes = Math.max(0, Math.min(99, Math.floor(Number(body.mistakes) || 0)));
+    const score = Math.max(0, Math.min(999, Math.floor(Number(body.score) || 0)));   // GOALS (ducks found) this survival run
     let timeMs = Math.max(0, Math.min(3600000, Math.floor(Number(body.timeMs) || 0)));
     if (timeMs < 4000) timeMs = 4000;                                   // anti-cheat lite: floor implausible times
     const known = (users && users.get(user.id)) || {};
@@ -100,14 +102,14 @@ function register(app, deps){
     const avatar = String(body.avatar || user.photo_url || '').slice(0, 300) || null;
 
     const ghosts = await getGhosts(seed, user.id, 4);
-    const { board, rank, goals, prize } = scoreRoom({ name, country, avatar, mistakes, time_ms: timeMs }, ghosts);
+    const { board, rank, goals, prize } = scoreRoom({ name, country, avatar, score, time_ms: timeMs }, ghosts);
 
     if (dbPool) {
       try {
         await dbPool.query(
-          `INSERT INTO tourney_runs (seed, tg_id, name, country, avatar, mistakes, time_ms, rank, goals, board)
+          `INSERT INTO tourney_runs (seed, tg_id, name, country, avatar, score, time_ms, rank, goals, board)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-          [seed, String(user.id), name, country, avatar, mistakes, timeMs, rank, goals, JSON.stringify(board)]);
+          [seed, String(user.id), name, country, avatar, score, timeMs, rank, goals, JSON.stringify(board)]);
         if (country) await dbPool.query('UPDATE players SET country = $2 WHERE tg_id = $1', [String(user.id), country]);
       } catch (e) { console.error('[tourney] submit:', e.message); }
     }

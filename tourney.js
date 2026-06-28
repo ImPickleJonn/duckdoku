@@ -183,23 +183,40 @@ function register(app, deps){
     res.json({ countries: list });
   });
 
-  // in-country members board: top players from one country by goals
-  app.get('/api/tourney/country', async (req, res) => {
-    const cc = String(req.query.cc || '').toUpperCase();
-    if (!/^[A-Z]{2}$/.test(cc)) return res.json({ country: cc, players: [] });
-    const byName = new Map();                                    // name(lower) -> { name, goals }
+  // in-country members board: top players from one country by goals.
+  // POST + caller-aware: always returns the CALLER's own row (flagged me:true in players, or summarized in `me`)
+  // with a true rank against the whole population, so a player who just scored never shows "play to rank".
+  const countryHandler = async (req, res) => {
+    const body = req.body || {};
+    const cc = String((body.cc || req.query.cc) || '').toUpperCase();
+    if (!/^[A-Z]{2}$/.test(cc)) return res.json({ country: cc, players: [], me: null });
+    const caller = resolveUser(body);                            // POST body carries identity; legacy GET -> no caller (me:null)
+    const callerId = caller ? String(caller.id) : null;
+    const realById = new Map();                                  // tgId -> { tgId, name, goals }
     if (dbPool) {
       try {
         const q = await dbPool.query(
-          `SELECT MAX(name) AS name, SUM(score)::int AS goals FROM tourney_runs
-             WHERE country = $1 GROUP BY tg_id ORDER BY SUM(score) DESC LIMIT 80`, [cc]);
-        for (const r of (q.rows || [])) { const nm = r.name || 'Duck'; byName.set(nm.toLowerCase(), { name: nm, goals: r.goals || 0 }); }
+          `SELECT tg_id, MAX(name) AS name, SUM(score)::int AS goals FROM tourney_runs
+             WHERE country = $1 GROUP BY tg_id ORDER BY SUM(score) DESC LIMIT 300`, [cc]);
+        for (const r of (q.rows || [])) realById.set(String(r.tg_id), { tgId: String(r.tg_id), name: r.name || 'Duck', goals: r.goals || 0 });
       } catch (e) { console.error('[tourney] in-country:', e.message); }
     }
-    for (const m of seedMembers(cc, 50)) { if (!byName.has(m.name.toLowerCase())) byName.set(m.name.toLowerCase(), { name: m.name, goals: m.goals }); } // seeded fill (real players win name ties)
-    const players = [...byName.values()].sort((a, b) => b.goals - a.goals).slice(0, 50).map((p, i) => ({ rank: i + 1, name: p.name, goals: p.goals }));
-    res.json({ country: cc, players });
-  });
+    // full population = real players + seeded fill (real players win name ties), ranked by goals
+    const realNames = new Set([...realById.values()].map(p => p.name.toLowerCase()));
+    const pop = [...realById.values()];
+    for (const m of seedMembers(cc, 50)) { if (!realNames.has(m.name.toLowerCase())) pop.push({ tgId: null, name: m.name, goals: m.goals }); }
+    pop.sort((a, b) => b.goals - a.goals);
+    // the caller's OWN row + true rank against the whole population
+    let me = null;
+    if (callerId) {
+      const idx = pop.findIndex(p => p.tgId === callerId);
+      me = idx >= 0 ? { found: true, rank: idx + 1, goals: pop[idx].goals } : { found: false, rank: 0, goals: 0 };
+    }
+    const players = pop.slice(0, 50).map((p, i) => ({ rank: i + 1, name: p.name, goals: p.goals, me: !!(callerId && p.tgId === callerId) }));
+    res.json({ country: cc, players, me });
+  };
+  app.get('/api/tourney/country', countryHandler);             // legacy clients (no caller -> me:null)
+  app.post('/api/tourney/country', countryHandler);            // current clients (caller-aware)
 
   // set/update the player's country flag (first-time picker)
   app.post('/api/tourney/flag', async (req, res) => {

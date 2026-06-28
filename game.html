@@ -540,6 +540,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
   <section id="home" class="screen on">
     <div class="homebar">
       <div class="hb-left">
+      <button class="iconbtn homeav" id="btnHomeAvatar" aria-label="your duck"><img id="homeAvImg" src="assets/ducks/avatars/avatar-1.png" alt=""><img id="homeAvFlag" class="homeavflag" alt=""></button>
       <button class="iconbtn" id="btnHomeLB" aria-label="leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" fill="#FFD23F"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg></button>
       <button class="iconbtn" id="btnHomeDaily" aria-label="daily reward"><svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round"><rect x="3.6" y="10" width="16.8" height="10.4" rx="1.8" fill="#FFD23F" stroke="#E8942F" stroke-width="1.5"/><rect x="3" y="7.4" width="18" height="3.6" rx="1.2" fill="#FFE08A" stroke="#E8942F" stroke-width="1.4"/><path d="M12 7.4V20.4" stroke="#E8942F" stroke-width="1.7"/><path d="M12 7.4C12 7.4 10 3.4 7.6 4.4 5.8 5.2 7.4 7.4 12 7.4z" fill="#F0544C" stroke="#D6453E" stroke-width="1"/><path d="M12 7.4C12 7.4 14 3.4 16.4 4.4 18.2 5.2 16.6 7.4 12 7.4z" fill="#F0544C" stroke="#D6453E" stroke-width="1"/></svg><i class="dailydot" id="dailyDot"></i></button>
       </div>
@@ -557,8 +558,26 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
     </div>
     <div class="menu">
       <button class="btn play" id="btnPlay" data-i="play">Level 1</button>
+      <button class="btn wcbtn" id="btnWC" aria-label="World Cup">
+        <span class="wcbtn-flag" id="wcBtnFlag"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#fff" stroke="#2e8b57" stroke-width="1.6"/><path d="M12 7.6l2.7 2-1.05 3.2h-3.3L9.3 9.6z" fill="#2e8b57"/><path d="M12 7.6V4.2M14.7 9.6l3.1-1.1M13.65 12.8l2 2.7M10.35 12.8l-2 2.7M9.3 9.6l-3.1-1.1" stroke="#2e8b57" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg></span>
+        <span class="wcbtn-lbl" id="wcBtnLbl">World Cup</span>
+        <i class="wcbtn-lock" id="wcBtnLock"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4" fill="#fff"/><path d="M7.6 10.5V7.6a4.4 4.4 0 0 1 8.8 0v2.9" fill="none" stroke="#fff" stroke-width="2.6"/></svg></i>
+      </button>
     </div>
     <div class="fill"></div>
+  </section>
+
+  <!-- ============ WORLD CUP (full screen) ============ -->
+  <section id="wc" class="screen">
+    <div class="topbar">
+      <button class="iconbtn" id="wcBack" aria-label="back"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="toptitle" id="wcTitle">World Cup</div>
+      <div class="topright"><button class="iconbtn" id="wcHistBtn" aria-label="history"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></button></div>
+    </div>
+    <div class="wcme" id="wcMe"></div>
+    <div class="ttabs" id="wcTabs"><div class="ttab on" id="twcTabCC">Countries</div><div class="ttab" id="twcTabMine">My country</div></div>
+    <div class="wclist" id="twcList"><p style="color:var(--ink-soft)">Loading...</p></div>
+    <div class="wcfoot"><button class="btn play" id="wcPlay">Play for my country</button></div>
   </section>
 
   <!-- ============ GAME ============ -->
@@ -574,11 +593,12 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 
     <div class="gspace"></div>
 
+    <div class="wcgoal" id="wcGoal"><svg class="goalsvg" viewBox="0 0 240 120"><defs><pattern id="wcnet" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M5.5 0V11M0 5.5H11" stroke="#fff" stroke-opacity=".30" stroke-width="1.1"/></pattern><linearGradient id="wcpost" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d4dbe4"/></linearGradient></defs><ellipse cx="120" cy="112" rx="103" ry="7" fill="rgba(0,0,0,.16)"/><path class="gnet" d="M36 104V32H204V104Z" fill="url(#wcnet)"/><path d="M36 32L50 18H190L204 32" fill="none" stroke="#c9d1db" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M50 18V96" stroke="#dfe5ec" stroke-width="2" opacity=".45"/><path d="M190 18V96" stroke="#dfe5ec" stroke-width="2" opacity=".45"/><path d="M36 104V38a6 6 0 0 1 6-6H198a6 6 0 0 1 6 6V104" fill="none" stroke="url(#wcpost)" stroke-width="9" stroke-linecap="round"/><path d="M36 104V38a6 6 0 0 1 6-6H198a6 6 0 0 1 6 6V104" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity=".75"/></svg><div class="goaltext" id="goalText">GOAL!</div></div>
     <div class="chips" id="chips"></div>
 
     <div class="statusrow" id="statusrow">
       <div class="progress">
-        <div class="pface"><canvas class="pfacecv" width="72" height="72"></canvas></div>
+        <div class="pface"><canvas class="pfacecv" width="72" height="72"></canvas><img class="pfaceball" src="assets/ducks/wcball.png" alt=""></div>
         <div class="ptrack"><div class="pfill" id="pfill"></div></div>
         <div class="pcount" id="countVal">0/5</div>
       </div>
@@ -816,7 +836,7 @@ try{ if(window.screen&&screen.orientation&&screen.orientation.lock)screen.orient
 function syncAppHeight(){try{const h=TG&&(TG.viewportStableHeight||TG.viewportHeight);if(h&&h>200)document.documentElement.style.setProperty('--app-h',h+'px');}catch(e){}}
 if(TG){ syncAppHeight(); TG.onEvent&&TG.onEvent('viewportChanged',syncAppHeight); }
 const initData=TG&&TG.initData?TG.initData:'';
-const API_BASE=(function(){const h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h.endsWith('.onrender.com'))return '';return 'https://duckdoku.onrender.com';})();
+const API_BASE=(function(){try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())return 'https://duckdoku.onrender.com';}catch(e){}const h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h.endsWith('.onrender.com'))return '';return 'https://duckdoku.onrender.com';})();
 let _haptics;
 function getHaptics(){if(_haptics!==undefined)return _haptics;_haptics=false;try{const C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()){_haptics=(C.Plugins&&C.Plugins.Haptics)||(C.registerPlugin&&C.registerPlugin('Haptics'))||false;}}catch(e){}return _haptics;}
 let _soft;
@@ -862,7 +882,7 @@ function haptic(k){
   try{if(navigator.vibrate){const ms=tier==='error'?[16,38,16]:tier==='success'?[12,28,12]:tier==='medium'?18:tier==='heavy'?28:8;navigator.vibrate(ms);}}catch(e){}}
 
 /* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
-const DD_VERSION='0.4.5';
+const DD_VERSION='0.6.0';
 function _mxHost(){try{const tg=TG;if(tg&&typeof tg.initData==='string'&&tg.initData.length>0)return'telegram';return'web';}catch(e){return'web';}}
 const MX={ready:false,token:'',_did:'',_super:{},_pre:[],
   _enc(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}catch(_){try{return btoa(JSON.stringify(o));}catch(e){return'';}}},
@@ -901,7 +921,7 @@ function mxBoot(){
   const profile=u?{$first_name:u.first_name,$last_name:u.last_name,username:u.username,telegram_id:u.id,language:u.language_code,is_premium:!!u.is_premium}:{};
   fetch(API_BASE+'/api/flags').then(r=>r.json()).then(j=>{
     MX.init(j.mixpanel_token||'',did,profile);
-    if(j.country)MX.setSuper({geo_country:j.country});
+    if(j.country){MX.setSuper({geo_country:j.country});try{window._geoCC=String(j.country).toUpperCase();}catch(e){}}
     try{ var _c=_ddCampaign(); if(_c){ MX.setSuper({campaign:_c}); MX.setProfile({campaign:_c}); if(_ddCampNew)MX.track('Campaign Arrival',{campaign:_c}); } }catch(_){}
     const d=new Date();MX.track('Session Start',{level:(save&&save.levelsDone+1)||1,day_of_week:d.getUTCDay(),hour_utc:d.getUTCHours()});
     mxAppOpen('cold');
@@ -967,6 +987,7 @@ const STICKER_SETS=[
   {id:'dream',en:'Duck Dreams',  ru:'Утиные мечты'},
   {id:'snack',en:'Snack Attack', ru:'Снэк-атака'},
   {id:'oops', en:'Oops Duck',    ru:'Упс, утята'},
+  {id:'cup',  en:'World Cup',    ru:'Кубок мира'},
 ];
 const STICKERS=[
   {id:'pond1',set:'pond',rarity:'common',   en:'Splashy',ru:'Плюх'},
@@ -1009,6 +1030,14 @@ const STICKERS=[
   {id:'oops6',set:'oops',rarity:'rare',     en:'Box Spy',ru:'Коробка'},
   {id:'oops7',set:'oops',rarity:'epic',     en:'DJ Duck',ru:'Диджей'},
   {id:'oops8',set:'oops',rarity:'legendary',en:'Superstar',ru:'Суперзвезда'},
+  {id:'cup1',set:'cup',rarity:'common',   en:'Striker',ru:'Нападающий'},
+  {id:'cup2',set:'cup',rarity:'common',   en:'Goalie',ru:'Вратарь'},
+  {id:'cup3',set:'cup',rarity:'common',   en:'Captain',ru:'Капитан'},
+  {id:'cup4',set:'cup',rarity:'common',   en:'Super Fan',ru:'Фанат'},
+  {id:'cup5',set:'cup',rarity:'rare',     en:'Golden Boot',ru:'Золотая бутса'},
+  {id:'cup6',set:'cup',rarity:'rare',     en:'Free Kick',ru:'Штрафной'},
+  {id:'cup7',set:'cup',rarity:'epic',     en:'Hat Trick',ru:'Хет-трик'},
+  {id:'cup8',set:'cup',rarity:'legendary',en:'World Champion',ru:'Чемпион мира'},
 ];
 function stName(s){return L(s.en,s.ru);}
 function stById(id){return STICKERS.find(s=>s.id===id);}
@@ -1255,7 +1284,7 @@ let _progUntil=0; // progress-bar face plays 'happy' once (until this ts) when a
 // EVERY placed duck reacts together (one loop), then faceFx expires -> they return to the constantly-looping idle.
 function allDucksReact(state,ms){if(!faceVideosReady)return;const until=Date.now()+ms;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(gstate[r][c]===DUCK)faceFx.set(r*100+c,{state,until});}
 // a duck was found: ALL ducks (and the progress-bar face) do ONE happy loop, then idle.
-function onDuckFound(){_progUntil=Date.now()+HAPPY_MS;allDucksReact('happy',HAPPY_MS);}
+function onDuckFound(){try{if(typeof TOURNEY!=='undefined'&&TOURNEY.active){TOURNEY.goals=(TOURNEY.goals||0)+1;if(typeof wcHud==='function')wcHud();}}catch(e){}_progUntil=Date.now()+HAPPY_MS;allDucksReact('happy',HAPPY_MS);}
 let _modalTimer=0;
 // Open the win/lose modal AFTER the board reaction, but cancellable + guarded so a stale timer can never
 // pop over home or a fresh level (only fires if we're still on this same ended level). Cleared on every (re)start.
@@ -1335,12 +1364,13 @@ function tryGuess(r,c){
   // The duck hides in ONE specific cell per region (the unique solution).
   if(puzzle.solCols[r]===c){
     // correct: the duck is found and LOCKED forever (cannot be removed)
-    gstate[r][c]=DUCK;duckCount++;renderCell(r,c);onDuckFound();haptic('duck');playSfx('duckfound');onFtueAction('duck',r,c);
-    if(duckCount===N&&!ftue)onWin(); else if(duckCount===N&&ftue&&ftue.active)onFtueWin();
+    gstate[r][c]=DUCK;duckCount++;haptic('duck');playSfx('duckfound');onFtueAction('duck',r,c);
+    if(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof wcGoalShot==='function'){ updateCount(); wcGoalShot(r,c,(duckCount===N&&!ftue)); }
+    else { renderCell(r,c);onDuckFound(); if(duckCount===N&&!ftue){ if(typeof TOURNEY!=='undefined'&&TOURNEY.active){onTourneyWin();} else {onWin();} } else if(duckCount===N&&ftue&&ftue.active)onFtueWin(); }
   } else {
     // wrong: leave a PERMANENT red X (locked) and lose a heart
     gstate[r][c]=RED;heartBreakAt(r,c,function(){renderCell(r,c);});allDucksReact('sad',CRY_MS);shakeBoard();haptic('wrong');playSfx('loseheart');MX.track('Mistake Made',{level:levelIdx+1});
-    if(heartsEnabled){hearts--;heartsLost++;renderHearts();breakHeartIcon(hearts);if(hearts<=0)onLose();}
+    heartsLost++;if(heartsEnabled){hearts--;renderHearts();breakHeartIcon(hearts);if(hearts<=0){if(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof endWcRun==='function'){gameLive=false;setTimeout(function(){try{endWcRun();}catch(e){}},750);}else{onLose();}}}
   }
 }
 function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),460);}if(gstate[r]&&gstate[r][c]===DUCK)duckReact(r,c,'oops',1000);});shakeBoard();}
@@ -1385,7 +1415,7 @@ function useUndo(){if(ended)return;if(!history.length){toast(L("Nothing to undo"
   for(let r=0;r<N;r++)for(let c=0;c<N;c++){ if(gstate[r][c]===DUCK||gstate[r][c]===RED)continue; const v=h.g[r][c]; gstate[r][c]=(v===DUCK||v===RED)?EMPTY:v; }
   renderAll();haptic('light');}
 function useHint(){if(ended||hintActive)return;const free=(save.freeBoosters&&save.freeBoosters.hint)||0;if(free<=0){openBoosterBuy('hint');return;}const h=computeHint();if(!h){toast(L("No hint available right now","Подсказок пока нет"));haptic('light');return;}save.freeBoosters.hint--;persist();renderBoosters();boostersUsed++;MX.track('Booster Used',{type:'hint'});try{if(window.DuckAdjust)DuckAdjust.fire('boosterUsed');}catch(e){}showHint(h);}
-function usePlaceDuck(){if(ended||hintActive)return;let avail=false;for(let r=0;r<N;r++){if(gstate[r][puzzle.solCols[r]]!==DUCK){avail=true;break;}}if(!avail){toast(L("All ducks placed","Все утки на месте"));return;}const free=(save.freeBoosters&&save.freeBoosters.placeduck)||0;if(free<=0){openBoosterBuy('placeduck');return;}save.freeBoosters.placeduck--;persist();renderBoosters();boostersUsed++;MX.track('Booster Used',{type:'placeduck'});try{if(window.DuckAdjust)DuckAdjust.fire('boosterUsed');}catch(e){}placeOneCorrect();haptic('ok');playSfx('duckfound');if(duckCount===N)onWin();}
+function usePlaceDuck(){if(ended||hintActive)return;let avail=false;for(let r=0;r<N;r++){if(gstate[r][puzzle.solCols[r]]!==DUCK){avail=true;break;}}if(!avail){toast(L("All ducks placed","Все утки на месте"));return;}const free=(save.freeBoosters&&save.freeBoosters.placeduck)||0;if(free<=0){openBoosterBuy('placeduck');return;}save.freeBoosters.placeduck--;persist();renderBoosters();boostersUsed++;MX.track('Booster Used',{type:'placeduck'});try{if(window.DuckAdjust)DuckAdjust.fire('boosterUsed');}catch(e){}placeOneCorrect();haptic('ok');playSfx('duckfound');if(duckCount===N)(typeof TOURNEY!=='undefined'&&TOURNEY.active?wcBoardComplete():onWin());}
 // 0 inventory + tap booster -> confirm-buy x3 with gold (not bought until confirm). Not enough gold -> shop.
 let _buyKey=null;
 function openBoosterBuy(k){const cost=BOOSTER_PACK_COST[k];if((save.gold||0)<cost){needGold();return;}_buyKey=k;const nm=k==='hint'?L('Hint','Подсказка'):L('Place a Duck','Подставить утку');$('bbIcon').innerHTML=boosterIcon(k);$('bbTitle').textContent=L('Get ','Получить ')+BOOSTER_PACK_QTY+' '+nm;$('bbSub').textContent=L('Stock up to keep solving.','Запасись, чтобы решать дальше.');$('bbBuy').innerHTML=L('Buy for ','Купить за ')+costChip(cost);openScrim('scrimBuy');haptic('light');}
@@ -1400,7 +1430,8 @@ function grantReward(g){if(!g)return;const msgs=[];
 function ftExcludedByDucks(r,c){for(let i=0;i<N;i++){if(gstate[r][i]===DUCK||gstate[i][c]===DUCK)return true;}const reg=puzzle.region[r][c];for(let rr=0;rr<N;rr++)for(let cc=0;cc<N;cc++)if(gstate[rr][cc]===DUCK&&puzzle.region[rr][cc]===reg)return true;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const rr=r+dr,cc=c+dc;if(rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===DUCK)return true;}return false;}
 // names derived from each region's ACTUAL (per-level) colour so the hint label matches what's on screen
 const HUE_NAMES=[[16,'Red','Красный'],[42,'Orange','Оранжевый'],[68,'Yellow','Жёлтый'],[100,'Lime','Салатовый'],[158,'Green','Зелёный'],[188,'Teal','Бирюзовый'],[210,'Cyan','Голубой'],[252,'Blue','Синий'],[288,'Purple','Фиолетовый'],[322,'Pink','Розовый'],[346,'Rose','Малиновый'],[361,'Red','Красный']];
-function colorHexOf(g){return (puzzle&&puzzle.colors&&puzzle.colors[g])||'#8a8a8a';}
+const RVARS=['#E58A77','#B773E8','#4BB6A7','#E8B24C','#6FA9E4','#8BCB6E','#EF94B6','#E0925A','#9E8BE6','#56C7BD']; // mirrors the CSS --r0..--r9 the tiles use when puzzle.colors is unset
+function colorHexOf(g){return (puzzle&&puzzle.colors&&puzzle.colors[g])||RVARS[g%10]||'#8a8a8a';} // match the ACTUAL tile colour (not grey) so the hint names it correctly
 function colorName(g){const h=hexToHsl(colorHexOf(g))[0];for(const e of HUE_NAMES){if(h<e[0])return L(e[1],e[2]);}return L('Color','Цвет');}
 function colorPill(g){const a=hexToHsl(colorHexOf(g));return '<span style="color:'+hslToHex(a[0],Math.min(82,a[1]+6),Math.min(46,a[2]))+';font-weight:900">'+colorName(g)+'</span>';}
 function regionCells(g){const out=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(puzzle.region[r][c]===g)out.push([r,c]);return out;}
@@ -1449,7 +1480,7 @@ function applyHint(){
   const h=_hint;if(!h){hideHint();return;}
   if(h.kind==='remove'){snapshot();const [r,c]=h.target;if(gstate[r][c]===MARK)gstate[r][c]=EMPTY;hideHint();playSfx('xremove');haptic('ok');return;}
   if(h.kind==='mark'){snapshot();(h.marks||[]).forEach(([r,c])=>{if(gstate[r][c]===EMPTY)gstate[r][c]=MARK;});hideHint();playSfx('xremove');haptic('ok');return;}
-  if(h.kind==='place'){const [r,c]=h.target;let won=false;if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;won=(duckCount===N);}hideHint();onDuckFound();pulseCell(r,c);updateCount();playSfx('duckfound');haptic('duck');if(won)onWin();return;}
+  if(h.kind==='place'){const [r,c]=h.target;let won=false;if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;won=(duckCount===N);}hideHint();onDuckFound();pulseCell(r,c);updateCount();playSfx('duckfound');haptic('duck');if(won)(typeof TOURNEY!=='undefined'&&TOURNEY.active?wcBoardComplete():onWin());return;}
   hideHint();
 }
 function placeOneCorrect(){for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK){gstate[r][c]=DUCK;duckCount++;renderCell(r,c);onDuckFound();pulseCell(r,c);return {r,c};}}return null;}
@@ -1485,7 +1516,7 @@ function buildGrid(){const g=$('grid');g.style.gridTemplateColumns='repeat('+N+'
 function cellEl(r,c){return cellEls[r]&&cellEls[r][c];}
 function renderCell(r,c){const el=cellEl(r,c);if(!el)return;const v=gstate[r][c];
   if(v===DUCK)el.innerHTML=faceVideosReady?'<canvas class="duckface" width="256" height="256"></canvas>':DUCK_SVG;
-  else if(v===RED)el.innerHTML=REDX_SVG;
+  else if(v===RED)el.innerHTML=(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof RED_CARD_SVG!=='undefined')?RED_CARD_SVG:REDX_SVG;
   else el.innerHTML=v===MARK?X_SVG:'';}
 function renderBoard(){for(let r=0;r<N;r++)for(let c=0;c<N;c++)renderCell(r,c);}
 function renderHearts(){const h=$('hearts');if(!heartsEnabled){h.style.display='none';return;}h.style.display='flex';let s='';for(let i=0;i<3;i++)s+=heartSvg(i<hearts);h.innerHTML=s;}
@@ -1496,7 +1527,7 @@ function pressTile(r,c){const el=cellEl(r,c);if(!el)return;el.style.animation='n
 function heartBreakAt(r,c,onReveal){const el=cellEl(r,c);if(!el)return;const d=document.createElement('div');d.className='hbreak';d.innerHTML='<svg viewBox="0 0 32 32"><path class="hbl" fill="#F0544C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" d="'+HEART_L+'"/><path class="hbr" fill="#F0544C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" d="'+HEART_R+'"/></svg>';el.appendChild(d);if(onReveal)setTimeout(()=>{try{onReveal();}catch(e){}},950);setTimeout(()=>{try{d.remove();}catch(e){}},1300);}
 function breakHeartIcon(idx){const h=$('hearts');if(!h||idx<0)return;const svg=h.children[idx];if(svg){svg.classList.add('hbrk');setTimeout(()=>{try{svg.classList.remove('hbrk');}catch(e){}},560);}}
 function updateCount(){$('countVal').textContent=duckCount+'/'+N;const f=$('pfill');if(f)f.style.width=(N?Math.round(duckCount/N*100):0)+'%';}
-function renderHud(){$('toptitle').textContent=L("Level ","Уровень ")+(levelIdx+1);updateCount();renderHearts();renderChips();}
+function renderHud(){$('toptitle').textContent=(typeof TOURNEY!=='undefined'&&TOURNEY.active)?(L("World Cup","Кубок")+"  "+((typeof TOURNEY!=='undefined'&&TOURNEY.goals)||0)+L(" goals"," голов")):(L("Level ","Уровень ")+(levelIdx+1));updateCount();renderHearts();renderChips();}
 function miniGrid(g){const cell=11,gap=2.5,pad=1,sz=3*cell+2*gap+2*pad;let s='<svg class="chipvis" viewBox="0 0 '+sz+' '+sz+'">';
   for(let r=0;r<3;r++)for(let c=0;c<3;c++){const x=pad+c*(cell+gap),y=pad+r*(cell+gap),v=g[r][c],cx=x+cell/2,cy=y+cell/2;
     s+='<rect x="'+x+'" y="'+y+'" width="'+cell+'" height="'+cell+'" rx="3" fill="#E7D5B5"/>';
@@ -1648,7 +1679,7 @@ function openLeaderboard(){closeAll();openScrim('scrimLB');MX.track('Leaderboard
   fetch(API_BASE+'/api/leaderboard').then(r=>r.json()).then(j=>renderLB((j&&j.top)||[])).catch(()=>{$('lbList').innerHTML='<p style="color:var(--ink-soft)">'+L("Could not load right now.","Не удалось загрузить.")+'</p>';});}
 function renderLB(rows){const el=$('lbList');if(!rows.length){el.innerHTML='<p style="color:var(--ink-soft)">'+L("No players yet. Be the first!","Пока никого. Будь первым!")+'</p>';return;}
   el.innerHTML=rows.map((r,i)=>{const medal=i===0?'#FFD23F':i===1?'#CFD2D8':i===2?'#E0925A':'var(--bg2)';
-    return '<div class="lbrow"><div class="lbrank" style="background:'+medal+'">'+(i+1)+'</div><div class="lbname">'+escapeHtml(r.name||'Duck')+'</div><div class="lblvl">'+L("Level ","Ур. ")+(r.level||0)+'</div></div>';}).join('');}
+    return '<div class="lbrow"><div class="lbrank" style="background:'+medal+'">'+(i+1)+'</div><img class="lbav" src="'+((typeof rowAv==='function')?rowAv(r):'')+'" onerror="this.style.visibility=&#39;hidden&#39;"><div class="lbname">'+escapeHtml(r.name||'Duck')+'</div><div class="lblvl">'+L("Level ","Ур. ")+(r.level||0)+'</div></div>';}).join('');}
 /* ---- IAP loader + purchase result (mirrors RTW) ---- */
 let _suppressGrantToast=false;
 let _pendingBuy=null; // sku the user is actively buying on native; the IAP approved() handler drives the success modal for it (robust to the 120s purchase timeout)
@@ -1704,7 +1735,7 @@ function setTotalN(setId){return STICKERS.filter(s=>s.set===setId).length;}
 function setComplete(setId){return setOwnedN(setId)===setTotalN(setId);}
 
 function chooseRarity(kind,minR){const w=PACK_WEIGHTS[kind];const minIdx=minR?RARITY_ORDER.indexOf(minR):0;let tot=0;const opts=[];for(let i=minIdx;i<RARITY_ORDER.length;i++){const r=RARITY_ORDER[i];tot+=w[r];opts.push([r,w[r]]);}let x=Math.random()*tot;for(const[r,wt]of opts){if(x<wt)return r;x-=wt;}return opts[0][0];}
-function rollOne(kind,minR){const r=chooseRarity(kind,minR);const pool=STICKERS.filter(s=>s.rarity===r);return pool[Math.floor(Math.random()*pool.length)];}
+function rollOne(kind,minR){const r=chooseRarity(kind,minR);const pool=STICKERS.filter(s=>s.rarity===r&&s.set!=='cup');return pool[Math.floor(Math.random()*pool.length)];}
 function doOpenPack(kind){const out=[];const n=PACK_SIZE[kind];save.stickers=save.stickers||{};
   for(let i=0;i<n;i++){const minR=(kind==='golden'&&i===0)?'rare':null;const s=rollOne(kind,minR);const had=ownedCount(s.id)>0;save.stickers[s.id]=ownedCount(s.id)+1;let dup=0;if(had){dup=DUP_GOLD[s.rarity]||0;save.gold=(save.gold||0)+dup;}out.push({s,had,dup});}
   persist();updateGoldHud();return out;}
@@ -1864,7 +1895,7 @@ function onFtueWin(){const replay=!!(ftue&&ftue.replay);ftue.active=false;ftueDi
   $('btnNext').textContent=t('next');showModalSoon('scrimWin',WIN_MODAL_DELAY);}
 
 /* ---------- home + misc ---------- */
-function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();updLbBtn();}
+function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();updLbBtn();try{updCupBtn();}catch(e){}}
 function albumUnlocked(){return (save.levelsDone||0)>=ALBUM_UNLOCK_LEVEL-1;}
 const LEADERBOARD_UNLOCK_LEVEL=13; // leaderboard stays locked until the player reaches this level
 function lbUnlocked(){return (save.levelsDone||0)>=LEADERBOARD_UNLOCK_LEVEL-1;}
@@ -1918,7 +1949,7 @@ function startPlay(){if(gameLive&&!ended){show('game');return;} /* resume the in
 /* ---------- OWNER / ADMIN (settings) ---------- */
 const ADMIN_IDS=[23040617];   // Pickle's Telegram user id -> auto owner
 const ADMIN_CODE='duckboss';  // secret unlock on native/web: tap the Settings title 7x, enter this
-const ADMIN_DEV=/^(localhost|127\.0\.0\.1|0\.0\.0\.0|)$/.test(location.hostname);
+const ADMIN_DEV=(function(){try{if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())return false;}catch(e){}return /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(location.hostname);})();  /* local WEB dev only; the native app (Capacitor) is NEVER auto-admin (prod Android leak fix) */
 function admUid(){return (TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.id)||0;}
 function isAdmin(){return ADMIN_DEV||save.admin===1||ADMIN_IDS.indexOf(admUid())>=0;}
 let admSel=1,admWipeArm=false;
@@ -1932,7 +1963,7 @@ function admDoWipe(){
 }
 function openSettings(inGame,fromHome){setSoundIcon();setHapticIcon();const v=$('setVer');if(v)v.textContent='v'+DD_VERSION;
   // in-game settings = sound + haptics + restart + version only; restore/privacy/contact live on the home settings.
-  $('setRestart').style.display=inGame?'':'none';
+  $('setRestart').style.display=(inGame&&!(typeof TOURNEY!=='undefined'&&TOURNEY.active))?'':'none';
   {const tb=$('setTutorial');if(tb)tb.style.display=fromHome?'':'none';} // "Tutorial" replay button: HOME settings only (not in-game, not shop)
   $('setRestore').style.display=inGame?'none':'';
   const sl=document.querySelector('#scrimSet .setlinks');if(sl)sl.style.display=inGame?'none':'';
@@ -1953,13 +1984,13 @@ function bind(){
   $('lbClose').onclick=()=>closeScrim('scrimLB');
   // Back -> home, but a live (unfinished) level stays resumable: tapping Play returns to the exact state.
   // Leaving the tutorial abandons it (its scripted step state is not resumable).
-  $('btnBack').onclick=()=>{if(ftue){ftue=null;gameLive=false;}ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;$('app').classList.remove('tut');show('home');refreshHome();};
+  $('btnBack').onclick=()=>{if(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof wcConfirmQuit==='function'){wcConfirmQuit();return;}if(ftue){ftue=null;gameLive=false;}ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;$('app').classList.remove('tut');show('home');refreshHome();};
   $('ftueGotit').onclick=()=>{hideGotit();if(ftue&&ftue.active&&ftue.step===1)ftueStepRowCol();};
   $('btnGear').onclick=()=>openSettings(true,false);
   $('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
   $('hintApply').onclick=applyHint;
   $('bbBuy').onclick=confirmBoosterBuy;$('bbClose').onclick=()=>closeScrim('scrimBuy');
-  $('btnNext').onclick=()=>{closeScrim('scrimWin');startLevel('levels',levelIdx+1);};
+  $('btnNext').onclick=()=>{closeScrim('scrimWin');startLevel('levels',levelIdx+1);try{maybeNameModal();}catch(e){}};
   $('btnRetry').onclick=()=>{closeScrim('scrimLose');if(!save.tutorialDone){startFTUE();}else{startLevel('levels',levelIdx);}};
   $('btnLoseHome').onclick=()=>{closeScrim('scrimLose');show('home');refreshHome();};
   $('btnLuOk').onclick=()=>closeScrim('scrimLevelUp');
@@ -2122,5 +2153,619 @@ function boot(){applyI18n();document.querySelectorAll('.cicon').forEach(e=>{e.in
 })();
 boot();
 </script>
+<!-- ============ DUCK CUP / WORLD CUP (client) — injected before </body> ============ -->
+<style>
+/* home entry button */
+.btn.wcbtn{background:#3CB371;color:#fff;text-shadow:0 1px 0 #2e8b57;box-shadow:0 6px 0 #2e8b57;display:flex;align-items:center;justify-content:center;gap:10px;position:relative;width:72%;align-self:center;font-size:4.8vw;padding:15px;}
+.btn.wcbtn.locked{filter:saturate(.55);opacity:.9;}
+.wcbtn-flag{width:30px;height:22px;display:flex;align-items:center;justify-content:center;flex:none;}
+.wcbtn-flag img{width:30px;height:21px;border-radius:4px;object-fit:cover;box-shadow:0 1px 2px rgba(0,0,0,.25);}
+.wcbtn-flag svg{width:26px;height:26px;}
+.wcbtn-lock{display:none;position:absolute;top:7px;right:12px;width:19px;height:19px;}
+.btn.wcbtn.locked .wcbtn-lock{display:block;}
+/* player avatar in the top-left home corner */
+.iconbtn.homeav{background:#FFD23F;padding:0;overflow:visible;position:relative;}
+.iconbtn.homeav #homeAvImg{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;}
+.homeavflag{position:absolute;bottom:-2px;right:-3px;width:19px;height:13px;border-radius:3px;object-fit:cover;border:1.5px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.35);display:none;}   /* (#4) country flag badge on the avatar */
+.homeavflag.on{display:block;}
+.hb-left .homeav{margin-right:7px;}   /* avatar alone in the corner; leaderboard + daily nudge to its right */
+.lbrow .lbav{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#FFD23F;flex:none;margin:0 9px 0 2px;}   /* (#6) duck avatar on the main leaderboard */
+/* World Cup full screen */
+#wc .wcme{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;color:var(--ink-soft);font-size:14px;padding:8px 12px 4px;cursor:default;}
+#wc .wcme .wcmeav{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#FFD23F;}
+#wc .wcme .wcmeflag{width:24px;height:16px;border-radius:3px;object-fit:cover;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+#wc .wcme .wcmegoals{font-size:12px;color:var(--orange);font-weight:900;background:rgba(232,148,47,.14);border-radius:9px;padding:2px 9px;}
+#wc .ttabs{width:min(92vw,420px);margin:6px auto 8px;}
+#wc .wclist{flex:1 1 auto;min-height:0;width:min(92vw,420px);align-self:center;overflow-y:auto;padding:2px 2px 10px;-webkit-overflow-scrolling:touch;}
+#wc .wcfoot{width:100%;display:flex;justify-content:center;padding:8px 0 calc(12px + var(--safe-bot,0px));background:linear-gradient(to top,var(--bg) 55%,transparent);}
+#wc .wcfoot .btn.play{width:min(86vw,420px);font-size:5.2vw;padding:18px;}
+/* ===== World Cup match: green pitch + soccer goal + scoring ===== */
+#app.cup #game{background:radial-gradient(135% 100% at 50% 6%, #3a9a52 0%, #2f8745 48%, #256d39 100%)!important;}
+#app.cup #qboard{filter:drop-shadow(0 8px 16px rgba(0,0,0,.30));}
+#app.cup .topbar .toptitle{color:#fff!important;}
+#app.cup .blabel{display:none!important;}                       /* (#1) hide Place/Hint labels in the cup */
+.pface{position:relative;}
+.pface .pfaceball{display:none;width:100%;height:100%;object-fit:contain;position:absolute;inset:0;}
+#app.cup .pface canvas{display:none;}                          /* (#2) static soccer ball instead of the duck on the progress bar */
+#app.cup .pface .pfaceball{display:block;}
+/* (#1,#2) reorder #game children: goal up top, rules pills below the boosters */
+#app.cup .topbar{order:0;} #app.cup #wcGoal{order:1;} #app.cup .statusrow{order:2;} #app.cup .boardwrap{order:3;} #app.cup #boosters{order:4;} #app.cup #chips{order:5;margin-top:8px;}
+/* the soccer goal at the top */
+.wcgoal{display:none;position:relative;width:min(74vw,300px);margin:0 auto;}
+#app.cup #wcGoal{display:block;}
+.wcgoal .goalsvg{width:100%;height:auto;display:block;filter:drop-shadow(0 3px 5px rgba(0,0,0,.28));}
+.wcgoal .gnet{transform-origin:50% 0;transition:transform .1s;}
+.wcgoal.scored .gnet{animation:netbulge .55s ease;}
+@keyframes netbulge{0%{transform:scaleY(1)}28%{transform:scaleY(1.16) translateY(3px)}100%{transform:scaleY(1)}}
+.goaltext{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%) scale(.4);font-size:8.5vw;font-weight:900;color:#FFD23F;paint-order:stroke;-webkit-text-stroke:5px #6b3f12;white-space:nowrap;letter-spacing:.5px;opacity:0;pointer-events:none;filter:drop-shadow(0 4px 3px rgba(0,0,0,.35));}
+.goaltext.go{animation:goalpop 1s cubic-bezier(.2,1.4,.4,1) forwards;}
+@keyframes goalpop{0%{opacity:0;transform:translate(-50%,-40%) scale(.3) rotate(-8deg)}28%{opacity:1;transform:translate(-50%,-78%) scale(1.12) rotate(4deg)}68%{opacity:1;transform:translate(-50%,-86%) scale(1)}100%{opacity:0;transform:translate(-50%,-104%) scale(.95)}}
+/* spinning ball in a found tile + the flying ball */
+.wcball{width:94%;height:94%;object-fit:contain;animation:wcspin .8s linear infinite;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));}
+@keyframes wcspin{to{transform:rotate(360deg)}}
+.wcflyball{position:fixed;z-index:88;pointer-events:none;will-change:transform;}
+.wcflyball svg{width:100%;height:100%;display:block;}
+@keyframes wcfly{0%{transform:translate(0,0) scale(1) rotate(0)}34%{transform:translate(calc(var(--dx)*.45),calc(var(--dy)*.45 - 48px)) scale(.82) rotate(300deg)}100%{transform:translate(var(--dx),var(--dy)) scale(.32) rotate(700deg)}}
+/* (#4) red card for a wrong guess (the tile keeps its own colour) */
+.redcard{width:66%;height:66%;animation:pop .16s cubic-bezier(.34,1.56,.64,1);}
+/* green Play-for-country button (#9) */
+#wc .wcfoot #wcPlay{background:#36b24a;box-shadow:0 6px 0 #248235;text-shadow:0 1px 0 #248235;}
+/* won World Cup sticker reveal in the result (#14) */
+.cupsticker{display:flex;flex-direction:column;align-items:center;gap:4px;margin:2px auto 2px;}
+.cupsticker .cstag{font-size:12px;font-weight:900;color:#FFE7A0;letter-spacing:.3px;}
+.cupsticker .csimg{width:76px;height:76px;border-radius:16px;object-fit:cover;border:3px solid #FFC23C;box-shadow:0 0 16px rgba(255,194,60,.6);animation:podPop .5s cubic-bezier(.2,1.3,.45,1) backwards;animation-delay:.9s;background:#3b2f25;}
+/* room board */
+.tbig{width:100%;max-width:320px;}
+#tResVid{width:min(64vw,240px);aspect-ratio:1;display:block;margin:0 auto -6px;border-radius:18px;background:#000;}
+.troom{width:100%;max-width:340px;display:flex;flex-direction:column;gap:6px;margin:6px 0;}
+.trow{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:14px;background:#f2efee;border:2px solid #e7ddd8;transition:transform .25s,background .25s;}
+.trow.me{background:#FFF4D6;border-color:var(--orange);}
+.trow.pending{opacity:.65;}
+.trank{width:26px;height:26px;border-radius:50%;background:#e3d8d2;color:#6E4F44;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none;}
+.trow:nth-child(1) .trank{background:#FFD23F;color:#5a4300;}
+.trow:nth-child(2) .trank{background:#dfe7f0;color:#5a6c80;}
+.trow:nth-child(3) .trank{background:#ecc59a;color:#7a4a14;}
+.tav{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#FFD23F;flex:none;}
+.tnm{flex:1;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;}
+.tfg{width:22px;height:15px;border-radius:3px;object-fit:cover;flex:none;}
+.tmiss{font-size:12px;font-weight:900;color:var(--accent-deep,#c0612e);flex:none;}
+.tmiss.pend{color:var(--ink-soft);}
+.tprize{font-weight:900;color:var(--orange);margin:4px 0 2px;}
+/* full-screen room result + podium */
+.cupresult .wincol{gap:6px;}
+.cupvid{width:min(44vw,168px);aspect-ratio:1;display:block;margin:0 auto;border-radius:18px;background:#000;}
+.cupresult h2{margin:2px 0 0;}
+.cuppod{display:flex;align-items:flex-end;justify-content:center;gap:7px;width:100%;max-width:360px;margin:8px auto 2px;}
+.cuppod .pod{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;animation:podPop .5s cubic-bezier(.2,1.3,.45,1) backwards;}
+.cuppod .pod.p3{animation-delay:.1s;} .cuppod .pod.p2{animation-delay:.35s;} .cuppod .pod.p1{animation-delay:.65s;}
+@keyframes podPop{0%{transform:translateY(22px) scale(.55);opacity:0;}60%{transform:translateY(-4px) scale(1.06);}100%{transform:translateY(0) scale(1);opacity:1;}}
+.pod .podavwrap{position:relative;display:inline-flex;}
+.pod .podav{width:50px;height:50px;border-radius:50%;object-fit:cover;background:#3b2f25;border:3px solid #FFD23F;}
+.pod.p2 .podav{width:44px;height:44px;border-color:#cfd8e6;} .pod.p3 .podav{width:42px;height:42px;border-color:#e7b07a;}
+.pod.me .podav{box-shadow:0 0 0 3px #fff,0 0 14px #FFD23F;}
+.pod .podname{font-size:11px;font-weight:800;color:#fff;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;}
+.pod .podflag{position:absolute;right:-5px;bottom:-3px;width:21px;height:15px;border-radius:3px;object-fit:cover;border:1.6px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);}   /* flag badge on the avatar (like the lobby) */
+.pod .podbar{width:100%;border-radius:11px 11px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:5px 2px 7px;color:#3b2f25;}
+.pod.p1 .podbar{height:90px;background:linear-gradient(#FFE48A,#FFC02E);box-shadow:0 0 16px rgba(255,200,40,.45);}
+.pod.p2 .podbar{height:76px;background:linear-gradient(#eef2f7,#c4cedd);}
+.pod.p3 .podbar{height:66px;background:linear-gradient(#f4d2ab,#dd9a58);}
+.pod .podrank{font-size:18px;font-weight:900;line-height:1;}
+.pod .podsc{font-size:10px;font-weight:900;color:rgba(59,47,37,.82);line-height:1;}   /* goals under the rank */
+.pod .podrew{display:flex;align-items:center;gap:3px;font-size:13px;font-weight:900;margin-top:3px;white-space:nowrap;}
+.pod .podrew svg{width:21px;height:21px;flex:none;}        /* (#3) bigger prize icons */
+.pod .podstar{width:19px;height:19px;display:inline-flex;flex:none;}
+.cupyou{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);color:#fff;border-radius:13px;padding:7px 11px;width:100%;max-width:320px;margin:5px auto 0;}
+.cupyou.me{background:#FFF4D6;color:#3b2f25;}
+.cupyou .trank{width:24px;height:24px;background:#5a4a40;color:#fff;font-size:12px;}
+.cupyou.me .trank{background:var(--orange);}
+.cupyou .cyav{position:relative;flex:none;display:inline-flex;}
+.cupyou .cyav .tfg{position:absolute;right:-4px;bottom:-3px;width:18px;height:12px;border-radius:3px;border:1.4px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.4);margin:0;}
+.cupyou .tnm{color:inherit;}
+.cupyou .tmiss{color:inherit;font-weight:900;}
+.cupresult .tprize{color:#FFE7A0;font-size:14px;max-width:320px;}
+/* flag picker */
+.flaggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-height:56vh;overflow-y:auto;overflow-x:hidden;padding:4px;box-sizing:border-box;}
+.flagcell{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:14px;background:var(--card);box-shadow:0 3px 0 var(--shadow);cursor:pointer;min-width:0;}
+.flagcell img{width:46px;height:31px;border-radius:4px;object-fit:cover;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+.flagcell span{font-size:11px;font-weight:800;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.flagcell.sel{outline:3px solid var(--orange);box-shadow:0 3px 0 var(--shadow),0 0 0 3px rgba(232,148,47,.25);}
+.btn.flagselbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:12px;background:#36b24a;box-shadow:0 6px 0 #248235;text-shadow:0 1px 0 #248235;color:#fff;}
+.btn.flagselbtn:disabled{filter:saturate(.5);opacity:.65;}
+.btn.flagselbtn .fsflag{width:32px;height:22px;border-radius:4px;object-fit:cover;box-shadow:0 1px 2px rgba(0,0,0,.3);background:#fff;}
+/* history + leaderboard rows */
+.thist{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:14px;background:#f2efee;margin-bottom:6px;cursor:pointer;}
+.thist .trank{width:30px;height:30px;}
+.thist b{font-weight:900;color:var(--ink);}
+.thsub{font-size:12px;color:var(--ink-soft);}
+.ttabs{display:flex;gap:8px;margin:2px 0 8px;}
+.ttab{flex:1;padding:8px;border-radius:12px;background:var(--card);box-shadow:0 3px 0 var(--shadow);font-weight:800;color:var(--ink-soft);cursor:pointer;text-align:center;}
+.ttab.on{background:var(--orange);color:#fff;box-shadow:0 3px 0 var(--orange-d);}
+.lcrow{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:13px;background:#f2efee;margin-bottom:5px;}
+.lcrow.me{background:#FFF4D6;}
+.lcrow .trank{width:24px;height:24px;}
+.lcrow img{width:26px;height:18px;border-radius:3px;object-fit:cover;}
+.lcrow .tnm{font-size:14px;}
+.lcgoals{font-weight:900;color:var(--orange);}
+.lcrow .lcav{width:27px;height:27px;border-radius:50%;object-fit:cover;background:#FFD23F;flex:none;}
+.lchead{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:13px;background:#FFF4D6;margin-bottom:7px;font-weight:900;color:var(--ink);}
+.lchead img{width:30px;height:20px;border-radius:3px;object-fit:cover;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+.lcsep{text-align:center;color:var(--ink-soft);font-weight:900;letter-spacing:3px;margin:1px 0 3px;}
+/* name modal */
+.navatars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;justify-items:center;margin:8px 0 14px;max-height:48vh;overflow-y:auto;padding:6px 6px 16px;}
+.navatar{width:60px;height:60px;border-radius:50%;background:#FFF4D6;padding:3px;cursor:pointer;border:3px solid transparent;box-shadow:0 3px 0 var(--shadow);}
+.navatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.navatar.sel{border-color:var(--orange);box-shadow:0 3px 0 var(--orange-d);}
+.namerow{display:flex;gap:8px;align-items:center;margin-bottom:4px;}
+.namerow input{flex:1;padding:13px 14px;border-radius:14px;border:2px solid var(--shadow);font-size:16px;font-weight:800;color:var(--ink);background:var(--card);outline:none;}
+.namerow input:read-only{opacity:.7;color:var(--ink-soft);cursor:default;}
+.namedice{width:50px;height:50px;border-radius:14px;background:var(--blue);box-shadow:0 3px 0 var(--blue-d);display:flex;align-items:center;justify-content:center;flex:none;}
+.namedice svg{width:24px;height:24px;}
+</style>
+
+<!-- Flag picker -->
+<div class="scrim" id="scrimFlag"><div class="modal modal-rel">
+  <button class="closex" id="flagClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h2 id="flagTitle">Pick your country</h2>
+  <p style="color:var(--ink-soft)" id="flagSub">You will play for your country in the World Cup.</p>
+  <div class="flaggrid" id="flagGrid"></div>
+  <button class="btn flagselbtn" id="flagSelect"><span id="flagSelTxt">Select</span><img class="fsflag" id="flagSelImg" alt=""></button>
+</div></div>
+
+<!-- Leave-run confirm (back button during a World Cup run) -->
+<div class="scrim" id="scrimCupQuit"><div class="modal modal-rel">
+  <h2 id="cqTitle">Are you sure?</h2>
+  <p style="color:var(--ink-soft)" id="cqSub">You will lose your goals!</p>
+  <button class="btn play" id="cqStay">Keep playing</button>
+  <button class="btn" id="cqLeave" style="background:var(--heart);box-shadow:0 5px 0 #c0392b;color:#fff;margin-top:8px">Leave</button>
+</div></div>
+
+<!-- Room result (full screen, podium) -->
+<div class="scrim winscrim cupresult" id="scrimCupRes"><div class="wincol">
+  <video id="tResVid" class="cupvid" loop muted playsinline></video>
+  <h2 id="tResTitle">Room finished</h2>
+  <div class="cuppod" id="cupPod"></div>
+  <div id="cupExtra"></div>
+  <div class="cupsticker" id="cupSticker" style="display:none"></div>
+  <div class="tprize" id="tPrize"></div>
+  <button class="btn" id="tResClose" style="background:var(--blue);box-shadow:0 5px 0 var(--blue-d);color:#fff;width:100%">Let's go!</button>
+</div></div>
+
+<!-- History -->
+<div class="scrim" id="scrimCupHist"><div class="modal modal-rel">
+  <button class="closex" id="thistClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h2 id="thistTitle">Matches History</h2>
+  <p style="color:var(--ink-soft)" id="thistSub">Play matches to see results here.</p>
+  <div id="thistList"><p style="color:var(--ink-soft)">Loading...</p></div>
+</div></div>
+
+<!-- Choose your duck (name + avatar) -->
+<div class="scrim" id="scrimName"><div class="modal modal-rel">
+  <h2 id="nameTitle">Choose your duck</h2>
+  <p style="color:var(--ink-soft)" id="nameSub">This is how you show up in the World Cup.</p>
+  <div class="navatars" id="nameAvatars"></div>
+  <div class="namerow">
+    <input id="nameInput" maxlength="16" placeholder="Your name" autocomplete="off">
+    <button class="namedice" id="nameDice" aria-label="random"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="4" fill="#fff"/><circle cx="9" cy="9" r="1.5" fill="#3a6ea5"/><circle cx="15" cy="9" r="1.5" fill="#3a6ea5"/><circle cx="12" cy="12" r="1.5" fill="#3a6ea5"/><circle cx="9" cy="15" r="1.5" fill="#3a6ea5"/><circle cx="15" cy="15" r="1.5" fill="#3a6ea5"/></svg></button>
+  </div>
+  <button class="btn play" id="nameSave">Save</button>
+</div></div>
+
+<script>
+/* ============ DUCK CUP / WORLD CUP ============ */
+const TOURNEY_UNLOCK_LEVEL = 1;                 // World Cup is open from the very start
+const TOURNEY_N = 6;                            // fixed 6x6 grid: fair, medium, quick
+let TOURNEY = { active:false, seed:0, start:0 };
+const CUP_FLAG  = cc => 'https://flagcdn.com/w40/' + String(cc||'').toLowerCase() + '.png';
+const CUP_FLAGW = cc => 'https://flagcdn.com/w80/' + String(cc||'').toLowerCase() + '.png';
+const TWC_COUNTRIES = [
+  ['BR','Brazil'],['AR','Argentina'],['FR','France'],['DE','Germany'],['ES','Spain'],['GB','England'],
+  ['PT','Portugal'],['NL','Netherlands'],['IT','Italy'],['BE','Belgium'],['HR','Croatia'],['US','USA'],
+  ['MX','Mexico'],['JP','Japan'],['KR','Korea'],['AU','Australia'],['CA','Canada'],['MA','Morocco'],
+  ['SN','Senegal'],['NG','Nigeria'],['EG','Egypt'],['SA','Saudi'],['TR','Turkey'],['RU','Russia'],
+  ['UA','Ukraine'],['PL','Poland'],['CO','Colombia'],['UY','Uruguay'],['CH','Swiss'],['DK','Denmark'],
+  ['SE','Sweden'],['IN','India'],['ID','Indonesia'],['CL','Chile'],['NO','Norway'],['FI','Finland'],
+  ['IE','Ireland'],['GR','Greece'],['AT','Austria'],['CZ','Czechia'],['RS','Serbia'],['RO','Romania'],
+  ['HU','Hungary'],['SK','Slovakia'],['SI','Slovenia'],['BG','Bulgaria'],['BA','Bosnia'],['AL','Albania'],
+  ['PE','Peru'],['EC','Ecuador'],['VE','Venezuela'],['PY','Paraguay'],['BO','Bolivia'],['CR','Costa Rica'],
+  ['PA','Panama'],['JM','Jamaica'],['HN','Honduras'],['GT','Guatemala'],['CN','China'],['TH','Thailand'],
+  ['VN','Vietnam'],['PH','Philippines'],['MY','Malaysia'],['SG','Singapore'],['IR','Iran'],['IQ','Iraq'],
+  ['QA','Qatar'],['AE','UAE'],['KW','Kuwait'],['JO','Jordan'],['IL','Israel'],['UZ','Uzbekistan'],
+  ['KZ','Kazakhstan'],['ZA','South Africa'],['GH','Ghana'],['CM','Cameroon'],['CI','Ivory Coast'],['DZ','Algeria'],
+  ['TN','Tunisia'],['KE','Kenya'],['ET','Ethiopia'],['NZ','New Zealand'],['IS','Iceland'],['PK','Pakistan'],
+  ['BD','Bangladesh'],['LK','Sri Lanka'],['NP','Nepal'],['GE','Georgia'],['AM','Armenia'],['AZ','Azerbaijan'],
+  ['LT','Lithuania'],['LV','Latvia'],['EE','Estonia'],['BY','Belarus'],['MK','Macedonia'],
+  ['LU','Luxembourg'],['MT','Malta'],['CY','Cyprus'],['MD','Moldova'],['ME','Montenegro'],['XK','Kosovo'],
+  ['TW','Taiwan'],['HK','Hong Kong'],['MN','Mongolia'],['MM','Myanmar'],['KH','Cambodia'],['LA','Laos'],
+  ['BN','Brunei'],['BT','Bhutan'],['MV','Maldives'],['AF','Afghanistan'],['SY','Syria'],['YE','Yemen'],
+  ['OM','Oman'],['BH','Bahrain'],['TM','Turkmenistan'],['TJ','Tajikistan'],['KG','Kyrgyzstan'],['KP','North Korea'],
+  ['AO','Angola'],['MZ','Mozambique'],['ZW','Zimbabwe'],['ZM','Zambia'],['UG','Uganda'],['TZ','Tanzania'],
+  ['RW','Rwanda'],['ML','Mali'],['BF','Burkina Faso'],['NE','Niger'],['SD','Sudan'],['LY','Libya'],
+  ['CD','DR Congo'],['CG','Congo'],['GA','Gabon'],['MG','Madagascar'],['BW','Botswana'],['NA','Namibia'],
+  ['MU','Mauritius'],['BJ','Benin'],['TG','Togo'],['GN','Guinea'],['SL','Sierra Leone'],['LR','Liberia'],
+  ['GM','Gambia'],['MW','Malawi'],['CV','Cape Verde'],['SO','Somalia'],
+  ['DO','Dominican Rep'],['GY','Guyana'],['SR','Suriname'],['TT','Trinidad'],['BS','Bahamas'],['BB','Barbados'],
+  ['BZ','Belize'],['NI','Nicaragua'],['SV','El Salvador'],['CU','Cuba'],['HT','Haiti'],['PR','Puerto Rico'],
+  ['FJ','Fiji'],['PG','Papua New Guinea'],['LI','Liechtenstein'],['MC','Monaco'],['AD','Andorra'],['SM','San Marino']
+];
+const CC_NAME = Object.fromEntries(TWC_COUNTRIES);
+// (#4) best-effort country auto-detect for the flag suggestion (server cf-ipcountry may also set window._geoCC)
+try{ if(!window._geoCC) fetch('https://ipapi.co/country/').then(r=>r.ok?r.text():'').then(t=>{ t=(t||'').trim().toUpperCase(); if(/^[A-Z]{2}$/.test(t)) window._geoCC=t; }).catch(()=>{}); }catch(e){}
+function tourneyUnlocked(){ return (save.levelsDone||0) >= TOURNEY_UNLOCK_LEVEL-1; }
+function myCountry(){ return (save.country && /^[A-Z]{2}$/.test(save.country)) ? save.country : ''; }
+const DUCK_NAMES=['Sir Quacks','Waddles','Nugget','Biscuit','Mochi','Pebbles','Sunny','Tofu','Maple','Pumpkin','Bubbles','Coco','Yolko','Peep','Splash','Goldie','Captain Quack','Mallard','Quackers','Puddles'];
+const DUCK_STYLES=['avatar-1','avatar-2','avatar-3','avatar-4','avatar-5','avatar-6','avatar-7','avatar-8','avatar-9','avatar-10','avatar-11','avatar-12'];
+const DUCK_AV = s => 'assets/ducks/avatars/'+s+'.png';
+function myName(){ try{ const u=TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user; return (save.name||(u&&(u.first_name||u.username))||'Duck'); }catch(e){ return save.name||'Duck'; } }
+function myAvatar(){
+  if(save.avatar){ if(/^(https?:|assets\/)/.test(save.avatar)) return save.avatar; if(DUCK_STYLES.indexOf(save.avatar)>=0) return DUCK_AV(save.avatar); }
+  try{ const u=TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user; return (u&&u.photo_url)||''; }catch(e){ return ''; }
+}
+// the home-corner avatar: the chosen duck, a real photo, or a deterministic duck by name (so it always shows one)
+function homeAvSrc(){ const a=myAvatar(); if(a) return a; const s=myName(); let h=0; for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0; return DUCK_AV(DUCK_STYLES[h%DUCK_STYLES.length]); }
+function wcGuestId(){ try{ let g=localStorage.getItem('dd.anon'); if(!g){ g='anon-'+((typeof MX!=='undefined'&&MX._iid)?MX._iid():(Date.now().toString(36)+Math.random().toString(36).slice(2,8))); localStorage.setItem('dd.anon',g); } return g; }catch(e){ return ''; } }   // stable native device id
+function _tapi(path, body){ return fetch(API_BASE+path, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined).then(r=>r.ok?r.json():null).catch(()=>null); }
+function avHtml(av){ return av ? '<img class="tav" src="'+escapeHtml(av)+'" onerror="this.style.visibility=\'hidden\'">' : '<span class="tav"></span>'; }
+// the player's total World Cup goals (server-authoritative when known, else a local sum of past matches)
+function myCupGoals(){ if(typeof window._myCupGoals==='number') return window._myCupGoals; let s=0; try{ (save.cupHistory||[]).forEach(r=>{ s+=((r.score!=null)?r.score:0); }); }catch(e){} return s; }
+function refreshMyGoals(){ const cc=myCountry(); if(!cc) return; _tapi('/api/tourney/country',{cc,initData,guestId:wcGuestId()}).then(j=>{ if(j&&j.me&&typeof j.me.goals==='number'){ window._myCupGoals=j.me.goals; const g=$('wcMeGoals'); if(g) g.textContent=j.me.goals+L(' goals',' голов'); } }); }
+
+/* ---- home entry button ---- */
+function updCupBtn(){
+  const ai=$('homeAvImg'); if(ai) ai.src=homeAvSrc();
+  const fl=$('homeAvFlag'); if(fl){ const cc=myCountry(); if(cc){ fl.src=CUP_FLAG(cc); fl.classList.add('on'); } else { fl.classList.remove('on'); } }   // (#4) flag badge on the avatar
+  const b=$('btnWC'); if(!b) return;
+  b.classList.toggle('locked', !tourneyUnlocked());
+  const cc=myCountry(), f=$('wcBtnFlag');
+  if(f && cc) f.innerHTML='<img src="'+CUP_FLAG(cc)+'" alt="">';
+  const lbl=$('wcBtnLbl'); if(lbl) lbl.textContent=L('World Cup','Кубок мира');
+}
+
+/* ---- open the World Cup screen ---- */
+function cupClearOverlays(){ try{ const a=$('app'); a&&a.classList.remove('tut','tutdim','hintmode'); const q=$('qboard'); q&&q.classList.remove('dim'); if(typeof handHide==='function')handHide(); if(typeof hideCoach==='function'){hideCoach('top');hideCoach('bot');} if(typeof hideGotit==='function')hideGotit(); }catch(e){} }
+function openWC(){
+  if(!tourneyUnlocked()){ showTip($('btnWC'), L('Unlocks at level ','Откроется на уровне ')+TOURNEY_UNLOCK_LEVEL, false); return; }
+  if(!myCountry()){ openFlagPicker(true); return; }     // first time -> pick a country, then the screen
+  if(!save.avatar){ save.avatar=randDuckStyle(); persist(); }   // always have a duck avatar to show
+  closeAll(); cupClearOverlays(); show('wc'); updWcScreen(); setTwcTab(_twcTab||'cc'); refreshMyGoals(); MX.track('Cup Opened');
+}
+function updWcScreen(){
+  const cc=myCountry(), nm=cc?(CC_NAME[cc]||cc):'';
+  const wt=$('wcTitle'); if(wt) wt.textContent=L('World Cup','Кубок мира');
+  const me=$('wcMe'); if(me) me.innerHTML = cc ? ('<img class="wcmeav" src="'+myAvatar()+'" onerror="this.style.visibility=\'hidden\'"><img class="wcmeflag" src="'+CUP_FLAG(cc)+'"><span>'+escapeHtml(myName())+'</span><span class="wcmegoals" id="wcMeGoals">'+myCupGoals()+L(' goals',' голов')+'</span>') : L('Pick your country to play','Выбери страну, чтобы играть');
+  const pb=$('wcPlay'); if(pb) pb.textContent = cc ? (L('Play for ','Играть за ')+nm+'!') : L('Choose country and play','Выбрать страну');
+}
+
+/* ---- flag picker ---- */
+let _flagThenPlay=false; let _flagSel='';
+function openFlagPicker(thenWC){
+  _flagThenPlay=!!thenWC;
+  const g=$('flagGrid'); const cur=myCountry();
+  let geo=''; try{ geo=(window._geoCC||'').toUpperCase(); }catch(e){}
+  const geoOk = geo && TWC_COUNTRIES.some(x=>x[0]===geo);
+  _flagSel = cur || (geoOk?geo:'');                              // pre-selected (geo or current) but NOT committed yet
+  let list=TWC_COUNTRIES.slice();
+  if(_flagSel) list.sort((a,b)=>(a[0]===_flagSel?-1:b[0]===_flagSel?1:0));   // float the pre-selected flag to the top
+  g.innerHTML = list.map(([cc,nm])=>'<div class="flagcell'+(cc===_flagSel?' sel':'')+'" data-cc="'+cc+'"><img loading="lazy" src="'+CUP_FLAGW(cc)+'"><span>'+nm+'</span></div>').join('');
+  g.querySelectorAll('.flagcell').forEach(el=>el.onclick=()=>markFlag(el.dataset.cc));   // tap MARKS a flag; the green Select button commits it
+  const txt=$('flagSelTxt'); if(txt) txt.textContent=L('Select','Выбрать');
+  const sub=$('flagSub'); if(sub) sub.textContent = (geoOk&&!cur) ? (L('We picked ','Мы выбрали ')+(CC_NAME[geo]||geo)+L(' for you. Tap another, then Select.',' за тебя. Выбери другую и нажми Выбрать.')) : L('Tap your country, then tap Select.','Выбери страну и нажми Выбрать.');
+  updFlagSel();
+  closeAll(); openScrim('scrimFlag');
+}
+function markFlag(cc){ _flagSel=cc; const g=$('flagGrid'); if(g) g.querySelectorAll('.flagcell').forEach(el=>el.classList.toggle('sel', el.dataset.cc===cc)); updFlagSel(); try{haptic('light');}catch(e){} }
+function updFlagSel(){ const b=$('flagSelect'); if(!b) return; const img=$('flagSelImg'); if(_flagSel){ if(img){ img.src=CUP_FLAG(_flagSel); img.style.display=''; } b.disabled=false; } else { if(img) img.style.display='none'; b.disabled=true; } }
+function pickFlag(cc){
+  save.country=cc; persist(); haptic('light'); try{updCupBtn();}catch(e){}
+  _tapi('/api/tourney/flag',{initData,guestId:wcGuestId(),country:cc});
+  closeScrim('scrimFlag');
+  if(_flagThenPlay){ _flagThenPlay=false; openWC(); }
+}
+
+/* ---- play a tournament run ---- */
+function startTourney(){
+  if(!myCountry()){ openFlagPicker(true); return; }
+  closeAll();
+  _tapi('/api/tourney/seed').then(j=>{
+    const seed = (j&&Number.isFinite(j.seed)) ? (j.seed>>>0) : (Math.floor(Date.now()/1200000)>>>0);
+    beginTourneyRun(seed);
+  });
+}
+// ---- World Cup = a SURVIVAL run: 3 lives carry across boards; score = total ducks found (goals); rank by score ----
+function wcBoardSize(k){ return 4 + ((k % 9)); }                                            // escalates 4,5,6...12, then cycles back to 4
+function wcBoardSeed(roomSeed,k){ let x=((roomSeed>>>0)*2654435761 + (k+1)*40503)>>>0; x^=x>>>13; x=(x*1597334677)>>>0; return x>>>0; } // same sequence of boards for everyone in the room
+function wcHud(){ try{ $('toptitle').textContent = L('World Cup','Кубок')+'  '+((typeof TOURNEY!=='undefined'&&TOURNEY.goals)||0)+L(' goals',' голов'); }catch(e){} }
+function wcLoadBoard(k){
+  TOURNEY.board=k; const sd=wcBoardSeed(TOURNEY.seed,k);
+  N=wcBoardSize(k); puzzle=fixedPuzzle(N,sd); try{ puzzle.colors=wcPalette(N,sd); }catch(e){}   // (#5) green-free tiles
+  gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY)); duckCount=0;
+  buildGrid(); renderAll(); try{ renderHearts(); }catch(e){} wcHud();                        // hearts persist (NOT reset)
+  try{ playSfx('reveal'); }catch(e){}
+}
+function beginTourneyRun(seed){
+  mode='tourney'; levelIdx=0; ended=false; boostersUsed=0; heartsLost=0; history=[]; ftue=null; faceFx.clear();
+  _boosterClock=Date.now(); clearTimeout(_modalTimer); _progUntil=0; hintActive=false; _hint=null;
+  document.getElementById('app').classList.remove('tutdim','hintmode','tut'); document.getElementById('qboard').classList.remove('dim');
+  $('hintPill').classList.remove('on'); $('hintApply').classList.remove('on');
+  heartsEnabled=true; hearts=3;                                         // 3 LIVES, carried across every board of the run
+  TOURNEY={ active:true, seed:(seed>>>0), start:Date.now(), goals:0, board:0 };
+  document.getElementById('app').classList.add('cup');                  // (#13) green grass field + (#10) boosters visible
+  show('game'); gameLive=true;
+  wcLoadBoard(0);                                                       // first board (sets N, puzzle, grid, hearts, hud)
+  MX.track('Cup Run Started');
+}
+function wcBoardComplete(){                                             // a board cleared -> next board (lives + goals carry over)
+  if(typeof TOURNEY==='undefined'||!TOURNEY.active) return;
+  setTimeout(()=>{ if(TOURNEY.active) wcLoadBoard((TOURNEY.board||0)+1); }, 320);
+}
+function endWcRun(){                                                    // 3 lives gone -> run ends; ranked by goals (ducks found)
+  if(typeof TOURNEY==='undefined'||!TOURNEY.active) return;
+  ended=true; gameLive=false; TOURNEY.active=false;
+  document.getElementById('app').classList.remove('cup');
+  const score=(TOURNEY.goals||0), timeMs=Date.now()-(TOURNEY.start||Date.now());
+  try{ haptic('lose'); soundLose(); }catch(e){}
+  const payload={ seed:TOURNEY.seed, score, timeMs, country:myCountry(), name:myName(), avatar:myAvatar(), initData, guestId:wcGuestId() };
+  showCupResult(null, { score });
+  // ALWAYS submit (Telegram via initData, or native via the device guest id) so goals register + leaderboards fill
+  _tapi('/api/tourney/submit', payload).then(res=>{ if(res&&res.ok) resolveCupResult(res); else resolveCupResult(localRoom(score,timeMs)); }).catch(()=>resolveCupResult(localRoom(score,timeMs)));
+}
+function onTourneyWin(){ endWcRun(); }                                  // alias: any remaining caller ends the run
+function wcConfirmQuit(){ try{ $('cqTitle').textContent=L('Are you sure?','Точно?'); $('cqSub').textContent=L('You will lose your goals!','Ты потеряешь свои голы!'); $('cqStay').textContent=L('Keep playing','Продолжить'); $('cqLeave').textContent=L('Leave','Выйти'); }catch(e){} openScrim('scrimCupQuit'); }
+function wcAbortRun(){                                                  // leave the run WITHOUT submitting (goals are lost)
+  closeScrim('scrimCupQuit');
+  ended=true; gameLive=false; if(typeof TOURNEY!=='undefined') TOURNEY.active=false;
+  document.getElementById('app').classList.remove('cup');
+  show('home'); refreshHome();
+}
+
+/* ---- the full-screen result + top-3 podium ---- */
+let _tRevealT=[]; let _cupResMode='run';
+const PLACE_REWARD = {1:{gold:100,sticker:true},2:{gold:50},3:{gold:25}};
+const STAR_MINI = '<svg class="podstar" viewBox="0 0 24 24" fill="#FF7AC8"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45L2.6 9.45l6.5-.95z"/></svg>';
+// every row gets a duck avatar: a chosen one, a real photo/style, or a deterministic duck by name (bots).
+function rowAv(r){
+  if(r && r.avatar){ if(/^(https?:|assets\/)/.test(r.avatar)) return r.avatar; if(DUCK_STYLES.indexOf(r.avatar)>=0) return DUCK_AV(r.avatar); }
+  const s=(r&&r.name)||'Duck'; let h=0; for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0; return DUCK_AV(DUCK_STYLES[h%DUCK_STYLES.length]);
+}
+// grant a random not-yet-owned World Cup sticker (the 'cup' album set), or null once the set is complete
+function grantCupSticker(){
+  try{
+    const pool=STICKERS.filter(s=>s.set==='cup' && !((save.stickers||{})[s.id]>0));
+    if(!pool.length) return null;
+    const s=pool[Math.floor(Math.random()*pool.length)];
+    save.stickers=save.stickers||{}; save.stickers[s.id]=(save.stickers[s.id]||0)+1; persist();
+    return s;
+  }catch(e){ return null; }
+}
+/* ===== World Cup match: soccer ball, red card, no-green tiles, goal scoring ===== */
+const WC_BALL_SRC='assets/ducks/wcball.png?v='+DD_VERSION;                                   // premium 3D ball (NBP, transparent)
+const WC_BALL_SPIN='<img class="wcball" src="'+WC_BALL_SRC+'" alt="">';
+const WC_BALL_FLY='<img src="'+WC_BALL_SRC+'" style="width:100%;height:100%;display:block" alt="">';
+const RED_CARD_SVG='<svg class="redcard" viewBox="0 0 64 64"><rect x="23" y="13" width="20" height="32" rx="3" transform="rotate(13 33 29)" fill="#E0322B" stroke="#9e1b15" stroke-width="2.5"/></svg>';
+const WC_TILE_COLORS=['#E58A77','#B773E8','#6FA9E4','#E8B24C','#EF94B6','#F2A65A','#E0675E','#9B8CE0'];   // (#5) NO greens (the pitch is green)
+function wcPalette(n,seed){ const a=WC_TILE_COLORS.slice(); let x=(seed>>>0)||1; for(let i=a.length-1;i>0;i--){ x=(x*1664525+1013904223)>>>0; const j=x%(i+1); const t=a[i];a[i]=a[j];a[j]=t; } return a.slice(0,n); }
+function goalCelebrate(){
+  const g=$('wcGoal'); if(g){ g.classList.remove('scored'); void g.offsetWidth; g.classList.add('scored'); }
+  const t=$('goalText'); if(t){ t.textContent=['GOAL!','GOALLL!','GOOAL!','SCORE!'][Math.floor(Math.random()*4)]; t.classList.remove('go'); void t.offsetWidth; t.classList.add('go'); }
+  try{haptic('duck');}catch(e){}
+}
+function flyBallToGoal(cellEl, done){
+  let fired=false; const fin=()=>{ if(fired)return; fired=true; try{fb.remove();}catch(e){} done&&done(); };
+  const cr=cellEl.getBoundingClientRect();
+  const fb=document.createElement('div'); fb.className='wcflyball';
+  fb.style.left=cr.left+'px'; fb.style.top=cr.top+'px'; fb.style.width=cr.width+'px'; fb.style.height=cr.height+'px';
+  fb.innerHTML=WC_BALL_FLY; document.body.appendChild(fb);
+  const goal=$('wcGoal'); let gx=innerWidth/2, gy=92;
+  if(goal){ const gr=goal.getBoundingClientRect(); gx=gr.left+gr.width*0.5; gy=gr.top+gr.height*0.46; }
+  const cx=cr.left+cr.width/2, cy=cr.top+cr.height/2;
+  fb.style.setProperty('--dx',(gx-cx)+'px'); fb.style.setProperty('--dy',(gy-cy)+'px');
+  fb.style.animation='wcfly .5s cubic-bezier(.45,.05,.62,1) forwards';
+  fb.addEventListener('animationend', fin, {once:true}); setTimeout(fin, 720);
+}
+// called from tryGuess in WC mode: ball appears + spins in the tile, shoots into the goal, then the duck face takes its place
+function wcGoalShot(r,c,lastOfBoard){
+  const el=(typeof cellEl==='function')&&cellEl(r,c);
+  const finish=()=>{ renderCell(r,c); onDuckFound(); if(lastOfBoard) wcBoardComplete(); };   // board cleared -> next board
+  if(!el){ finish(); return; }
+  el.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">'+WC_BALL_SPIN+'</div>';
+  try{ el.classList.add('spot'); setTimeout(()=>{try{el.classList.remove('spot');}catch(e){}},900); }catch(e){}
+  setTimeout(()=>{ flyBallToGoal(el, ()=>{ goalCelebrate(); finish(); }); }, 360);
+}
+function showCupResult(res, me){
+  closeAll();
+  $('tResTitle').textContent = L('Counting the match...','Подсчёт матча...');
+  $('cupPod').innerHTML=''; $('cupExtra').innerHTML=''; $('tPrize').textContent='';
+  $('tResClose').style.display='none';
+  try{ $('tResVid').removeAttribute('src'); }catch(e){}
+  openScrim('scrimCupRes');
+}
+function renderPodium(board){
+  const top3=board.slice(0,3), disp=[1,0,2];           // 2nd, 1st, 3rd left-to-right
+  $('cupPod').innerHTML = disp.map(i=>{ const r=top3[i]; if(!r) return ''; const place=i+1, rew=PLACE_REWARD[place];
+    const flag=r.country?'<img class="podflag" src="'+CUP_FLAG(r.country)+'">':'';   // flag badge ON the avatar (like the lobby)
+    const rewHtml='<div class="podrew">'+COIN_SVG+rew.gold+(rew.sticker?STAR_MINI:'')+'</div>';
+    return '<div class="pod p'+place+(r.me?' me':'')+'">'
+      +'<div class="podavwrap"><img class="podav" src="'+rowAv(r)+'" onerror="this.style.visibility=\'hidden\'">'+flag+'</div>'
+      +'<div class="podname">'+(r.me?L('You','Ты'):escapeHtml(r.name||'Duck'))+'</div>'
+      +'<div class="podbar"><div class="podrank">#'+place+'</div>'
+        +'<div class="podsc">'+((r.score!=null)?r.score:0)+L(' goals',' голов')+'</div>'+rewHtml+'</div></div>';
+  }).join('');
+}
+function renderCupExtra(board, myRank){
+  const rest=board.filter(x=>x.rank>3);                          // (#2) show every remaining finisher with their goals
+  if(!rest.length){ $('cupExtra').innerHTML=''; return; }
+  $('cupExtra').innerHTML = rest.map(r=>{
+    const flag=r.country?'<img class="tfg" src="'+CUP_FLAG(r.country)+'">':'';
+    const sc=((r.score!=null)?r.score:0)+L(' goals',' голов');
+    return '<div class="cupyou'+(r.me?' me':'')+'"><div class="trank">#'+r.rank+'</div><div class="cyav"><img class="tav" src="'+rowAv(r)+'" onerror="this.style.visibility=\'hidden\'">'+flag+'</div><div class="tnm">'+(r.me?L('You','Ты'):escapeHtml(r.name||'Duck'))+'</div><span class="tmiss">'+sc+'</span></div>';
+  }).join('');
+}
+function resolveCupResult(res){
+  _tRevealT.forEach(clearTimeout); _tRevealT=[];
+  const board=((res&&res.board)||[]).slice().sort((a,b)=>(a.rank||0)-(b.rank||0));
+  const myRank=(res&&res.myRank)||(board.findIndex(x=>x.me)+1)||0;
+  const won = myRank>=1 && myRank<=3;
+  $('tResVid').src = won ? 'assets/ducks/raw/soccer-victory-'+(1+Math.floor(Math.random()*5))+'.mp4' : 'assets/ducks/raw/soccer-defeat-'+(1+Math.floor(Math.random()*6))+'.mp4';
+  try{ $('tResVid').play&&$('tResVid').play().catch(()=>{}); }catch(e){}
+  $('tResTitle').textContent = myRank===1 ? L('Champion!','Чемпион!') : (won ? (L('You finished #','Ты занял #')+myRank+'!') : (L('You finished #','Ты занял #')+myRank));
+  renderPodium(board); renderCupExtra(board, myRank);
+  const prize=(res&&res.prize)||{};
+  if(prize.gold){ addGold(prize.gold); }
+  // only the CHAMPION (#1) wins a NEW World Cup sticker for the album (until the set is complete)
+  let wonSticker = (myRank===1) ? grantCupSticker() : null;
+  const cs=$('cupSticker');
+  if(cs){ if(wonSticker){ cs.style.display=''; cs.innerHTML='<div class="cstag">'+L('NEW World Cup sticker!','НОВАЯ наклейка Кубка!')+'</div><img class="csimg" src="assets/stickers/'+wonSticker.id+'.png?v='+DD_VERSION+'"><div class="cstag" style="color:#fff">'+stName(wonSticker)+'</div>'; } else { cs.style.display='none'; cs.innerHTML=''; } }
+  const myScore=((board.find(x=>x.me)||{}).score)||0;
+  let pl = prize.gold ? (L('You won ','Ты выиграл ')+prize.gold+' '+L('gold','золота')) : L('No prize this match. Top 3 win gold; #1 wins a sticker.','Без приза. Топ 3 берут золото; 1 место получает наклейку.');
+  if(myScore){ pl += '    +'+myScore+' '+L('goals for ','голов для ')+(CC_NAME[myCountry()]||myCountry()); }   // your ducks found feed your country's total
+  $('tPrize').textContent = pl;
+  // (#8) save this room to LOCAL history so every player can review past rooms (not only Telegram)
+  try{ save.cupHistory=(save.cupHistory||[]); save.cupHistory.unshift({seed:(typeof TOURNEY!=='undefined'&&TOURNEY.seed)||0,score:myScore,rank:myRank,goals:(res&&res.goals)||0,board:board,ts:Date.now()}); save.cupHistory=save.cupHistory.slice(0,30); persist(); }catch(e){}
+  try{ window._myCupGoals=(typeof window._myCupGoals==='number'?window._myCupGoals:0)+myScore; }catch(e){}   // reflect this run in my goals total right away
+  if(won){ haptic('win'); confettiRain(); } else { try{haptic('light');}catch(e){} }
+  _tRevealT.push(setTimeout(()=>{ try{haptic('light');}catch(e){} }, 350));
+  _tRevealT.push(setTimeout(()=>{ try{haptic(won?'win':'light');}catch(e){} }, 750));
+  _cupResMode='run'; const rc=$('tResClose'); if(rc){ rc.textContent=L("Let's go!","Поехали!"); rc.style.display=''; }
+}
+function localRoom(score,timeMs){ // offline fallback (no server): fabricate 4 ghosts, ranked by GOALS (ducks found)
+  const ghosts=[]; for(let i=0;i<4;i++){ const sc=Math.floor(8+Math.random()*36); ghosts.push({name:['Pip','Coco','Dax','Olive'][i],country:['BR','FR','JP','US'][i],avatar:null,score:sc,time_ms:Math.floor(40000+Math.random()*70000)}); }
+  const me={name:myName(),country:myCountry(),avatar:myAvatar(),score,time_ms:timeMs};
+  const all=[Object.assign({me:true},me),...ghosts.map(g=>Object.assign({me:false},g))];
+  all.sort((a,b)=>(b.score-a.score)||(a.time_ms-b.time_ms));
+  const rank=all.findIndex(x=>x.me)+1;
+  return { ok:true, myRank:rank, goals:rank===1?3:rank===2?2:rank===3?1:0, prize:rank===1?{gold:100,sticker:true}:rank===2?{gold:50}:rank===3?{gold:25}:{},
+    board: all.map((x,i)=>({rank:i+1,name:x.name,country:x.country,avatar:x.avatar,score:x.score,timeMs:x.time_ms,me:!!x.me})) };
+}
+
+/* ---- history ---- */
+function _histRow(r){
+  const medal=r.rank===1?'#FFD23F':r.rank===2?'#dfe7f0':r.rank===3?'#ecc59a':'#e3d8d2';
+  return '<div class="thist" onclick=\'showHistRoom('+JSON.stringify(JSON.stringify(r.board||[]))+')\'><div class="trank" style="background:'+medal+'">'+(r.rank||'-')+'</div><div style="flex:1"><b>'+L('Rank ','Место ')+(r.rank||'-')+' / 5</b><div class="thsub">'+((r.score!=null?r.score:0))+' '+L('goals','голов')+(r.goals?(' . +'+r.goals+' '+L('for country','для страны')):'')+'</div></div></div>';
+}
+function _renderHist(runs){
+  const sub=$('thistSub');
+  if(!runs.length){ if(sub) sub.style.display=''; $('thistList').innerHTML=''; return; }   // empty -> show the subtitle hint only
+  if(sub) sub.style.display='none';
+  $('thistList').innerHTML = runs.map(_histRow).join('');
+}
+// (#8) history works for EVERYONE: local save.cupHistory, merged with the server's cross-device history for Telegram users.
+function openCupHist(){
+  closeAll(); openScrim('scrimCupHist');
+  $('thistTitle').textContent=L('Matches History','История матчей');
+  $('thistSub').textContent=L('Play matches to see results here.','Сыграй матчи, чтобы увидеть результаты.');
+  const local=(save.cupHistory||[]).slice();
+  _renderHist(local);
+  _tapi('/api/tourney/history',{initData,guestId:wcGuestId()}).then(j=>{   // works for native (guest) too
+    if(!j) return;
+    const sv=((j.runs)||[]).map(r=>({seed:r.seed,score:r.score,rank:r.rank,goals:r.goals,board:r.board,ts:(+new Date(r.ts))||0}));
+    const seen=new Set();
+    const all=local.concat(sv).filter(r=>{const k=(r.ts||0)+'_'+(r.rank||0)+'_'+((r.score!=null)?r.score:0);if(seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,30);
+    _renderHist(all);
+  });
+}
+function showHistRoom(boardStr){ let board=[]; try{board=JSON.parse(boardStr);}catch(e){} closeAll(); board=board.slice().sort((a,b)=>(a.rank||0)-(b.rank||0)); _cupResMode='hist'; $('tResTitle').textContent=L('Match result','Итог матча'); $('tPrize').textContent=''; const cs=$('cupSticker'); if(cs){cs.style.display='none';cs.innerHTML='';} try{$('tResVid').removeAttribute('src');}catch(e){} renderPodium(board); renderCupExtra(board,(board.findIndex(x=>x.me)+1)||0); const rc=$('tResClose'); if(rc){ rc.textContent=L('Back','Назад'); rc.style.display=''; } openScrim('scrimCupRes'); }
+
+/* ---- World Cup leaderboards (inside the #wc screen) ---- */
+let _twcTab='cc';
+function setTwcTab(tab){ _twcTab=tab; const a=$('twcTabCC'),b=$('twcTabMine'); if(a){a.textContent=L('Countries','Страны');a.classList.toggle('on',tab==='cc');} if(b){b.textContent=L('My country','Моя страна');b.classList.toggle('on',tab==='mine');} renderTwc(); }
+function renderTwc(){
+  const el=$('twcList'); if(!el) return; el.innerHTML='<p style="color:var(--ink-soft)">'+L('Loading...','Загрузка...')+'</p>';
+  const myCC=myCountry();
+  if(_twcTab==='cc'){
+    _tapi('/api/tourney/countries').then(j=>{ const cs=(j&&j.countries)||[];
+      if(!cs.length){ el.innerHTML='<p style="color:var(--ink-soft)">'+L('No goals yet. Be the first!','Голов пока нет. Будь первым!')+'</p>'; return; }
+      el.innerHTML=cs.map((c,i)=>'<div class="lcrow'+(c.country===myCC?' me':'')+'"><div class="trank">'+(i+1)+'</div><img src="'+CUP_FLAG(c.country)+'"><div class="tnm">'+(CC_NAME[c.country]||c.country)+'</div><span class="lcgoals">'+c.goals+' '+L('goals','голов')+'</span></div>').join('');
+    });
+  } else {
+    const cc=myCC; if(!cc){ el.innerHTML='<p style="color:var(--ink-soft)">'+L('Pick a country first.','Сначала выбери страну.')+'</p>'; return; }
+    _tapi('/api/tourney/country',{cc,initData,guestId:wcGuestId()}).then(j=>{
+      if(!j){ el.innerHTML='<p style="color:var(--ink-soft)">'+L('Could not load.','Не удалось загрузить.')+'</p>'; return; }
+      const ps=(j.players)||[], meInfo=j.me;
+      if(meInfo && typeof meInfo.goals==='number'){ window._myCupGoals=meInfo.goals; const gEl=$('wcMeGoals'); if(gEl) gEl.textContent=meInfo.goals+L(' goals',' голов'); }   // keep the self-bar goals in sync
+      if(!ps.length){ el.innerHTML='<p style="color:var(--ink-soft)">'+L('No players from your country yet.','Из твоей страны пока никого.')+'</p>'; return; }
+      const row=(p,me)=>'<div class="lcrow'+(me?' me':'')+'"><div class="trank">'+(p.rank||0)+'</div><img class="lcav" src="'+rowAv({name:p.name})+'" onerror="this.style.visibility=\'hidden\'"><div class="tnm">'+(me?L('You','Ты'):escapeHtml(p.name||'Duck'))+'</div><span class="lcgoals">'+p.goals+' '+L('goals','голов')+'</span></div>';
+      let html='<div class="lchead"><img src="'+CUP_FLAG(cc)+'"><div class="tnm">'+(CC_NAME[cc]||cc)+'</div></div>';
+      html+=ps.slice(0,10).map(p=>row(p,!!p.me)).join('');   // top 10 (board holds up to 50); the server flags MY row reliably
+      if(meInfo && meInfo.found && meInfo.rank>10){           // + my placement if I'm outside the top 10
+        html+='<div class="lcsep">. . .</div><div class="lcrow me"><div class="trank">'+meInfo.rank+'</div><img class="lcav" src="'+rowAv({name:myName()})+'" onerror="this.style.visibility=\'hidden\'"><div class="tnm">'+L('You','Ты')+'</div><span class="lcgoals">'+meInfo.goals+' '+L('goals','голов')+'</span></div>';
+      } else if(!meInfo || !meInfo.found){                    // I have not scored for this country yet
+        html+='<div class="lcsep">. . .</div><div class="lcrow me"><div class="trank">-</div><img class="lcav" src="'+rowAv({name:myName()})+'" onerror="this.style.visibility=\'hidden\'"><div class="tnm">'+L('You','Ты')+'</div><span class="lcgoals">'+L('play to rank','сыграй для места')+'</span></div>';
+      }
+      el.innerHTML=html;
+    });
+  }
+}
+
+/* ---- choose your duck (name + avatar) ---- */
+let _nameSel='avatar-1';
+function randDuckName(){ return DUCK_NAMES[Math.floor(Math.random()*DUCK_NAMES.length)]; }
+function randDuckStyle(){ return DUCK_STYLES[Math.floor(Math.random()*DUCK_STYLES.length)]; }
+function renderNameAvatars(){
+  const wrap=$('nameAvatars'); if(!wrap) return;
+  wrap.innerHTML = DUCK_STYLES.map(s=>'<div class="navatar'+(s===_nameSel?' sel':'')+'" data-s="'+s+'"><img src="'+DUCK_AV(s)+'" alt=""></div>').join('');
+  wrap.querySelectorAll('.navatar').forEach(el=>el.onclick=()=>{ _nameSel=el.dataset.s; renderNameAvatars(); try{haptic('light');}catch(e){} });
+}
+function openNameModal(){
+  closeAll();
+  const locked=!!save.name;                                   // (#1) once a name is set it cannot be changed
+  $('nameTitle').textContent=L('Choose your duck','Выбери свою утку');
+  $('nameSub').textContent = locked ? L('Your duck name is locked.','Имя утки закреплено.') : '';   // (#2) no generic subtitle
+  $('nameInput').placeholder=L('Your name','Твоё имя');
+  $('nameSave').textContent=L('Save','Сохранить');
+  $('nameInput').value = save.name || randDuckName();
+  $('nameInput').readOnly = locked;
+  const dice=$('nameDice'); if(dice) dice.style.display = locked ? 'none' : '';
+  _nameSel = (save.avatar && DUCK_STYLES.indexOf(save.avatar)>=0) ? save.avatar : randDuckStyle();
+  renderNameAvatars();
+  openScrim('scrimName');
+}
+function nameReroll(){ $('nameInput').value=randDuckName(); _nameSel=randDuckStyle(); renderNameAvatars(); try{haptic('light');}catch(e){} }
+async function saveDuckName(){
+  if(save.name){                                              // (#1) name locked: only the avatar may change
+    save.avatar=_nameSel; persist(); try{updCupBtn();}catch(e){} try{updWcScreen();}catch(e){}
+    closeScrim('scrimName'); try{haptic('ok');}catch(e){} return;
+  }
+  let n=(($('nameInput').value||'').trim()).slice(0,16) || randDuckName();
+  for(let t=0;t<4;t++){ const res=await _tapi('/api/tourney/claim-name',{initData,guestId:wcGuestId(),name:n}); if(!res||res.ok)break; if(res.taken){ n=(n.slice(0,12)+Math.floor(10+Math.random()*89)); } else break; }   // (#1) unique name (TG or native)
+  save.name=n; save.avatar=_nameSel; save.nameAsked=true; persist();
+  try{updCupBtn();}catch(e){} try{updWcScreen();}catch(e){}
+  closeScrim('scrimName'); try{haptic('ok');}catch(e){}
+}
+// after winning level 3: Telegram users keep their TG name+photo silently; everyone else picks a duck.
+function maybeNameModal(){
+  if(save.nameAsked) return;
+  if((save.levelsDone||0) < 3) return;
+  let u=null; try{ u=TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user; }catch(e){}
+  if(u && (u.first_name||u.username)){
+    if(!save.name) save.name=String(u.first_name||u.username).slice(0,16);
+    if(!save.avatar) save.avatar = u.photo_url || randDuckStyle();
+    save.nameAsked=true; persist(); try{updCupBtn();}catch(e){} return;
+  }
+  openNameModal();
+}
+
+/* ---- wiring ---- */
+function wireCup(){
+  const w=(id,fn)=>{ const e=$(id); if(e) e.onclick=fn; };
+  w('btnWC', openWC);
+  w('btnHomeAvatar', openNameModal);
+  w('wcBack', ()=>{ show('home'); refreshHome(); });
+  w('wcHistBtn', openCupHist);
+  w('wcPlay', startTourney);
+  w('twcTabCC', ()=>setTwcTab('cc'));
+  w('twcTabMine', ()=>setTwcTab('mine'));
+  w('flagClose', ()=>closeScrim('scrimFlag'));
+  w('flagSelect', ()=>{ if(_flagSel) pickFlag(_flagSel); });
+  w('cqStay', ()=>closeScrim('scrimCupQuit'));
+  w('cqLeave', wcAbortRun);
+  w('thistClose', ()=>closeScrim('scrimCupHist'));
+  w('nameSave', saveDuckName);
+  w('nameDice', nameReroll);
+  w('tResClose', ()=>{ closeScrim('scrimCupRes'); try{$('tResVid').pause&&$('tResVid').pause();}catch(e){} if(_cupResMode==='hist'){ openCupHist(); return; } show('wc'); updWcScreen(); setTwcTab('cc'); refreshMyGoals(); if(typeof updCupBtn==='function')updCupBtn(); });
+  updCupBtn();
+}
+try{ wireCup(); }catch(e){ try{ document.addEventListener('DOMContentLoaded',wireCup); }catch(_){} }
+</script>
+<!-- ============ /WORLD CUP ============ -->
+
 </body>
 </html>

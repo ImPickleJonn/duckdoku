@@ -34,7 +34,7 @@
 #app.cup .pface canvas{display:none;}                          /* (#2) static soccer ball instead of the duck on the progress bar */
 #app.cup .pface .pfaceball{display:block;}
 /* (#1,#2) reorder #game children: goal up top, rules pills below the boosters */
-#app.cup .topbar{order:0;} #app.cup #wcGoal{order:1;} #app.cup .statusrow{order:2;} #app.cup .boardwrap{order:3;} #app.cup #boosters{order:4;} #app.cup #chips{order:5;margin-top:8px;}
+#app.cup .topbar{order:0;} #app.cup #wcGoal{order:1;} #app.cup .statusrow{order:2;} #app.cup .boardwrap{order:3;} #app.cup #boosters{order:4;} #app.cup #chipswrap{order:5;margin-top:8px;}
 /* the soccer goal at the top */
 .wcgoal{display:none;position:relative;width:min(74vw,300px);margin:0 auto;}
 #app.cup #wcGoal{display:block;}
@@ -178,7 +178,7 @@
 
 <!-- Room result (full screen, podium) -->
 <div class="scrim winscrim cupresult" id="scrimCupRes"><div class="wincol">
-  <video id="tResVid" class="cupvid" loop muted playsinline></video>
+  <video id="tResVid" class="cupvid" autoplay loop muted playsinline preload="auto" disablepictureinpicture x-webkit-airplay="deny"></video>
   <h2 id="tResTitle">Room finished</h2>
   <div class="cuppod" id="cupPod"></div>
   <div id="cupExtra"></div>
@@ -464,13 +464,19 @@ function renderCupExtra(board, myRank){
     return '<div class="cupyou'+(r.me?' me':'')+'"><div class="trank">#'+r.rank+'</div><div class="cyav"><img class="tav" src="'+rowAv(r)+'" onerror="this.style.visibility=\'hidden\'">'+flag+'</div><div class="tnm">'+(r.me?L('You','Ты'):escapeHtml(r.name||'Duck'))+'</div><span class="tmiss">'+sc+'</span></div>';
   }).join('');
 }
+// load + AUTOPLAY the result clip robustly (muted + autoplay + retry) so WebViews/Telegram never show the gray play button
+function cupVidLoad(src){ const v=$('tResVid'); if(!v) return; try{
+  v.muted=true; v.defaultMuted=true; v.setAttribute('muted',''); v.setAttribute('autoplay',''); v.playsInline=true; v.setAttribute('playsinline',''); v.removeAttribute('controls');
+  v.src=src; try{ v.load(); }catch(e){}
+  const go=()=>{ try{ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} };
+  go(); ['loadeddata','canplay','canplaythrough'].forEach(ev=>{ try{ v.addEventListener(ev, go, {once:true}); }catch(e){} });
+}catch(e){} }
 function resolveCupResult(res){
   _tRevealT.forEach(clearTimeout); _tRevealT=[];
   const board=((res&&res.board)||[]).slice().sort((a,b)=>(a.rank||0)-(b.rank||0));
   const myRank=(res&&res.myRank)||(board.findIndex(x=>x.me)+1)||0;
   const won = myRank>=1 && myRank<=3;
-  $('tResVid').src = won ? 'assets/ducks/raw/soccer-victory-'+(1+Math.floor(Math.random()*5))+'.mp4' : 'assets/ducks/raw/soccer-defeat-'+(1+Math.floor(Math.random()*6))+'.mp4';
-  try{ $('tResVid').play&&$('tResVid').play().catch(()=>{}); }catch(e){}
+  cupVidLoad(won ? 'assets/ducks/raw/soccer-victory-'+(1+Math.floor(Math.random()*5))+'.mp4' : 'assets/ducks/raw/soccer-defeat-'+(1+Math.floor(Math.random()*6))+'.mp4');
   $('tResTitle').textContent = myRank===1 ? L('Champion!','Чемпион!') : (won ? (L('You finished #','Ты занял #')+myRank+'!') : (L('You finished #','Ты занял #')+myRank));
   renderPodium(board); renderCupExtra(board, myRank);
   const prize=(res&&res.prize)||{};

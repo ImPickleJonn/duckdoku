@@ -498,7 +498,7 @@ function renderCupExtra(board, myRank){
 let _cupVidT=0;
 function cupVidLoad(src){ const v=$('tResVid'),wrap=$('tResWrap'),ps=$('tResPoster'); if(!v) return; try{
   clearTimeout(_cupVidT);
-  if(wrap){ wrap.classList.remove('playing'); wrap.classList.remove('posterfallback'); }   // show the spinning loader while it loads
+  if(wrap){ wrap.style.display=''; wrap.classList.remove('playing'); wrap.classList.remove('posterfallback'); }   // re-show the video square + show the spinning loader while it loads
   if(ps){ try{ ps.src=src.replace(/\.mp4.*/,'.jpg'); }catch(e){} }                          // first frame, used only as a last-resort fallback
   v.muted=true; v.defaultMuted=true; v.setAttribute('muted',''); v.setAttribute('autoplay',''); v.playsInline=true; v.setAttribute('playsinline',''); v.removeAttribute('controls');
   v.src=src; try{ v.load(); }catch(e){}
@@ -579,7 +579,7 @@ function openCupHist(){
     _renderHist(all);
   });
 }
-function showHistRoom(boardStr){ let board=[]; try{board=JSON.parse(boardStr);}catch(e){} closeAll(); board=board.slice().sort((a,b)=>(a.rank||0)-(b.rank||0)); _cupResMode='hist'; $('tResTitle').textContent=L('Match result','Итог матча'); $('tPrize').textContent=''; const cs=$('cupSticker'); if(cs){cs.style.display='none';cs.innerHTML='';} try{$('tResVid').removeAttribute('src');}catch(e){} renderPodium(board); renderCupExtra(board,(board.findIndex(x=>x.me)+1)||0); const rc=$('tResClose'); if(rc){ rc.textContent=L('Back','Назад'); rc.style.display=''; } openScrim('scrimCupRes'); }
+function showHistRoom(boardStr){ let board=[]; try{board=JSON.parse(boardStr);}catch(e){} closeAll(); board=board.slice().sort((a,b)=>(a.rank||0)-(b.rank||0)); _cupResMode='hist'; $('tResTitle').textContent=L('Match result','Итог матча'); $('tPrize').textContent=''; const cs=$('cupSticker'); if(cs){cs.style.display='none';cs.innerHTML='';} try{ const w=$('tResWrap'); if(w){ w.style.display='none'; w.classList.remove('playing'); w.classList.remove('posterfallback'); } $('tResVid').removeAttribute('src'); }catch(e){} renderPodium(board); renderCupExtra(board,(board.findIndex(x=>x.me)+1)||0); const rc=$('tResClose'); if(rc){ rc.textContent=L('Back','Назад'); rc.style.display=''; } openScrim('scrimCupRes'); }
 
 /* ---- World Cup rules popup (the "i" button) ---- */
 function openCupInfo(){

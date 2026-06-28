@@ -898,7 +898,7 @@ function haptic(k){
   try{if(navigator.vibrate){const ms=tier==='error'?[16,38,16]:tier==='success'?[12,28,12]:tier==='medium'?18:tier==='heavy'?28:8;navigator.vibrate(ms);}}catch(e){}}
 
 /* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
-const DD_VERSION='0.7.9';
+const DD_VERSION='0.7.10';
 let DD_BUILD='';   // native build number, stamped from build.gradle by scripts/build-mobile.js
 function _mxHost(){try{const tg=TG;if(tg&&typeof tg.initData==='string'&&tg.initData.length>0)return'telegram';return'web';}catch(e){return'web';}}
 const MX={ready:false,token:'',_did:'',_super:{},_pre:[],
@@ -2690,7 +2690,7 @@ function renderCupExtra(board, myRank){
 let _cupVidT=0;
 function cupVidLoad(src){ const v=$('tResVid'),wrap=$('tResWrap'),ps=$('tResPoster'); if(!v) return; try{
   clearTimeout(_cupVidT);
-  if(wrap){ wrap.classList.remove('playing'); wrap.classList.remove('posterfallback'); }   // show the spinning loader while it loads
+  if(wrap){ wrap.style.display=''; wrap.classList.remove('playing'); wrap.classList.remove('posterfallback'); }   // re-show the video square + show the spinning loader while it loads
   if(ps){ try{ ps.src=src.replace(/\.mp4.*/,'.jpg'); }catch(e){} }                          // first frame, used only as a last-resort fallback
   v.muted=true; v.defaultMuted=true; v.setAttribute('muted',''); v.setAttribute('autoplay',''); v.playsInline=true; v.setAttribute('playsinline',''); v.removeAttribute('controls');
   v.src=src; try{ v.load(); }catch(e){}
@@ -2771,7 +2771,7 @@ function openCupHist(){
     _renderHist(all);
   });
 }
-function showHistRoom(boardStr){ let board=[]; try{board=JSON.parse(boardStr);}catch(e){} closeAll(); board=board.slice().sort((a,b)=>(a.rank||0)-(b.rank||0)); _cupResMode='hist'; $('tResTitle').textContent=L('Match result','Итог матча'); $('tPrize').textContent=''; const cs=$('cupSticker'); if(cs){cs.style.display='none';cs.innerHTML='';} try{$('tResVid').removeAttribute('src');}catch(e){} renderPodium(board); renderCupExtra(board,(board.findIndex(x=>x.me)+1)||0); const rc=$('tResClose'); if(rc){ rc.textContent=L('Back','Назад'); rc.style.display=''; } openScrim('scrimCupRes'); }
+function showHistRoom(boardStr){ let board=[]; try{board=JSON.parse(boardStr);}catch(e){} closeAll(); board=board.slice().sort((a,b)=>(a.rank||0)-(b.rank||0)); _cupResMode='hist'; $('tResTitle').textContent=L('Match result','Итог матча'); $('tPrize').textContent=''; const cs=$('cupSticker'); if(cs){cs.style.display='none';cs.innerHTML='';} try{ const w=$('tResWrap'); if(w){ w.style.display='none'; w.classList.remove('playing'); w.classList.remove('posterfallback'); } $('tResVid').removeAttribute('src'); }catch(e){} renderPodium(board); renderCupExtra(board,(board.findIndex(x=>x.me)+1)||0); const rc=$('tResClose'); if(rc){ rc.textContent=L('Back','Назад'); rc.style.display=''; } openScrim('scrimCupRes'); }
 
 /* ---- World Cup rules popup (the "i" button) ---- */
 function openCupInfo(){

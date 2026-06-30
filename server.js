@@ -408,6 +408,7 @@ app.get('/api/adjust-callback', (req, res) => {
     };
     console.log('[adjust-cb]', JSON.stringify(rec));
     adjustLog.push(rec); if (adjustLog.length > 500) adjustLog.shift();
+    try { const _mpid = q.mp_id || q.mp_distinct_id || q.adid; if (_mpid) mpInstall(_mpid, rec); } catch (e) {}   /* forward Adjust's RESOLVED attribution (incl. Facebook) to Mixpanel */
   } catch (e) {}
 });
 
@@ -772,6 +773,19 @@ function mpSetCampaign(tgId, label) {
     const payload = { $token: token, $distinct_id: String(tgId), $set_once: { campaign: label, campaign_via: 'bot_start' } };
     const data = Buffer.from(JSON.stringify(payload)).toString('base64');
     fetch('https://api.mixpanel.com/engage', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'data=' + encodeURIComponent(data) }).catch(() => {});
+  } catch (e) {}
+}
+// Adjust S2S install attribution -> Mixpanel. Fires a visible "Install Attributed" EVENT (network +
+// campaign as event props) + a profile $set so in-app events become filterable. distinct_id = the
+// client's Mixpanel id (mp_id, if Adjust forwards it) else the Adjust device id (adid). Called from
+// /api/adjust-callback. [[reference_duckdoku_ads]]
+function mpInstall(distinctId, rec) {
+  try {
+    const token = process.env.MIXPANEL_TOKEN || '';
+    if (!token || !distinctId) return;
+    const post = (path, obj) => { const data = Buffer.from(JSON.stringify(obj)).toString('base64'); fetch('https://api.mixpanel.com/' + path, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'data=' + encodeURIComponent(data) }).catch(() => {}); };
+    post('track', { event: 'Install Attributed', properties: { token: token, distinct_id: String(distinctId), time: Math.floor(Date.now() / 1000), network: rec.network || null, campaign: rec.campaign || null, adgroup: rec.adgroup || null, creative: rec.creative || null, store: rec.store || null, country: rec.country || null, source: 'adjust' } });
+    post('engage', { $token: token, $distinct_id: String(distinctId), $set: { campaign: rec.campaign || rec.network || 'Unattributed', acq_network: rec.network || null, acq_campaign: rec.campaign || null } });
   } catch (e) {}
 }
 async function handleCommand(m) {

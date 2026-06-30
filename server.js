@@ -121,10 +121,27 @@ async function initSchema() {
         applied_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS qlevel_at   TIMESTAMPTZ;
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS seen_below_q BOOLEAN NOT NULL DEFAULT false;
     `);
     dbReady = true;
     console.log('[pg] schema ready');
   } catch (e) { console.error('[pg] initSchema failed:', e.message); }
+}
+const QUALIFY_LEVEL = 20;   /* "reach level N within 24h" milestone partners verify (matches RTW) */
+// Stamp the moment a player FIRST crosses the qualify level, but only if we previously saw them below it
+// (seen_below_q). Pre-existing high-level users are never marked, so they can never falsely qualify. join
+// time = players.created_at (set on first INSERT). Called after every DB write that carries levelsDone.
+async function stampQualify(tgId, levelsDone) {
+  if (!dbReady || !dbPool || !tgId) return;
+  const cur = (Number(levelsDone) || 0) + 1;   /* current level = highest completed + 1 (the number the game shows) */
+  try {
+    if (cur < QUALIFY_LEVEL) {
+      await dbPool.query('UPDATE players SET seen_below_q = true WHERE tg_id = $1 AND seen_below_q = false AND qlevel_at IS NULL', [String(tgId)]);
+    } else {
+      await dbPool.query('UPDATE players SET qlevel_at = now() WHERE tg_id = $1 AND qlevel_at IS NULL AND seen_below_q = true', [String(tgId)]);
+    }
+  } catch (e) {}
 }
 
 // ----- Telegram initData validation -----
@@ -287,6 +304,7 @@ app.post('/api/sync/save', async (req, res) => {
          first_name = $2, username = $3, updated_at = now()`,
       [user.id, user.first_name || null, user.username || null, JSON.stringify(save), body.lang || null]
     );
+    try { stampQualify(user.id, Number(save.levelsDone) || 0); } catch (e) {}   /* partner reach-L20-in-24h tracking */
     res.json({ ok: true, persisted: true });
   } catch (e) { res.status(500).json({ error: 'save failed' }); }
 });
@@ -365,6 +383,7 @@ async function selfRegister(user, body) {
       `INSERT INTO players (tg_id, first_name, username, save, updated_at) VALUES ($1,$2,$3,$4, now())
        ON CONFLICT (tg_id) DO UPDATE SET save = $4, updated_at = now()`,
       [String(user.id), user.first_name || null, user.username || null, JSON.stringify(sv)]);
+    try { stampQualify(user.id, sv.levelsDone); } catch (e) {}   /* partner reach-L20-in-24h tracking */
   } catch (e) { console.error('[lb] self-register:', e.message); }
 }
 app.get('/api/leaderboard', async (req, res) => {
@@ -936,17 +955,29 @@ app.get('/api/partner/user', async (req, res) => {
   let key = null, val = NaN, mode = null;
   for (const k in q) { if (/^completed.*level$/i.test(k)) { key = k; val = parseInt(q[k], 10); mode = 'completed'; break; } }
   if (!key) for (const k in q) { if (/^reach.*level$/i.test(k)) { key = k; val = parseInt(q[k], 10); mode = 'reach'; break; } }
-  let done = 0, isUser = false;
+  let done = 0, isUser = false, joinedAt = null, qlevelAt = null;
   try {
     if (dbPool) {
-      const r = await dbPool.query('SELECT save FROM players WHERE tg_id = $1', [uid]);
-      if (r.rows && r.rows.length) { isUser = true; let s = r.rows[0].save; if (typeof s === 'string') { try { s = JSON.parse(s); } catch (_) { s = {}; } } done = Number(s && s.levelsDone) || 0; }
+      const r = await dbPool.query('SELECT save, created_at, qlevel_at FROM players WHERE tg_id = $1', [uid]);
+      if (r.rows && r.rows.length) {
+        isUser = true; let s = r.rows[0].save; if (typeof s === 'string') { try { s = JSON.parse(s); } catch (_) { s = {}; } } done = Number(s && s.levelsDone) || 0;
+        joinedAt = r.rows[0].created_at ? new Date(r.rows[0].created_at).getTime() : null;
+        qlevelAt = r.rows[0].qlevel_at ? new Date(r.rows[0].qlevel_at).getTime() : null;
+      }
     }
   } catch (e) {}
   const hasCheck = !!(key && Number.isFinite(val));
-  const passed = hasCheck ? (mode === 'completed' ? (done >= val) : ((done + 1) >= val)) : false;   // no check => never reward
+  let passed = hasCheck ? (mode === 'completed' ? (done >= val) : ((done + 1) >= val)) : false;   // no check => never reward
+  // optional 24h window: WithinHours=24 also requires they reached L20 within that many hours of joining.
+  const withinH = parseFloat(q.WithinHours || q.withinHours || '');
+  let withinWindow = null;
+  if (Number.isFinite(withinH) && withinH > 0) {
+    withinWindow = !!(joinedAt && qlevelAt && (qlevelAt - joinedAt) >= 0 && (qlevelAt - joinedAt) <= withinH * 3600000);
+    passed = passed && withinWindow;
+  }
   const out = { completed: passed, messages: hasCheck ? [] : ['specify ReachLevel=N or CompletedLevel=N'], FromPartner: isUser };
   if (key) out[key] = passed;
+  if (withinWindow !== null) { out.WithinHours = withinH; out.withinWindow = withinWindow; }
   res.json(out);
 });
 app.get('/healthz', (req, res) => res.json({ ok: true, dbReady }));

@@ -297,13 +297,16 @@ app.post('/api/sync/save', async (req, res) => {
   const save = body.save;
   if (!save || typeof save !== 'object') return res.status(400).json({ error: 'save must be object' });
   try {
-    // ANTI-CHEAT: clamp levelsDone against the account's stored age + previous level before persisting
+    // ANTI-CHEAT: clamp levelsDone by account age + the increment clock; carry the clock across the
+    // client's full-save overwrite (the client never sends _lvlTs).
     try {
-      const ex = await dbPool.query('SELECT save, created_at, updated_at FROM players WHERE tg_id = $1', [user.id]);
+      const ex = await dbPool.query('SELECT save, created_at FROM players WHERE tg_id = $1', [user.id]);
       let prevSv = ex.rows[0] && ex.rows[0].save; if (typeof prevSv === 'string') { try { prevSv = JSON.parse(prevSv); } catch (_) { prevSv = {}; } } prevSv = prevSv || {};
       const createdMs = ex.rows[0] && ex.rows[0].created_at ? new Date(ex.rows[0].created_at).getTime() : Date.now();
-      const updatedMs = ex.rows[0] && ex.rows[0].updated_at ? new Date(ex.rows[0].updated_at).getTime() : createdMs;
-      save.levelsDone = clampLevel(Number(prevSv.levelsDone) || 0, Number(save.levelsDone) || 0, createdMs, updatedMs);
+      const prevLevel = Number(prevSv.levelsDone) || 0;
+      const acc = clampLevel(prevLevel, Number(save.levelsDone) || 0, createdMs, Number(prevSv._lvlTs) || createdMs);
+      save.levelsDone = acc;
+      save._lvlTs = (acc > prevLevel) ? Date.now() : (Number(prevSv._lvlTs) || Number(save._lvlTs) || createdMs);
     } catch (_) {}
     await dbPool.query(
       `INSERT INTO players (tg_id, first_name, username, save, lang, updated_at)
@@ -360,20 +363,22 @@ let _lbCache = { ts: 0, top: [] };
 // ---- ANTI-CHEAT: a reported level can never exceed what is physically playable for the account's AGE,
 // nor jump faster than the play RATE since its last update. Blocks guestId leaderboard spoofs (a fresh
 // account POSTing level 320 gets capped to ~LEVEL_BURST). Legit play (real ~30-90s/level) never trips it.
-const MIN_SEC_PER_LEVEL = 10;   // very generous floor; even a trivial level takes longer than this to solve
-const LEVEL_BURST = 14;         // slack so a fast legit player can register right at the L13 unlock
-const MAX_GAIN_PER_UPDATE = 30; // a single server write can raise the level by at most this (client syncs ~per level)
-function clampLevel(prev, requested, createdMs, updatedMs) {
+const MIN_SEC_PER_LEVEL = 6;    // wall-clock floor per level: at most 1 level gained per this many seconds
+const LEVEL_BURST = 14;         // one-time slack so a fast player can register right at the L13 unlock
+const MAX_GAIN_PER_UPDATE = 40; // hard ceiling on one write's gain (covers a legit long offline batch)
+// 4th arg is the time of the LAST accepted level-up (sv._lvlTs), not the last write, so rapid-fire
+// requests (all with a tiny sinceIncr) gain nothing -> you cannot script your way up faster than real time.
+function clampLevel(prev, requested, createdMs, lastIncrMs) {
   prev = Math.max(0, Math.floor(Number(prev) || 0));
   requested = Math.max(0, Math.min(9999, Math.floor(Number(requested) || 0)));
   if (requested <= prev) return prev;                         // decreases/no-ops pass through (can't inflate)
   const now = Date.now();
   const ageSec = Math.max(0, (now - (Number(createdMs) || now)) / 1000);
-  const gapSec = Math.max(0, (now - (Number(updatedMs) || Number(createdMs) || now)) / 1000);
-  const ageCeil = Math.floor(ageSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST;                              // ceiling for account age
-  const gain = Math.min(MAX_GAIN_PER_UPDATE, Math.floor(gapSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST);  // capped per-write gain
+  const sinceIncr = Math.max(0, (now - (Number(lastIncrMs) || Number(createdMs) || now)) / 1000);
+  const ageCeil = Math.floor(ageSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST;                    // account-age ceiling (one-time slack)
+  const gain = Math.min(MAX_GAIN_PER_UPDATE, Math.floor(sinceIncr / MIN_SEC_PER_LEVEL));   // NO per-write slack
   const accepted = Math.max(prev, Math.min(requested, ageCeil, prev + gain));
-  if (requested > accepted + 2) console.warn('[lb] anti-cheat clamp: req ' + requested + ' -> ' + accepted + ' (ageSec ' + Math.round(ageSec) + ')');
+  if (requested > accepted + 2) console.warn('[lb] anti-cheat clamp: req ' + requested + ' -> ' + accepted + ' (ageSec ' + Math.round(ageSec) + ', sinceIncr ' + Math.round(sinceIncr) + ')');
   return accepted;
 }
 // one-time boot sweep: re-clamp any stored row whose level exceeds what its ACTIVITY WINDOW (first->last
@@ -393,15 +398,6 @@ async function sanitizeLeaderboard() {
         sv.levelsDone = 0;
         await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]);
         fixed++; console.warn('[lb] sanitize: REMOVED spoof tg ' + row.tg_id + ' (name "' + (sv.name || '') + '", claimed level ' + lvl + ', no tutorialDone)');
-        continue;
-      }
-      // TEMP one-time purge (reverted next commit): remove the confirmed L320 spoof. It has tutorialDone
-      // set + a wide activity window, so it slips every time/flag rule, but Mixpanel proves zero real play
-      // near that level and the top LEGIT player is ~178, so anything this high is impossible right now.
-      if (lvl > 250) {
-        sv.levelsDone = 0;
-        await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]);
-        fixed++; console.warn('[lb] sanitize: REMOVED outlier spoof tg ' + row.tg_id + ' (name "' + (sv.name || '') + '", level ' + lvl + ')');
         continue;
       }
       const createdMs = row.created_at ? new Date(row.created_at).getTime() : Date.now();
@@ -438,13 +434,14 @@ async function selfRegister(user, body) {
   const requested = Math.max(0, Math.min(9999, Math.floor(Number(body.levelsDone) || 0)));
   if (requested <= 0) return;
   try {
-    const ex = await dbPool.query('SELECT save, created_at, updated_at FROM players WHERE tg_id = $1', [String(user.id)]);
+    const ex = await dbPool.query('SELECT save, created_at FROM players WHERE tg_id = $1', [String(user.id)]);
     let sv = ex.rows[0] && ex.rows[0].save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { sv = {}; } } sv = sv || {};
     const createdMs = ex.rows[0] && ex.rows[0].created_at ? new Date(ex.rows[0].created_at).getTime() : Date.now();
-    const updatedMs = ex.rows[0] && ex.rows[0].updated_at ? new Date(ex.rows[0].updated_at).getTime() : createdMs;
-    sv.levelsDone = clampLevel(Number(sv.levelsDone) || 0, requested, createdMs, updatedMs); // ANTI-CHEAT
+    const prevLevel = Number(sv.levelsDone) || 0;
+    sv.levelsDone = clampLevel(prevLevel, requested, createdMs, Number(sv._lvlTs) || createdMs); // ANTI-CHEAT
     // a row that never finished the tutorial (only ever hit the leaderboard API) cannot be a ranked player
     if (sv.levelsDone >= LEADERBOARD_UNLOCK_LEVEL - 1 && sv.tutorialDone !== true) sv.levelsDone = LEADERBOARD_UNLOCK_LEVEL - 2;
+    if (sv.levelsDone > prevLevel) sv._lvlTs = Date.now();  // advance the increment clock only on a real gain
     if (body.name) sv.name = String(body.name).slice(0, 24);
     if (body.avatar) sv.avatar = String(body.avatar).slice(0, 300);
     await dbPool.query(

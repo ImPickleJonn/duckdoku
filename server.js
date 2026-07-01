@@ -391,11 +391,19 @@ async function sanitizeLeaderboard() {
     for (const row of q.rows) {
       let sv = row.save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { continue; } } if (!sv) continue;
       const lvl = Math.floor(Number(sv.levelsDone) || 0); if (lvl <= 0) continue;
+      // TEMP one-time (reverted next commit): the confirmed spoofer keeps re-submitting a fake level from
+      // their client. Zero the row AND reset the increment clock so their next sync can't re-jump.
+      if (sv.name === 'Прокофья') {
+        sv.levelsDone = 0; sv._lvlTs = Date.now();
+        await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]);
+        fixed++; console.warn('[lb] sanitize: zeroed confirmed spoofer "' + sv.name + '" (was level ' + lvl + ')');
+        continue;
+      }
       // A ranked player MUST have finished the tutorial (it IS level 1) and synced a real save (cloudSave
       // posts the full save on every level). A row ranked at the unlock level with NO tutorialDone was
       // level-injected via the API and never actually played -> remove it from the board entirely.
       if (lvl >= LEADERBOARD_UNLOCK_LEVEL - 1 && sv.tutorialDone !== true) {
-        sv.levelsDone = 0;
+        sv.levelsDone = 0; sv._lvlTs = Date.now();
         await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]);
         fixed++; console.warn('[lb] sanitize: REMOVED spoof tg ' + row.tg_id + ' (name "' + (sv.name || '') + '", claimed level ' + lvl + ', no tutorialDone)');
         continue;
@@ -422,7 +430,13 @@ async function computeLeaderboard() {
       }
     } catch (e) { console.error('[lb] db query:', e.message); }
   }
-  for (const [uid, s] of users) { const done = s.levelsDone || 0; const prev = byUid.get(String(uid)); if (!prev || done > prev.done) byUid.set(String(uid), { name: s.name || s.first || (prev && prev.name) || 'Duck', done, avatar: s.avatar || (prev && prev.avatar) || null }); }
+  // in-memory overlay: Postgres level is AUTHORITATIVE (it's the clamped/anti-cheat value). The in-memory
+  // map (fed by unclamped heartbeats) may ONLY refresh name/avatar of an existing row, never raise the level.
+  for (const [uid, s] of users) {
+    const prev = byUid.get(String(uid));
+    if (prev) { if (s.name || s.first) prev.name = s.name || s.first; if (s.avatar) prev.avatar = s.avatar; }
+    else byUid.set(String(uid), { name: s.name || s.first || 'Duck', done: Math.min(Number(s.levelsDone) || 0, LEADERBOARD_UNLOCK_LEVEL - 2), avatar: s.avatar || null }); // not in Postgres yet -> can't rank on an unclamped in-memory level
+  }
   const arr = [];
   for (const [uid, v] of byUid) { if (v.done >= LEADERBOARD_UNLOCK_LEVEL - 1) arr.push({ uid: String(uid), name: v.name, level: v.done + 1, avatar: v.avatar || null }); }
   arr.sort((a, b) => b.level - a.level);

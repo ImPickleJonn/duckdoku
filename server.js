@@ -360,8 +360,9 @@ let _lbCache = { ts: 0, top: [] };
 // ---- ANTI-CHEAT: a reported level can never exceed what is physically playable for the account's AGE,
 // nor jump faster than the play RATE since its last update. Blocks guestId leaderboard spoofs (a fresh
 // account POSTing level 320 gets capped to ~LEVEL_BURST). Legit play (real ~30-90s/level) never trips it.
-const MIN_SEC_PER_LEVEL = 10;   // very generous floor; L320 needs >= ~53min account age to be accepted
+const MIN_SEC_PER_LEVEL = 10;   // very generous floor; even a trivial level takes longer than this to solve
 const LEVEL_BURST = 14;         // slack so a fast legit player can register right at the L13 unlock
+const MAX_GAIN_PER_UPDATE = 30; // a single server write can raise the level by at most this (client syncs ~per level)
 function clampLevel(prev, requested, createdMs, updatedMs) {
   prev = Math.max(0, Math.floor(Number(prev) || 0));
   requested = Math.max(0, Math.min(9999, Math.floor(Number(requested) || 0)));
@@ -369,24 +370,27 @@ function clampLevel(prev, requested, createdMs, updatedMs) {
   const now = Date.now();
   const ageSec = Math.max(0, (now - (Number(createdMs) || now)) / 1000);
   const gapSec = Math.max(0, (now - (Number(updatedMs) || Number(createdMs) || now)) / 1000);
-  const ageCeil = Math.floor(ageSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST;          // absolute ceiling for account age
-  const rateCeil = prev + Math.floor(gapSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST;  // per-update gain cap
-  const accepted = Math.max(prev, Math.min(requested, ageCeil, rateCeil));
+  const ageCeil = Math.floor(ageSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST;                              // ceiling for account age
+  const gain = Math.min(MAX_GAIN_PER_UPDATE, Math.floor(gapSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST);  // capped per-write gain
+  const accepted = Math.max(prev, Math.min(requested, ageCeil, prev + gain));
   if (requested > accepted + 2) console.warn('[lb] anti-cheat clamp: req ' + requested + ' -> ' + accepted + ' (ageSec ' + Math.round(ageSec) + ')');
   return accepted;
 }
-// one-time boot sweep: re-clamp any already-stored rows to their account-age ceiling -> purges past spoofs.
+// one-time boot sweep: re-clamp any stored row whose level exceeds what its ACTIVITY WINDOW (first->last
+// activity) could produce at MIN_SEC_PER_LEVEL. A legit L320 player played 53min+; a spoofer POSTed once. -> purges spoofs.
 async function sanitizeLeaderboard() {
   if (!dbReady || !dbPool) return;
   try {
-    const q = await dbPool.query('SELECT tg_id, save, created_at FROM players');
+    const q = await dbPool.query('SELECT tg_id, save, created_at, updated_at FROM players');
     let fixed = 0;
     for (const row of q.rows) {
       let sv = row.save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { continue; } } if (!sv) continue;
       const lvl = Math.floor(Number(sv.levelsDone) || 0); if (lvl <= 0) continue;
       const createdMs = row.created_at ? new Date(row.created_at).getTime() : Date.now();
-      const ceil = Math.floor(Math.max(0, (Date.now() - createdMs) / 1000) / MIN_SEC_PER_LEVEL) + LEVEL_BURST;
-      if (lvl > ceil) { sv.levelsDone = ceil; await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]); fixed++; console.warn('[lb] sanitize tg ' + row.tg_id + ': level ' + lvl + ' -> ' + ceil); }
+      const updatedMs = row.updated_at ? new Date(row.updated_at).getTime() : createdMs;
+      const spanSec = Math.max(0, (updatedMs - createdMs) / 1000);                 // the account's real activity window
+      const ceil = Math.floor(spanSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST;
+      if (lvl > ceil) { sv.levelsDone = ceil; await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]); fixed++; console.warn('[lb] sanitize tg ' + row.tg_id + ': level ' + lvl + ' -> ' + ceil + ' (spanSec ' + Math.round(spanSec) + ')'); }
     }
     console.log('[lb] sanitize done, re-clamped ' + fixed + ' implausible row(s)');
   } catch (e) { console.error('[lb] sanitize:', e.message); }

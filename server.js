@@ -386,6 +386,15 @@ async function sanitizeLeaderboard() {
     for (const row of q.rows) {
       let sv = row.save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { continue; } } if (!sv) continue;
       const lvl = Math.floor(Number(sv.levelsDone) || 0); if (lvl <= 0) continue;
+      // A ranked player MUST have finished the tutorial (it IS level 1) and synced a real save (cloudSave
+      // posts the full save on every level). A row ranked at the unlock level with NO tutorialDone was
+      // level-injected via the API and never actually played -> remove it from the board entirely.
+      if (lvl >= LEADERBOARD_UNLOCK_LEVEL - 1 && sv.tutorialDone !== true) {
+        sv.levelsDone = 0;
+        await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]);
+        fixed++; console.warn('[lb] sanitize: REMOVED spoof tg ' + row.tg_id + ' (name "' + (sv.name || '') + '", claimed level ' + lvl + ', no tutorialDone)');
+        continue;
+      }
       const createdMs = row.created_at ? new Date(row.created_at).getTime() : Date.now();
       const updatedMs = row.updated_at ? new Date(row.updated_at).getTime() : createdMs;
       const spanSec = Math.max(0, (updatedMs - createdMs) / 1000);                 // the account's real activity window
@@ -425,6 +434,8 @@ async function selfRegister(user, body) {
     const createdMs = ex.rows[0] && ex.rows[0].created_at ? new Date(ex.rows[0].created_at).getTime() : Date.now();
     const updatedMs = ex.rows[0] && ex.rows[0].updated_at ? new Date(ex.rows[0].updated_at).getTime() : createdMs;
     sv.levelsDone = clampLevel(Number(sv.levelsDone) || 0, requested, createdMs, updatedMs); // ANTI-CHEAT
+    // a row that never finished the tutorial (only ever hit the leaderboard API) cannot be a ranked player
+    if (sv.levelsDone >= LEADERBOARD_UNLOCK_LEVEL - 1 && sv.tutorialDone !== true) sv.levelsDone = LEADERBOARD_UNLOCK_LEVEL - 2;
     if (body.name) sv.name = String(body.name).slice(0, 24);
     if (body.avatar) sv.avatar = String(body.avatar).slice(0, 300);
     await dbPool.query(

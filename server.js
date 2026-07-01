@@ -395,6 +395,15 @@ async function sanitizeLeaderboard() {
         fixed++; console.warn('[lb] sanitize: REMOVED spoof tg ' + row.tg_id + ' (name "' + (sv.name || '') + '", claimed level ' + lvl + ', no tutorialDone)');
         continue;
       }
+      // TEMP one-time purge (reverted next commit): remove the confirmed L320 spoof. It has tutorialDone
+      // set + a wide activity window, so it slips every time/flag rule, but Mixpanel proves zero real play
+      // near that level and the top LEGIT player is ~178, so anything this high is impossible right now.
+      if (lvl > 250) {
+        sv.levelsDone = 0;
+        await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]);
+        fixed++; console.warn('[lb] sanitize: REMOVED outlier spoof tg ' + row.tg_id + ' (name "' + (sv.name || '') + '", level ' + lvl + ')');
+        continue;
+      }
       const createdMs = row.created_at ? new Date(row.created_at).getTime() : Date.now();
       const updatedMs = row.updated_at ? new Date(row.updated_at).getTime() : createdMs;
       const spanSec = Math.max(0, (updatedMs - createdMs) / 1000);                 // the account's real activity window

@@ -391,14 +391,6 @@ async function sanitizeLeaderboard() {
     for (const row of q.rows) {
       let sv = row.save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { continue; } } if (!sv) continue;
       const lvl = Math.floor(Number(sv.levelsDone) || 0); if (lvl <= 0) continue;
-      // TEMP one-time (reverted next commit): the confirmed spoofer keeps re-submitting a fake level from
-      // their client. Zero the row AND reset the increment clock so their next sync can't re-jump.
-      if (sv.name === 'Прокофья') {
-        sv.levelsDone = 0; sv._lvlTs = Date.now();
-        await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]);
-        fixed++; console.warn('[lb] sanitize: zeroed confirmed spoofer "' + sv.name + '" (was level ' + lvl + ')');
-        continue;
-      }
       // A ranked player MUST have finished the tutorial (it IS level 1) and synced a real save (cloudSave
       // posts the full save on every level). A row ranked at the unlock level with NO tutorialDone was
       // level-injected via the API and never actually played -> remove it from the board entirely.

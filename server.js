@@ -297,6 +297,14 @@ app.post('/api/sync/save', async (req, res) => {
   const save = body.save;
   if (!save || typeof save !== 'object') return res.status(400).json({ error: 'save must be object' });
   try {
+    // ANTI-CHEAT: clamp levelsDone against the account's stored age + previous level before persisting
+    try {
+      const ex = await dbPool.query('SELECT save, created_at, updated_at FROM players WHERE tg_id = $1', [user.id]);
+      let prevSv = ex.rows[0] && ex.rows[0].save; if (typeof prevSv === 'string') { try { prevSv = JSON.parse(prevSv); } catch (_) { prevSv = {}; } } prevSv = prevSv || {};
+      const createdMs = ex.rows[0] && ex.rows[0].created_at ? new Date(ex.rows[0].created_at).getTime() : Date.now();
+      const updatedMs = ex.rows[0] && ex.rows[0].updated_at ? new Date(ex.rows[0].updated_at).getTime() : createdMs;
+      save.levelsDone = clampLevel(Number(prevSv.levelsDone) || 0, Number(save.levelsDone) || 0, createdMs, updatedMs);
+    } catch (_) {}
     await dbPool.query(
       `INSERT INTO players (tg_id, first_name, username, save, lang, updated_at)
        VALUES ($1,$2,$3,$4,$5, now())
@@ -349,6 +357,40 @@ app.post('/api/write-access', (req, res) => {
 // (levelsDone + 1, the same number the rest of the game shows). Cached ~60s.
 const LEADERBOARD_UNLOCK_LEVEL = 13; // MUST match the client const; only players who reached it are ranked
 let _lbCache = { ts: 0, top: [] };
+// ---- ANTI-CHEAT: a reported level can never exceed what is physically playable for the account's AGE,
+// nor jump faster than the play RATE since its last update. Blocks guestId leaderboard spoofs (a fresh
+// account POSTing level 320 gets capped to ~LEVEL_BURST). Legit play (real ~30-90s/level) never trips it.
+const MIN_SEC_PER_LEVEL = 10;   // very generous floor; L320 needs >= ~53min account age to be accepted
+const LEVEL_BURST = 14;         // slack so a fast legit player can register right at the L13 unlock
+function clampLevel(prev, requested, createdMs, updatedMs) {
+  prev = Math.max(0, Math.floor(Number(prev) || 0));
+  requested = Math.max(0, Math.min(9999, Math.floor(Number(requested) || 0)));
+  if (requested <= prev) return prev;                         // decreases/no-ops pass through (can't inflate)
+  const now = Date.now();
+  const ageSec = Math.max(0, (now - (Number(createdMs) || now)) / 1000);
+  const gapSec = Math.max(0, (now - (Number(updatedMs) || Number(createdMs) || now)) / 1000);
+  const ageCeil = Math.floor(ageSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST;          // absolute ceiling for account age
+  const rateCeil = prev + Math.floor(gapSec / MIN_SEC_PER_LEVEL) + LEVEL_BURST;  // per-update gain cap
+  const accepted = Math.max(prev, Math.min(requested, ageCeil, rateCeil));
+  if (requested > accepted + 2) console.warn('[lb] anti-cheat clamp: req ' + requested + ' -> ' + accepted + ' (ageSec ' + Math.round(ageSec) + ')');
+  return accepted;
+}
+// one-time boot sweep: re-clamp any already-stored rows to their account-age ceiling -> purges past spoofs.
+async function sanitizeLeaderboard() {
+  if (!dbReady || !dbPool) return;
+  try {
+    const q = await dbPool.query('SELECT tg_id, save, created_at FROM players');
+    let fixed = 0;
+    for (const row of q.rows) {
+      let sv = row.save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { continue; } } if (!sv) continue;
+      const lvl = Math.floor(Number(sv.levelsDone) || 0); if (lvl <= 0) continue;
+      const createdMs = row.created_at ? new Date(row.created_at).getTime() : Date.now();
+      const ceil = Math.floor(Math.max(0, (Date.now() - createdMs) / 1000) / MIN_SEC_PER_LEVEL) + LEVEL_BURST;
+      if (lvl > ceil) { sv.levelsDone = ceil; await dbPool.query('UPDATE players SET save = $2 WHERE tg_id = $1', [row.tg_id, JSON.stringify(sv)]); fixed++; console.warn('[lb] sanitize tg ' + row.tg_id + ': level ' + lvl + ' -> ' + ceil); }
+    }
+    console.log('[lb] sanitize done, re-clamped ' + fixed + ' implausible row(s)');
+  } catch (e) { console.error('[lb] sanitize:', e.message); }
+}
 // build the ranked list FRESH from the durable players table + the live in-memory map (TG and native both live here)
 async function computeLeaderboard() {
   const byUid = new Map(); // uid -> { name, done, avatar }
@@ -371,12 +413,14 @@ async function computeLeaderboard() {
 // upsert the caller's own progress so VIEWING the board registers them (esp. native players). Merges into any existing save.
 async function selfRegister(user, body) {
   if (!user || !dbReady || !dbPool) return;
-  const lvls = Math.max(0, Math.min(9999, Math.floor(Number(body.levelsDone) || 0)));
-  if (lvls <= 0) return;
+  const requested = Math.max(0, Math.min(9999, Math.floor(Number(body.levelsDone) || 0)));
+  if (requested <= 0) return;
   try {
-    const ex = await dbPool.query('SELECT save FROM players WHERE tg_id = $1', [String(user.id)]);
+    const ex = await dbPool.query('SELECT save, created_at, updated_at FROM players WHERE tg_id = $1', [String(user.id)]);
     let sv = ex.rows[0] && ex.rows[0].save; if (typeof sv === 'string') { try { sv = JSON.parse(sv); } catch (_) { sv = {}; } } sv = sv || {};
-    sv.levelsDone = Math.max(Number(sv.levelsDone) || 0, lvls);
+    const createdMs = ex.rows[0] && ex.rows[0].created_at ? new Date(ex.rows[0].created_at).getTime() : Date.now();
+    const updatedMs = ex.rows[0] && ex.rows[0].updated_at ? new Date(ex.rows[0].updated_at).getTime() : createdMs;
+    sv.levelsDone = clampLevel(Number(sv.levelsDone) || 0, requested, createdMs, updatedMs); // ANTI-CHEAT
     if (body.name) sv.name = String(body.name).slice(0, 24);
     if (body.avatar) sv.avatar = String(body.avatar).slice(0, 300);
     await dbPool.query(
@@ -563,7 +607,7 @@ function lbSaveSoon() {
 function lbLoad() {
   try {
     const arr = JSON.parse(fs.readFileSync(LB_FILE, 'utf8'));
-    for (const r of arr) if (r && r.uid) { const s = users.get(r.uid) || { chatId: r.uid, lang: 'en', optOut: false }; if ((r.level || 0) > (s.levelsDone || 0)) { s.name = r.name; s.levelsDone = r.level; } users.set(r.uid, s); }
+    for (const r of arr) if (r && r.uid) { const s = users.get(r.uid) || { chatId: r.uid, lang: 'en', optOut: false }; if (r.name && !s.name) s.name = r.name; users.set(r.uid, s); } // register users for notifications only; do NOT import levelsDone (Postgres is the authoritative, clamped level source)
     console.log('[lb] loaded ' + arr.length + ' entries');
   } catch (e) {}
 }
@@ -985,6 +1029,7 @@ app.get('/healthz', (req, res) => res.json({ ok: true, dbReady }));
 initSchema().finally(() => {
   try { require('./tourney').register(app, { dbPool, validateInitData, users, noteUser }); } catch (e) { console.error('[tourney] mount:', e.message); }
   lbLoad();
+  sanitizeLeaderboard(); // one-time boot sweep: re-clamp any already-stored spoofed rows (purges past cheats)
   app.listen(PORT, () => console.log(`Duckdoku server on :${PORT} (iap ${BOT_TOKEN ? 'on' : 'off'})`));
   if (BOT_TOKEN) {
     setTimeout(() => { configureBotProfile().catch(() => {}); }, 1500);

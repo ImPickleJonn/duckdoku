@@ -133,6 +133,21 @@ button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:var(
 @keyframes hbR{0%{opacity:0;transform:rotate(0) scale(.35);}14%{opacity:1;transform:rotate(0) scale(1.18);}30%{transform:rotate(0) scale(1);}50%{transform:rotate(0) scale(1);}60%{transform:translate(3%,2%) rotate(7deg) scale(1);}100%{opacity:0;transform:translate(34%,56%) rotate(42deg) scale(.8);}}
 .hearts svg.hbrk{animation:heartBrk .55s ease forwards;transform-origin:center;}
 .hearts svg.cardslam{animation:cardSlam .5s cubic-bezier(.2,1.5,.4,1);transform-origin:center;}
+/* ---------- MODES LAB (owner test bench) ---------- */
+.labon #boosters,.labon #hintApply,.labon #hintPill,.labon .chipswrap,.labon #wcGoal{display:none!important;}
+.labon #game{padding-bottom:104px;}
+.lab-giant .qboard{overflow:auto;-webkit-overflow-scrolling:touch;}
+.lab-giant #grid{width:max-content;height:max-content;}
+#labBar{position:fixed;left:0;right:0;bottom:0;background:var(--card);box-shadow:0 -4px 0 var(--shadow);padding:9px 12px calc(10px + env(safe-area-inset-bottom));z-index:40;}
+#labBar .labrow{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:3px 0;}
+#labBar .labturn{color:#fff;font-weight:900;font-size:12px;padding:4px 11px;border-radius:14px;}
+#labBar .labmv{font-weight:900;font-size:12.5px;color:var(--ink);}
+#labBar .labmv b{color:var(--orange);}
+#labBar .labcontrib{display:flex;gap:8px;flex-wrap:wrap;font-weight:900;font-size:12px;color:var(--ink);}
+#labBar .labcontrib i{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:3px;}
+.labbtn{border:none;border-radius:13px;font-weight:900;font-size:13px;padding:9px 14px;background:#efe3cb;color:var(--ink);box-shadow:0 3px 0 var(--shadow);cursor:pointer;}
+.labbtn.primary{background:var(--blue);color:#fff;box-shadow:0 3px 0 var(--blue-d);}
+.labbtn:active{transform:translateY(3px);box-shadow:none;}
 @keyframes cardSlam{0%{transform:scale(2.3) rotate(-28deg);opacity:0}55%{transform:scale(1.15) rotate(7deg);opacity:1}100%{transform:scale(1) rotate(0)}}
 @keyframes heartBrk{0%{transform:scale(1);}25%{transform:scale(1.4) rotate(-10deg);}45%{transform:scale(1.12) rotate(8deg);}100%{transform:scale(1) rotate(0);}}
 @keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
@@ -631,6 +646,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
     <div class="gspace"></div>
     <div id="hintPill"></div>
     <button class="btn play" id="hintApply">Apply</button>
+    <div id="labBar" style="display:none"></div>
   </section>
 
   <!-- ============ ALBUM ============ -->
@@ -764,6 +780,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
     <button class="setlink" id="setContact" data-i="contact">Contact us</button>
   </div>
   <button class="btn ghost" id="setAdmin" style="display:none;color:#C0392B">Owner</button>
+  <button class="btn ghost" id="setModes" style="display:none;color:#2C82C9">Modes Lab</button>
   <div class="setver" id="setVer"></div>
 </div></div>
 
@@ -788,6 +805,17 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
     <div class="admSec admdanger">Danger</div>
     <button class="btn" id="admWipe" style="background:var(--red);color:#fff">Wipe account and reload</button>
   </div>
+</div></div>
+
+<div class="scrim" id="scrimLab"><div class="modal modal-rel">
+  <button class="closex" id="labClose"><svg viewBox="0 0 24 24" fill="none" stroke="#6E4F44" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h2>Modes Lab</h2>
+  <p style="color:var(--ink-soft);font-weight:700;font-size:3.6vw;margin:2px 0 12px">Owner test bench. Real art and real mechanics. Double-tap to place a duck, single-tap to mark an X.</p>
+  <button class="btn play" id="labCommunity" style="color:#fff;background:var(--green);box-shadow:0 5px 0 var(--green-d)">Community Mural (new)</button>
+  <div style="height:8px"></div>
+  <button class="btn play" id="labSingle" style="color:#fff">Single &middot; 12 x 12</button>
+  <button class="btn play" id="labDuel" style="color:#fff;margin-top:8px">2 players &middot; 14 x 14</button>
+  <button class="btn play" id="labGiant" style="color:#fff;margin-top:8px">Giant community</button>
 </div></div>
 
 <div class="scrim" id="scrimLB"><div class="modal modal-rel">
@@ -835,6 +863,7 @@ body.nav-on #home,body.nav-on #shop,body.nav-on #album{padding-bottom:calc(var(-
 <div class="fx" id="fx"></div>
 <div class="toast" id="toast"></div>
 
+<script id="ddicons">window.DD_ICONS=[{"t":"duck","g":[["#359095","#3fb0b5","#339095","#45c1c7","#339095","#3fb0b5","#339095","#45c1c7","#339095","#3fb0b5","#339095","#45c1c7"],["#45c1c7","#3aa2a7","#4bd3d9","#3aa2a7","#45c1c7","#3aa2a7","#4bd3d9","#3fb0b5","#45c1c7","#3aa2a7","#4bd3d9","#3aa2a7"],["#339095","#45c1c7","#339095","#fae757","#e4c80a","#ffef0d","#cbb209","#f8d90b","#cdbd47","#45c1c7","#339095","#3fb0b5"],["#4bd3d9","#3fb0b5","#4bd3d9","#e4c80a","#ffff0e","#f8d90b","#ffff0e","#e4c80a","#ffff0e","#213562","#4bd3d9","#3aa2a7"],["#339095","#3fb0b5","#cbb209","#ffef0d","#cbb209","#f8d90b","#cbb209","#ffef0d","#cbb209","#f8d90b","#339095","#45c1c7"],["#45c1c7","#3aa2a7","#ffff0e","#020201","#020202","#e4c80a","#ffff0e","#020201","#020202","#e4c80a","#4bd3d9","#3fb0b5"],["#3aa2a7","#ffef0d","#cbb209","#ffef0d","#e4c80a","#ff7524","#c5571b","#f8d90b","#e4c80a","#ffef0d","#cbb209","#45c1c7"],["#4bd3d9","#f8d90b","#ffff0e","#e4c80a","#ff7f27","#f16a21","#ff7f27","#dd611e","#ffff0e","#f8d90b","#ffff0e","#3aa2a7"],["#339095","#3fb0b5","#cbb209","#ffef0d","#cbb209","#f8d90b","#cbb209","#ffef0d","#cbb209","#f8d90b","#339095","#45c1c7"],["#45c1c7","#3aa2a7","#4bd3d9","#e4c80a","#ffef0d","#e4c80a","#ffff0e","#f8d90b","#ffef0d","#3aa2a7","#4bd3d9","#3aa2a7"],["#339095","#45c1c7","#339095","#3fb0b5","#3aa2a7","#45c1c7","#339095","#3fb0b5","#339095","#45c1c7","#339095","#3fb0b5"],["#4bd3d9","#3fb0b5","#4bd3d9","#3aa2a7","#4bd3d9","#3fb0b5","#4bd3d9","#3aa2a7","#4bd3d9","#3fb0b5","#4bd3d9","#3aa2a7"]]},{"t":"apple","g":[["#c7bfa1","#f3e9c5","#c7bfa1","#ffffd9","#c7bfa1","#f3e9c5","#c7bfa1","#ffffd9","#c7bfa1","#f3e9c5","#c7bfa1","#ffffd9"],["#ffffd9","#dfd6b5","#ffffec","#dfd6b5","#ffffd9","#dfd6b5","#ffffec","#4ca447","#ffffd9","#dfd6b5","#ffffec","#dfd6b5"],["#c7bfa1","#ffffd9","#c7bfa1","#f3e9c5","#dfd6b5","#ffffd9","#3e873a","#f3e9c5","#c7bfa1","#ffffd9","#c7bfa1","#f3e9c5"],["#ffffec","#f3e9c5","#ffffec","#cf112d","#ff163a","#030201","#040202","#cf112d","#ff163a","#f3e9c5","#ffffec","#dfd6b5"],["#c7bfa1","#f3e9c5","#b90f28","#f81536","#b90f28","#e21331","#b90f28","#f81536","#b90f28","#e21331","#c7bfa1","#ffffd9"],["#ffffd9","#dfd6b5","#ff163a","#e21331","#f81536","#cf112d","#ff163a","#cf112d","#f81536","#cf112d","#ffffec","#f3e9c5"],["#dfd6b5","#ffffd9","#b90f28","#f81536","#cf112d","#f81536","#b90f28","#e21331","#cf112d","#f81536","#c7bfa1","#ffffd9"],["#ffffec","#f3e9c5","#ff163a","#cf112d","#ff163a","#e21331","#ff163a","#cf112d","#ff163a","#e21331","#ffffec","#dfd6b5"],["#c7bfa1","#f3e9c5","#b90f28","#f81536","#b90f28","#e21331","#b90f28","#f81536","#b90f28","#e21331","#c7bfa1","#ffffd9"],["#ffffd9","#dfd6b5","#ffffec","#cf112d","#f81536","#cf112d","#ff163a","#e21331","#f41534","#dfd6b5","#ffffec","#dfd6b5"],["#c7bfa1","#ffffd9","#c7bfa1","#f3e9c5","#cc122c","#f41534","#b61027","#de1330","#c7bfa1","#ffffd9","#c7bfa1","#f3e9c5"],["#ffffec","#f3e9c5","#ffffec","#dfd6b5","#ffffec","#f3e9c5","#ffffec","#dfd6b5","#ffffec","#f3e9c5","#ffffec","#dfd6b5"]]},{"t":"heart","g":[["#d1d1d1","#ffffff","#d1d1d1","#ffffff","#d1d1d1","#ffffff","#d1d1d1","#ffffff","#d1d1d1","#ffffff","#d1d1d1","#ffffff"],["#ffffff","#eaeaea","#ffffff","#eaeaea","#ffffff","#eaeaea","#ffffff","#ffffff","#ffffff","#eaeaea","#ffffff","#eaeaea"],["#d1d1d1","#ffffff","#d1d1d1","#180504","#160403","#ffffff","#d1d1d1","#180504","#140403","#ffffff","#d1d1d1","#ffffff"],["#ffffff","#ffffff","#1d0604","#e66b65","#ff0301","#fb0201","#ff0301","#e60201","#ff0301","#180504","#ffffff","#eaeaea"],["#d1d1d1","#ffffff","#cd0200","#ff0301","#cd0200","#fb0201","#cd0200","#ff0301","#cd0200","#ca0501","#d1d1d1","#ffffff"],["#ffffff","#eaeaea","#1d0604","#fb0201","#ff0301","#e60201","#ff0301","#e60201","#ff0301","#160403","#ffffff","#ffffff"],["#eaeaea","#ffffff","#d1d1d1","#ff0301","#e60201","#ff0301","#cd0200","#fb0201","#ba0401","#ffffff","#d1d1d1","#ffffff"],["#ffffff","#ffffff","#ffffff","#eaeaea","#ff0301","#fb0201","#ff0301","#ba0401","#ffffff","#ffffff","#ffffff","#eaeaea"],["#d1d1d1","#ffffff","#d1d1d1","#ffffff","#d1d1d1","#fb0201","#a60401","#ffffff","#d1d1d1","#ffffff","#d1d1d1","#ffffff"],["#ffffff","#eaeaea","#ffffff","#eaeaea","#ffffff","#eaeaea","#ffffff","#ffffff","#ffffff","#eaeaea","#ffffff","#eaeaea"],["#d1d1d1","#ffffff","#d1d1d1","#ffffff","#eaeaea","#ffffff","#d1d1d1","#ffffff","#d1d1d1","#ffffff","#d1d1d1","#ffffff"],["#ffffff","#ffffff","#ffffff","#eaeaea","#ffffff","#ffffff","#ffffff","#eaeaea","#ffffff","#ffffff","#ffffff","#eaeaea"]]},{"t":"star","g":[["#191c40","#1f224f","#191c40","#222556","#191c40","#1f224f","#191c40","#222556","#191c40","#1f224f","#191c40","#222556"],["#222556","#1c1f48","#25295e","#1c1f48","#222556","#e5ae02","#ffe303","#1f224f","#222556","#1c1f48","#25295e","#1c1f48"],["#191c40","#222556","#191c40","#1f224f","#1c1f48","#101339","#cc9b02","#1f224f","#191c40","#222556","#191c40","#1f224f"],["#25295e","#1f224f","#25295e","#1c1f48","#ffe303","#fefefc","#ffe303","#e5ae02","#25295e","#1f224f","#25295e","#1c1f48"],["#191c40","#f9bd03","#cc9b02","#ffd003","#cc9b02","#f9bd03","#cc9b02","#ffd003","#cc9b02","#f9bd03","#cc9b02","#222556"],["#222556","#e5ae02","#ffe303","#f9bd03","#ffd003","#e5ae02","#ffe303","#e5ae02","#ffd003","#e5ae02","#ffe303","#1f224f"],["#1c1f48","#222556","#cc9b02","#ffd003","#e5ae02","#ffd003","#cc9b02","#f9bd03","#e5ae02","#ffd003","#191c40","#222556"],["#25295e","#1f224f","#25295e","#e5ae02","#ffe303","#f9bd03","#ffe303","#e5ae02","#ffe303","#1f224f","#25295e","#1c1f48"],["#191c40","#1f224f","#191c40","#ffd003","#cc9b02","#f9bd03","#cc9b02","#ffd003","#cc9b02","#1f224f","#191c40","#222556"],["#222556","#1c1f48","#ffe303","#0e1030","#101339","#e5ae02","#ffe303","#0f1234","#101339","#e5ae02","#25295e","#1c1f48"],["#191c40","#222556","#191c40","#f9bd03","#1c1f48","#222556","#191c40","#1f224f","#cc9b02","#222556","#191c40","#1f224f"],["#272a5f","#20234f","#25295e","#1c1f48","#25295e","#20234f","#272a5f","#1c1f48","#25295e","#20234f","#25295e","#1c1f48"]]},{"t":"strawberry","g":[["#cbc0a1","#f8eac5","#cbc0a1","#ffffd9","#cbc0a1","#f8eac5","#cbc0a1","#ffffd9","#cbc0a1","#f8eac5","#cbc0a1","#ffffd9"],["#ffffd9","#e4d7b5","#ffffec","#e4d7b5","#ffffd9","#e4d7b5","#ffffec","#f8eac5","#ffffd9","#e4d7b5","#ffffec","#e4d7b5"],["#cbc0a1","#ffffd9","#cbc0a1","#f8eac5","#e4d7b5","#79ad4f","#241724","#f8eac5","#cbc0a1","#ffffd9","#cbc0a1","#f8eac5"],["#ffffec","#f8eac5","#ffffec","#e4d7b5","#85bd56","#6e9e48","#85bd56","#669142","#ffffec","#f8eac5","#ffffec","#e4d7b5"],["#cbc0a1","#f8eac5","#cbc0a1","#e23b3b","#a82c2c","#cd3635","#a82c2c","#e23b3b","#a82c2c","#f8eac5","#cbc0a1","#ffffd9"],["#ffffd9","#e4d7b5","#ffffec","#cd3635","#e23b3b","#bd3131","#f64040","#bd3131","#e23b3b","#e4d7b5","#ffffec","#f8eac5"],["#e4d7b5","#ffffd9","#cbc0a1","#e23b3b","#bd3131","#e23b3b","#a82c2c","#cd3635","#bd3131","#ffffd9","#cbc0a1","#ffffd9"],["#ffffec","#f8eac5","#ffffec","#bd3131","#f64040","#cd3635","#f64040","#bd3131","#f64040","#f8eac5","#ffffec","#e4d7b5"],["#cbc0a1","#f8eac5","#cbc0a1","#ffffd9","#a82c2c","#cd3635","#a82c2c","#e23b3b","#cbc0a1","#f8eac5","#cbc0a1","#ffffd9"],["#ffffd9","#e4d7b5","#ffffec","#e4d7b5","#e23b3b","#bd3131","#f64040","#cd3635","#ffffd9","#e4d7b5","#ffffec","#e4d7b5"],["#cbc0a1","#ffffd9","#cbc0a1","#f8eac5","#e4d7b5","#ffffd9","#cbc0a1","#f8eac5","#cbc0a1","#ffffd9","#cbc0a1","#f8eac5"],["#ffffec","#f8eac5","#ffffec","#e4d7b5","#ffffec","#f8eac5","#ffffec","#e4d7b5","#ffffec","#f8eac5","#ffffec","#e4d7b5"]]},{"t":"mushroom","g":[["#439054","#52b066","#439054","#5ac171","#439054","#52b066","#439054","#5ac171","#439054","#52b066","#439054","#5ac171"],["#5ac171","#4ca25e","#63d37b","#4ca25e","#5ac171","#4ca25e","#63d37b","#52b066","#5ac171","#4ca25e","#63d37b","#4ca25e"],["#439054","#5ac171","#439054","#52b066","#18161b","#fc2b2a","#161418","#1a181d","#439054","#5ac171","#439054","#52b066"],["#63d37b","#52b066","#63d37b","#d32423","#ff2f2d","#e52726","#ff2f2d","#eaeae9","#ff2f2d","#52b066","#63d37b","#4ca25e"],["#439054","#52b066","#161418","#fc2b2a","#bc201f","#e52726","#bc201f","#fc2b2a","#bc201f","#1a181d","#439054","#5ac171"],["#5ac171","#4ca25e","#ff2f2d","#e52726","#fc2b2a","#eaeae9","#ff2f2d","#eaeae9","#ffffff","#d32423","#63d37b","#52b066"],["#4ca25e","#5ac171","#161418","#fc2b2a","#d32423","#fc2b2a","#bc201f","#e52726","#d32423","#fc2b2a","#439054","#5ac171"],["#63d37b","#52b066","#63d37b","#18161b","#1f1d23","#1a181d","#1f1d23","#18161b","#1f1d23","#52b066","#63d37b","#4ca25e"],["#439054","#52b066","#439054","#5ac171","#ccc0a0","#f9ebc4","#ccc0a0","#ffffd7","#439054","#52b066","#439054","#5ac171"],["#5ac171","#4ca25e","#63d37b","#4ca25e","#1d1b20","#e5d8b4","#ffffeb","#1a181d","#5ac171","#4ca25e","#63d37b","#4ca25e"],["#439054","#5ac171","#439054","#52b066","#4ca25e","#5ac171","#439054","#52b066","#439054","#5ac171","#439054","#52b066"],["#63d37b","#52b066","#63d37b","#4ca25e","#63d37b","#52b066","#63d37b","#4ca25e","#63d37b","#52b066","#63d37b","#4ca25e"]]},{"t":"fish","g":[["#073e84","#094ba1","#073e84","#0953b1","#073e84","#094ba1","#073e84","#0953b1","#073e84","#094ba1","#073e84","#0953b1"],["#0953b1","#084594","#0a5bc1","#084594","#0953b1","#084594","#0a5bc1","#094ba1","#0953b1","#084594","#0a5bc1","#084594"],["#073e84","#0953b1","#073e84","#094ba1","#084594","#0953b1","#073e84","#094ba1","#073e84","#0953b1","#073e84","#094ba1"],["#0a5bc1","#094ba1","#0a5bc1","#084594","#ff7a00","#fa6600","#ff7a00","#084594","#ff7a00","#fa6600","#562003","#084594"],["#073e84","#094ba1","#cd5300","#ff7000","#cd5300","#fa6600","#cd5300","#ff7000","#cd5300","#fa6600","#cd5300","#0953b1"],["#0953b1","#e65e00","#ff7a00","#fa6600","#ff7000","#e65e00","#ff7a00","#e65e00","#ff7000","#e65e00","#ff7a00","#094ba1"],["#084594","#ff7000","#cd5300","#ff7000","#e65e00","#ff7000","#cd5300","#fa6600","#e65e00","#ff7000","#cd5300","#0953b1"],["#0a5bc1","#094ba1","#ff7a00","#e65e00","#ff7a00","#fa6600","#ff7a00","#e65e00","#ff7a00","#fa6600","#ff7a00","#084594"],["#073e84","#094ba1","#073e84","#0953b1","#cd5300","#fa6600","#073e84","#0953b1","#cd5300","#fa6600","#3b1602","#0953b1"],["#0953b1","#084594","#0a5bc1","#084594","#0953b1","#084594","#0a5bc1","#094ba1","#0953b1","#084594","#0a5bc1","#084594"],["#073e84","#0953b1","#073e84","#094ba1","#084594","#0953b1","#073e84","#094ba1","#073e84","#0953b1","#073e84","#094ba1"],["#0a5bc1","#094ba1","#0a5bc1","#084594","#0a5bc1","#094ba1","#0a5bc1","#084594","#0a5bc1","#094ba1","#0a5bc1","#084594"]]},{"t":"flower","g":[["#55a4c3","#67c8ed","#55a4c3","#72dcff","#55a4c3","#67c8ed","#55a4c3","#72dcff","#55a4c3","#67c8ed","#55a4c3","#72dcff"],["#72dcff","#5fb8da","#7cf0ff","#5fb8da","#72dcff","#ea7ca9","#ffa1dc","#67c8ed","#72dcff","#5fb8da","#7cf0ff","#5fb8da"],["#55a4c3","#72dcff","#55a4c3","#67c8ed","#ea7ca9","#ff94ca","#d16e96","#fe86b7","#55a4c3","#72dcff","#55a4c3","#67c8ed"],["#7cf0ff","#67c8ed","#ffa1dc","#ea7ca9","#ffa1dc","#fe86b7","#ffa1dc","#ea7ca9","#ffa1dc","#fe86b7","#7cf0ff","#5fb8da"],["#55a4c3","#fe86b7","#d16e96","#ff94ca","#cdb904","#fbe105","#cdb904","#fff806","#d16e96","#fe86b7","#d16e96","#72dcff"],["#72dcff","#5fb8da","#ffa1dc","#fe86b7","#fff806","#e7cf05","#ffff06","#e7cf05","#ffdf04","#ea7ca9","#7cf0ff","#67c8ed"],["#5fb8da","#72dcff","#d16e96","#020101","#e7cf05","#fff806","#cdb904","#fbe105","#e5bb04","#ff94ca","#55a4c3","#72dcff"],["#7cf0ff","#fe86b7","#ffa1dc","#ea7ca9","#ffff06","#fbe105","#ffff06","#e5bb04","#ffa1dc","#fe86b7","#ffa1dc","#5fb8da"],["#55a4c3","#67c8ed","#d16e96","#ff94ca","#d16e96","#f9cb04","#cca603","#ff94ca","#d16e96","#fe86b7","#55a4c3","#72dcff"],["#72dcff","#5fb8da","#7cf0ff","#5fb8da","#ff94ca","#ea7ca9","#ffa1dc","#fe86b7","#72dcff","#5fb8da","#7cf0ff","#5fb8da"],["#55a4c3","#72dcff","#55a4c3","#67c8ed","#5fb8da","#ff94ca","#d16e96","#67c8ed","#55a4c3","#72dcff","#55a4c3","#67c8ed"],["#7cf0ff","#67c8ed","#7cf0ff","#5fb8da","#7cf0ff","#67c8ed","#7cf0ff","#5fb8da","#7cf0ff","#67c8ed","#7cf0ff","#5fb8da"]]},{"t":"cherry","g":[["#c9be9c","#f5e8be","#c9be9c","#ffffd1","#c9be9c","#f5e8be","#c9be9c","#ffffd1","#c9be9c","#f5e8be","#c9be9c","#ffffd1"],["#ffffd1","#e1d6ae","#ffffe4","#e1d6ae","#ffffd1","#e1d6ae","#ffffe4","#f5e8be","#ffffd1","#e1d6ae","#ffffe4","#e1d6ae"],["#c9be9c","#ffffd1","#c9be9c","#f5e8be","#e1d6ae","#ffffd1","#528535","#64a241","#c9be9c","#ffffd1","#c9be9c","#f5e8be"],["#ffffe4","#f5e8be","#ffffe4","#e1d6ae","#ffffe4","#3d2313","#78c24e","#e1d6ae","#ffffe4","#f5e8be","#ffffe4","#e1d6ae"],["#c9be9c","#f5e8be","#c9be9c","#ffffd1","#c9be9c","#f5e8be","#6b4625","#ffffd1","#c9be9c","#f5e8be","#c9be9c","#ffffd1"],["#ffffd1","#e1d6ae","#ffffe4","#f5e8be","#ffffd1","#e1d6ae","#ffffe4","#e1d6ae","#ffffd1","#e1d6ae","#ffffe4","#f5e8be"],["#e1d6ae","#ffffd1","#c9be9c","#d82a2c","#b52424","#ffffd1","#c9be9c","#c42728","#b52424","#ffffd1","#c9be9c","#ffffd1"],["#ffffe4","#f5e8be","#eb2e2f","#b52424","#eb2e2f","#c42728","#eb2e2f","#b52424","#eb2e2f","#c42728","#ffffe4","#e1d6ae"],["#c9be9c","#f5e8be","#a12020","#d82a2c","#a12020","#c42728","#a12020","#d82a2c","#a12020","#c42728","#c9be9c","#ffffd1"],["#ffffd1","#e1d6ae","#eb2e2f","#b52424","#d82a2c","#b52424","#eb2e2f","#c42728","#d82a2c","#b52424","#ffffe4","#e1d6ae"],["#c9be9c","#ffffd1","#c9be9c","#c42728","#e1d6ae","#ffffd1","#c9be9c","#f5e8be","#a12020","#ffffd1","#c9be9c","#f5e8be"],["#ffffe4","#f5e8be","#ffffe4","#e1d6ae","#ffffe4","#f5e8be","#ffffe4","#e1d6ae","#ffffe4","#f5e8be","#ffffe4","#e1d6ae"]]},{"t":"balloon","g":[["#69aac3","#80cfee","#69aac3","#8de4ff","#69aac3","#80cfee","#69aac3","#8de4ff","#69aac3","#80cfee","#69aac3","#8de4ff"],["#8de4ff","#76bfdb","#9af9ff","#76bfdb","#ffed1c","#e6c617","#ffff1e","#fad819","#8de4ff","#76bfdb","#9af9ff","#76bfdb"],["#69aac3","#8de4ff","#69aac3","#fad819","#d42323","#ffed1c","#cdb115","#e72626","#cdb115","#8de4ff","#69aac3","#80cfee"],["#9af9ff","#80cfee","#ff2d2e","#e6c617","#ff2d2e","#fad819","#ffff1e","#d42323","#ffff1e","#e72626","#9af9ff","#76bfdb"],["#69aac3","#80cfee","#bd1f1f","#ffed1c","#bd1f1f","#fad819","#cdb115","#fe292a","#cdb115","#e72626","#69aac3","#8de4ff"],["#8de4ff","#76bfdb","#1b182f","#fad819","#fe292a","#e6c617","#ffff1e","#d42323","#ffed1c","#151224","#9af9ff","#80cfee"],["#76bfdb","#8de4ff","#69aac3","#ffed1c","#d42323","#ffed1c","#cdb115","#e72626","#e6c617","#8de4ff","#69aac3","#8de4ff"],["#9af9ff","#80cfee","#9af9ff","#151224","#ffff1e","#fad819","#ffff1e","#e6c617","#1b182f","#80cfee","#9af9ff","#76bfdb"],["#69aac3","#80cfee","#69aac3","#8de4ff","#69aac3","#171428","#121020","#8de4ff","#69aac3","#80cfee","#69aac3","#8de4ff"],["#8de4ff","#76bfdb","#9af9ff","#76bfdb","#8de4ff","#151224","#1b182f","#80cfee","#8de4ff","#76bfdb","#9af9ff","#76bfdb"],["#69aac3","#8de4ff","#69aac3","#80cfee","#76bfdb","#b56e3e","#87522e","#80cfee","#69aac3","#8de4ff","#69aac3","#80cfee"],["#9af9ff","#80cfee","#9af9ff","#76bfdb","#9af9ff","#80cfee","#9af9ff","#76bfdb","#9af9ff","#80cfee","#9af9ff","#76bfdb"]]},{"t":"gift","g":[["#c8c2ab","#f4edd0","#c8c2ab","#ffffe5","#c8c2ab","#f4edd0","#c8c2ab","#ffffe5","#c8c2ab","#f4edd0","#c8c2ab","#ffffe5"],["#ffffe5","#e0dac0","#fffffa","#e0dac0","#ffffe5","#e0dac0","#fffffa","#f4edd0","#ffffe5","#e0dac0","#fffffa","#e0dac0"],["#c8c2ab","#ffffe5","#c8c2ab","#f4edd0","#e7dc02","#ffff02","#cec402","#fbef02","#c8c2ab","#ffffe5","#c8c2ab","#f4edd0"],["#fffffa","#f4edd0","#ff033e","#e5022f","#ff033e","#11041d","#ffff03","#e5022f","#ff033e","#f90333","#fffffa","#e0dac0"],["#c8c2ab","#f4edd0","#cc022a","#ff0338","#cc022a","#fbef02","#cec402","#ff0338","#cc022a","#f90333","#c8c2ab","#ffffe5"],["#ffffe5","#e0dac0","#ff033e","#f90333","#ff0338","#e7dc02","#ffff03","#e5022f","#ff0338","#e5022f","#fffffa","#f4edd0"],["#e0dac0","#ffffe5","#cec402","#ffff02","#e7dc02","#ffff02","#cec402","#fbef02","#e7dc02","#ffff02","#c8c2ab","#ffffe5"],["#fffffa","#f4edd0","#150423","#e5022f","#ff033e","#fbef02","#ffff03","#e5022f","#ff033e","#11041d","#fffffa","#e0dac0"],["#c8c2ab","#f4edd0","#cc022a","#ff0338","#cc022a","#fbef02","#cec402","#ff0338","#cc022a","#f90333","#c8c2ab","#ffffe5"],["#ffffe5","#e0dac0","#ff033e","#e5022f","#ff0338","#e7dc02","#ffff03","#f90333","#ff0338","#e5022f","#fffffa","#e0dac0"],["#c8c2ab","#ffffe5","#c8c2ab","#f4edd0","#e0dac0","#ffffe5","#c8c2ab","#f4edd0","#c8c2ab","#ffffe5","#c8c2ab","#f4edd0"],["#fffffa","#f4edd0","#fffffa","#e0dac0","#fffffa","#f4edd0","#fffffa","#e0dac0","#fffffa","#f4edd0","#fffffa","#e0dac0"]]},{"t":"crown","g":[["#175569","#1c6880","#175569","#1f728d","#175569","#1c6880","#175569","#1f728d","#175569","#1c6880","#175569","#1f728d"],["#1f728d","#1a6076","#227d9a","#1a6076","#1e718b","#195f74","#217c98","#1c6880","#1f728d","#1a6076","#227d9a","#195f74"],["#165568","#08292f","#165568","#1b677e","#195f74","#ffcd06","#c59904","#1b677e","#165568","#1e718b","#061f23","#1b677e"],["#217c98","#f1ba05","#092d33","#195f74","#217c98","#f1ba05","#ffe007","#195f74","#217c98","#08252b","#ffe007","#195f74"],["#165568","#f1ba05","#c59904","#08292f","#c59904","#f1ba05","#c59904","#ffcd06","#061f23","#f1ba05","#c59904","#1e718b"],["#1e718b","#ddab05","#ffe007","#f1ba05","#ffcd06","#ddab05","#ffe007","#ddab05","#ffcd06","#ddab05","#ffe007","#1b677e"],["#195f74","#08292f","#c59904","#ffcd06","#ddab05","#ffcd06","#c59904","#f1ba05","#ddab05","#ffcd06","#061f23","#1e718b"],["#217c98","#08252b","#ffe007","#ddab05","#ffe007","#f60431","#ff053b","#ddab05","#ffe007","#f1ba05","#ffe007","#195f74"],["#165568","#08252b","#c59904","#ffcd06","#c59904","#f60431","#ca0428","#ffcd06","#c59904","#f1ba05","#061f23","#1e718b"],["#1e718b","#195f74","#ffe007","#ddab05","#ffcd06","#ddab05","#ffe007","#f1ba05","#ffcd06","#ddab05","#092d33","#195f74"],["#165568","#1e718b","#061f23","#08252b","#072227","#08292f","#061f23","#08252b","#061f23","#08292f","#165568","#1b677e"],["#227d9a","#1c6880","#217c98","#195f74","#217c98","#1b677e","#227d9a","#195f74","#217c98","#1b677e","#217c98","#1a6076"]]},{"t":"sun","g":[["#054579","#065494","#ca9708","#065ca3","#054579","#f6b80a","#ca9708","#065ca3","#054579","#f6b80a","#054579","#065ca3"],["#065ca3","#054d88","#0764b2","#e2aa09","#065ca3","#200a06","#2a0d07","#065494","#ffcb0b","#054d88","#0764b2","#054d88"],["#ca9708","#065ca3","#054579","#230b06","#e2aa09","#ffcb0b","#ca9708","#f6b80a","#1d0905","#065ca3","#054579","#f6b80a"],["#0764b2","#f6b80a","#2a0d07","#e2aa09","#ffdd0c","#f6b80a","#ffdd0c","#e2aa09","#ffdd0c","#230b06","#ffdd0c","#e2aa09"],["#054579","#065494","#ca9708","#ffcb0b","#ca9708","#f6b80a","#ca9708","#ffcb0b","#ca9708","#f6b80a","#054579","#065ca3"],["#ffcb0b","#200a06","#ffdd0c","#f6b80a","#270c07","#e2aa09","#ffdd0c","#200a06","#ffcb0b","#e2aa09","#2a0d07","#f6b80a"],["#e2aa09","#270c07","#ca9708","#ffcb0b","#e2aa09","#ffcb0b","#ca9708","#f6b80a","#e2aa09","#ffcb0b","#1d0905","#ffcb0b"],["#0764b2","#065494","#ffdd0c","#e2aa09","#ffdd0c","#f6b80a","#ffdd0c","#e2aa09","#ffdd0c","#f6b80a","#0764b2","#054d88"],["#054579","#f6b80a","#1d0905","#ffcb0b","#ca9708","#f6b80a","#ca9708","#ffcb0b","#ca9708","#230b06","#ca9708","#065ca3"],["#ffcb0b","#054d88","#0764b2","#200a06","#ffcb0b","#e2aa09","#ffdd0c","#f6b80a","#270c07","#054d88","#0764b2","#e2aa09"],["#054579","#065ca3","#054579","#f6b80a","#054d88","#270c07","#1d0905","#065494","#ca9708","#065ca3","#054579","#065494"],["#0764b2","#065494","#ffdd0c","#054d88","#0764b2","#f6b80a","#ffdd0c","#054d88","#0764b2","#f6b80a","#0764b2","#054d88"]]},{"t":"rainbow","g":[["#9fa1af","#c2c5d5","#9fa1af","#d5d8eb","#9fa1af","#c2c5d5","#9fa1af","#d5d8eb","#9fa1af","#c2c5d5","#9fa1af","#d5d8eb"],["#d5d8eb","#b2b5c4","#e9ecff","#b2b5c4","#d5d8eb","#b2b5c4","#e9ecff","#c2c5d5","#d5d8eb","#b2b5c4","#e9ecff","#b2b5c4"],["#9fa1af","#d5d8eb","#9fa1af","#c2c5d5","#d61f22","#ff2628","#bf1c1e","#e92225","#9fa1af","#d5d8eb","#9fa1af","#c2c5d5"],["#e9ecff","#c2c5d5","#e9ecff","#d61f22","#ffae25","#f4911f","#ffae25","#e1851c","#ff292c","#c2c5d5","#e9ecff","#b2b5c4"],["#9fa1af","#c2c5d5","#bf1c1e","#ff9f22","#338f3f","#3faf4d","#338f3f","#45c054","#c87719","#e92225","#9fa1af","#d5d8eb"],["#d5d8eb","#b2b5c4","#ff292c","#3faf4d","#2497da","#b2b5c4","#e9ecff","#1e7eb6","#45c054","#d61f22","#e9ecff","#c2c5d5"],["#b2b5c4","#d5d8eb","#bf1c1e","#020202","#020202","#d5d8eb","#9fa1af","#2089c6","#020202","#ff2628","#9fa1af","#d5d8eb"],["#e9ecff","#c2c5d5","#ffffff","#eaeaea","#ffffff","#c2c5d5","#e9ecff","#eaeaea","#ffffff","#fefefe","#e9ecff","#b2b5c4"],["#9fa1af","#fefefe","#d1d1d1","#ffffff","#d1d1d1","#fefefe","#d1d1d1","#ffffff","#d1d1d1","#fefefe","#d1d1d1","#d5d8eb"],["#d5d8eb","#b2b5c4","#e9ecff","#b2b5c4","#d5d8eb","#b2b5c4","#e9ecff","#c2c5d5","#d5d8eb","#b2b5c4","#e9ecff","#b2b5c4"],["#9fa1af","#d5d8eb","#9fa1af","#c2c5d5","#b2b5c4","#d5d8eb","#9fa1af","#c2c5d5","#9fa1af","#d5d8eb","#9fa1af","#c2c5d5"],["#e9ecff","#c2c5d5","#e9ecff","#b2b5c4","#e9ecff","#c2c5d5","#e9ecff","#b2b5c4","#e9ecff","#c2c5d5","#e9ecff","#b2b5c4"]]},{"t":"cat","g":[["#a1cac6","#c4f7f1","#a1cac6","#d8ffff","#a1cac6","#c4f7f1","#a1cac6","#d8ffff","#a1cac6","#c4f7f1","#a1cac6","#d8ffff"],["#d8ffff","#e78927","#ffb333","#b4e3de","#d8ffff","#b4e3de","#ebffff","#c4f7f1","#d8ffff","#e78927","#ffb333","#b4e3de"],["#a1cac6","#ff8118","#c16012","#fc952a","#e78927","#ffa42f","#ce7a23","#fc952a","#ce7a23","#ff8118","#c16012","#c4f7f1"],["#ebffff","#ec7516","#ff8d1a","#e78927","#ffb333","#fc952a","#ffb333","#e78927","#ffb333","#ec7516","#ff8d1a","#b4e3de"],["#a1cac6","#fc952a","#ce7a23","#ffa42f","#ce7a23","#fc952a","#ce7a23","#ffa42f","#ce7a23","#fc952a","#ce7a23","#d8ffff"],["#d8ffff","#e78927","#ffb333","#3e210a","#45240b","#e78927","#ffb333","#391e09","#45240b","#e78927","#ffb333","#c4f7f1"],["#b4e3de","#ffa42f","#ce7a23","#45240b","#391e09","#ffa42f","#ce7a23","#3e210a","#391e09","#ffa42f","#ce7a23","#d8ffff"],["#ebffff","#fc952a","#ffb333","#e78927","#ffb333","#fc952a","#ffb333","#e78927","#ffb333","#fc952a","#ffb333","#b4e3de"],["#a1cac6","#fc952a","#ce7a23","#ffa42f","#ce7a23","#fc952a","#ce7a23","#ffa42f","#ce7a23","#fc952a","#ce7a23","#d8ffff"],["#d8ffff","#e78927","#ffb333","#e78927","#ffa42f","#e78927","#ffb333","#fc952a","#ffa42f","#e78927","#ffb333","#b4e3de"],["#a1cac6","#d8ffff","#ce7a23","#fc952a","#e78927","#ffa42f","#ce7a23","#fc952a","#ce7a23","#ffa42f","#a1cac6","#c4f7f1"],["#ebffff","#c4f7f1","#ebffff","#b4e3de","#ffb333","#fc952a","#ffb333","#e78927","#ebffff","#c4f7f1","#ebffff","#b4e3de"]]},{"t":"icecream","g":[["#7da0bd","#98c3e6","#7da0bd","#a8d7fd","#7da0bd","#98c3e6","#7da0bd","#a8d7fd","#7da0bd","#98c3e6","#7da0bd","#a8d7fd"],["#a8d7fd","#8cb4d4","#b7eaff","#8cb4d4","#a8d7fd","#8cb4d4","#b7eaff","#98c3e6","#a8d7fd","#8cb4d4","#b7eaff","#8cb4d4"],["#7da0bd","#a8d7fd","#7da0bd","#98c3e6","#e880ab","#ff9acc","#cf7298","#fc8cb9","#7da0bd","#a8d7fd","#7da0bd","#98c3e6"],["#b7eaff","#98c3e6","#b7eaff","#8cb4d4","#ffa7de","#fc8cb9","#ffa7de","#e880ab","#b7eaff","#98c3e6","#b7eaff","#8cb4d4"],["#7da0bd","#98c3e6","#7da0bd","#a8d7fd","#cf7298","#fc8cb9","#cf7298","#ff9acc","#7da0bd","#98c3e6","#7da0bd","#a8d7fd"],["#a8d7fd","#8cb4d4","#b7eaff","#192649","#ff9acc","#e880ab","#ffa7de","#e880ab","#1c2a50","#8cb4d4","#b7eaff","#98c3e6"],["#8cb4d4","#a8d7fd","#7da0bd","#a8d7fd","#172343","#c57f31","#935f24","#192649","#8cb4d4","#a8d7fd","#7da0bd","#a8d7fd"],["#b7eaff","#98c3e6","#b7eaff","#8cb4d4","#b7eaff","#b3742c","#d78b35","#8cb4d4","#b7eaff","#98c3e6","#b7eaff","#8cb4d4"],["#7da0bd","#98c3e6","#7da0bd","#a8d7fd","#7da0bd","#b3742c","#935f24","#a8d7fd","#7da0bd","#98c3e6","#7da0bd","#a8d7fd"],["#a8d7fd","#8cb4d4","#b7eaff","#8cb4d4","#a8d7fd","#a56b29","#d78b35","#98c3e6","#a8d7fd","#8cb4d4","#b7eaff","#8cb4d4"],["#7da0bd","#a8d7fd","#7da0bd","#98c3e6","#8cb4d4","#a8d7fd","#7da0bd","#98c3e6","#7da0bd","#a8d7fd","#7da0bd","#98c3e6"],["#b7eaff","#98c3e6","#b7eaff","#8cb4d4","#b7eaff","#98c3e6","#b7eaff","#8cb4d4","#b7eaff","#98c3e6","#b7eaff","#8cb4d4"]]},{"t":"rocket","g":[["#151c39","#192246","#151c39","#1c264d","#151c39","#192246","#151c39","#1c264d","#151c39","#192246","#151c39","#1c264d"],["#1c264d","#172040","#1e2954","#172040","#1c264d","#172040","#1e2954","#192246","#1c264d","#172040","#1e2954","#172040"],["#151c39","#1c264d","#151c39","#192246","#172040","#fb2627","#bb1c1d","#192246","#151c39","#1c264d","#151c39","#192246"],["#1e2954","#192246","#1e2954","#172040","#111830","#aaabad","#cccdcf","#0d1225","#1e2954","#192246","#1e2954","#172040"],["#151c39","#192246","#151c39","#1c264d","#0c1021","#aaabad","#8b8c8e","#10162c","#151c39","#192246","#151c39","#1c264d"],["#1c264d","#172040","#1e2954","#192246","#ffffff","#eaeaea","#ffffff","#c8c8c8","#1c264d","#172040","#1e2954","#192246"],["#172040","#1c264d","#151c39","#1c264d","#eaeaea","#ffffff","#d0d0d0","#d9dada","#172040","#1c264d","#151c39","#1c264d"],["#1e2954","#192246","#1e2954","#d22020","#ffffff","#fefefe","#ffffff","#c8c8c8","#ff292a","#192246","#1e2954","#172040"],["#151c39","#192246","#151c39","#fb2627","#0c1021","#d9dada","#b2b2b3","#10162c","#bb1c1d","#192246","#151c39","#1c264d"],["#1c264d","#172040","#1e2954","#0d1225","#1c264d","#e0831e","#ffab28","#192246","#10162c","#172040","#1e2954","#172040"],["#151c39","#1c264d","#151c39","#192246","#172040","#1c264d","#151c39","#192246","#151c39","#1c264d","#151c39","#192246"],["#1e2954","#192246","#1e2954","#172040","#1e2954","#192246","#1e2954","#172040","#1e2954","#192246","#1e2954","#172040"]]},{"t":"cupcake","g":[["#c8c1a8","#f4ebcd","#c8c1a8","#ffffe1","#c8c1a8","#f4ebcd","#c8c1a8","#ffffe1","#c8c1a8","#f4ebcd","#c8c1a8","#ffffe1"],["#ffffe1","#e1d9bd","#fffff6","#e1d9bd","#ffffe1","#402611","#e72c37","#f4ebcd","#ffffe1","#e1d9bd","#fffff6","#e1d9bd"],["#c8c1a8","#ffffe1","#c8c1a8","#f4ebcd","#402611","#d42833","#9e1e26","#452913","#c8c1a8","#ffffe1","#c8c1a8","#f4ebcd"],["#fffff6","#f4ebcd","#fffff6","#e1d9bd","#ff90c7","#f078a6","#ff90c7","#dd6e98","#533116","#f4ebcd","#fffff6","#e1d9bd"],["#c8c1a8","#f4ebcd","#c8c1a8","#ff84b6","#c56288","#f078a6","#c56288","#ff84b6","#c56288","#f4ebcd","#c8c1a8","#ffffe1"],["#ffffe1","#e1d9bd","#fffff6","#f078a6","#ff84b6","#dd6e98","#ff90c7","#dd6e98","#ff84b6","#e1d9bd","#fffff6","#f4ebcd"],["#e1d9bd","#ffffe1","#39220f","#9f602a","#855023","#9f602a","#77481f","#915726","#855023","#4c2d15","#c8c1a8","#ffffe1"],["#fffff6","#f4ebcd","#fffff6","#855023","#ad692e","#915726","#ad692e","#855023","#ad692e","#f4ebcd","#fffff6","#e1d9bd"],["#c8c1a8","#f4ebcd","#c8c1a8","#9f602a","#77481f","#915726","#77481f","#9f602a","#77481f","#f4ebcd","#c8c1a8","#ffffe1"],["#ffffe1","#e1d9bd","#fffff6","#855023","#9f602a","#855023","#ad692e","#915726","#9f602a","#e1d9bd","#fffff6","#e1d9bd"],["#c8c1a8","#ffffe1","#c8c1a8","#452913","#402611","#9f602a","#77481f","#452913","#39220f","#ffffe1","#c8c1a8","#f4ebcd"],["#fffff6","#f4ebcd","#fffff6","#e1d9bd","#fffff6","#f4ebcd","#fffff6","#e1d9bd","#fffff6","#f4ebcd","#fffff6","#e1d9bd"]]},{"t":"watermelon","g":[["#89b8bc","#a7e1e5","#89b8bc","#b8f7fc","#89b8bc","#a7e1e5","#89b8bc","#b8f7fc","#89b8bc","#a7e1e5","#89b8bc","#b8f7fc"],["#b8f7fc","#9acfd2","#c8ffff","#9acfd2","#b8f7fc","#9acfd2","#c8ffff","#a7e1e5","#b8f7fc","#9acfd2","#c8ffff","#9acfd2"],["#89b8bc","#b8f7fc","#89b8bc","#a7e1e5","#9acfd2","#b8f7fc","#89b8bc","#a7e1e5","#89b8bc","#b8f7fc","#89b8bc","#a7e1e5"],["#c8ffff","#a7e1e5","#c8ffff","#9acfd2","#c8ffff","#dc2d2f","#ff3639","#9acfd2","#c8ffff","#a7e1e5","#c8ffff","#9acfd2"],["#89b8bc","#a7e1e5","#89b8bc","#b8f7fc","#b42527","#dc2d2f","#b42527","#f23134","#89b8bc","#a7e1e5","#89b8bc","#b8f7fc"],["#b8f7fc","#9acfd2","#c8ffff","#dc2d2f","#f23134","#ca292b","#ff3639","#ca292b","#f23134","#9acfd2","#c8ffff","#a7e1e5"],["#9acfd2","#b8f7fc","#b42527","#f23134","#ca292b","#f23134","#b42527","#dc2d2f","#ca292b","#f23134","#89b8bc","#b8f7fc"],["#c8ffff","#0f6b37","#ffffff","#ca292b","#ff3639","#dc2d2f","#ff3639","#ca292b","#ff3639","#dc2d2f","#128142","#9acfd2"],["#89b8bc","#0f6b37","#0c582d","#ffffff","#b42527","#dc2d2f","#b42527","#f23134","#d0d0d0","#0f6b37","#0c582d","#b8f7fc"],["#b8f7fc","#9acfd2","#128142","#0e6333","#10763d","#0e6333","#128142","#0f6b37","#10763d","#0e6333","#c8ffff","#9acfd2"],["#89b8bc","#b8f7fc","#89b8bc","#a7e1e5","#9acfd2","#b8f7fc","#89b8bc","#a7e1e5","#89b8bc","#b8f7fc","#89b8bc","#a7e1e5"],["#c8ffff","#a7e1e5","#c8ffff","#9acfd2","#c8ffff","#a7e1e5","#c8ffff","#9acfd2","#c8ffff","#a7e1e5","#c8ffff","#9acfd2"]]},{"t":"frog","g":[["#c98c28","#f5ab31","#c98c28","#ffbc35","#c98c28","#f5ab31","#c98c28","#ffbc35","#c98c28","#f5ab31","#c98c28","#ffbc35"],["#ffbc35","#e19d2d","#ffcd3a","#010101","#ffbc35","#e19d2d","#ffcd3a","#f5ab31","#32b745","#e19d2d","#ffcd3a","#e19d2d"],["#c98c28","#ffbc35","#d0d1d0","#fefefe","#eaeaea","#010101","#010100","#fefefe","#d0d1d0","#ffffff","#010100","#f5ab31"],["#ffcd3a","#2ea640","#ffffff","#010101","#ffffff","#2ea640","#38c84d","#eaeaea","#010101","#fefefe","#38c84d","#e19d2d"],["#c98c28","#010101","#d0d1d0","#ffffff","#d0d1d0","#2ea63f","#258833","#ffffff","#d0d1d0","#fefefe","#010100","#ffbc35"],["#ffbc35","#010101","#38c84d","#2ea640","#33b747","#2b993b","#38c84d","#2b993b","#33b747","#2b993b","#010101","#f5ab31"],["#e19d2d","#33b747","#c66e85","#33b747","#2b993b","#33b747","#268835","#2ea640","#2b993b","#ff94b2","#268835","#ffbc35"],["#ffcd3a","#2ea640","#ffa1c2","#2b993b","#38c84d","#2ea640","#38c84d","#2b993b","#38c84d","#f187a2","#38c84d","#e19d2d"],["#c98c28","#f5ab31","#268835","#33b747","#268835","#2ea640","#268835","#33b747","#268835","#2ea640","#010100","#ffbc35"],["#ffbc35","#e19d2d","#010101","#2b993b","#33b747","#2b993b","#38c84d","#2ea640","#33b747","#010101","#ffcd3a","#e19d2d"],["#c98c28","#ffbc35","#c98c28","#f5ab31","#e19d2d","#33b747","#268835","#f5ab31","#c98c28","#ffbc35","#c98c28","#f5ab31"],["#ffcd3a","#f5ab31","#ffcd3a","#e19d2d","#ffcd3a","#f5ab31","#ffcd3a","#e19d2d","#ffcd3a","#f5ab31","#ffcd3a","#e19d2d"]]}];</script>
 <script>
 "use strict";
 /* =================================================================
@@ -898,9 +927,9 @@ function haptic(k){
   try{if(navigator.vibrate){const ms=tier==='error'?[16,38,16]:tier==='success'?[12,28,12]:tier==='medium'?18:tier==='heavy'?28:8;navigator.vibrate(ms);}}catch(e){}}
 
 /* ---------- Mixpanel (client fires straight to api.mixpanel.com; token from /api/flags) ---------- */
-const DD_VERSION='0.7.11';
+const DD_VERSION='0.7.15';
 let DD_BUILD='';   // native build number, stamped from build.gradle by scripts/build-mobile.js
-function _mxHost(){try{const tg=TG;if(tg&&typeof tg.initData==='string'&&tg.initData.length>0)return'telegram';return'web';}catch(e){return'web';}}
+function _mxHost(){try{var cap=window.Capacitor;var pp=(cap&&typeof cap.getPlatform==='function')?cap.getPlatform():'';if(pp==='android')return'android_native';if(pp==='ios')return'ios_native';const tg=TG;if(tg&&typeof tg.initData==='string'&&tg.initData.length>0)return'telegram';return'web';}catch(e){return'web';}}  /* native (Capacitor) checked FIRST: the native build also loads a TG stub, so it must win over the telegram branch. FB installs => android_native */
 const MX={ready:false,token:'',_did:'',_super:{},_pre:[],
   _enc(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}catch(_){try{return btoa(JSON.stringify(o));}catch(e){return'';}}},
   _send(url,payload){try{const d=this._enc(payload);if(!d)return;const full=url+'?data='+encodeURIComponent(d)+'&ip=1&verbose=0';if(navigator.sendBeacon){try{if(navigator.sendBeacon(full))return;}catch(_){}}fetch(full,{method:'GET',mode:'no-cors',keepalive:true,cache:'no-store'}).catch(()=>{});}catch(_){}},
@@ -1129,7 +1158,7 @@ function generatePuzzle(N,seed){for(let a=0;a<80;a++){const rng=mulberry32((seed
   const rng=mulberry32(seed>>>0);const sol=genSolution(N,rng)||[...Array(N).keys()];return {N,region:refineUnique(N,sol,genRegions(N,sol,rng),rng),solCols:sol};}
 // Wave difficulty (bell-ish, NOT monotonic): easy>medium>hard>easy>very-hard>easy... with peaks
 // that rise over time so late levels reach 10/11/12 ducks; breathers drop back to easy between peaks.
-const LEVEL_N=[4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,6,8,7,6,8,7, 9,7,9,8,10,7,9,8,11,8, 10,9,11,8,12,9,11,10,12,9]; // L1-3=4x4, L4-8=5x5, L9-13=6x6, then the wave (easy>hard>medium>very-hard>... rising to 12)
+const LEVEL_N=[4,4,4,4,4, 5,5,5, 6,6,6,6,6, 7,6,8,7,6,8,7, 9,7,9,8,10,7,9,8,11,8, 10,9,11,8,12,9,11,10,12,9]; // L1-5=4x4 (easy onboarding), L6-8=5x5, L9-13=6x6, then the wave rising to 12
 const LEVEL_WAVE=[9,11,10,12,9,11,10,12]; // repeating high wave (still wavy) for L41+
 function levelSize(idx){if(idx<0)idx=0;return idx<LEVEL_N.length?LEVEL_N[idx]:LEVEL_WAVE[(idx-LEVEL_N.length)%LEVEL_WAVE.length];}
 // Each level keeps a FIXED region STRUCTURE (deterministic seed) so its difficulty is
@@ -1150,7 +1179,24 @@ function recolorPuzzle(pz){const ids=[...new Set(pz.region.flat())],sh=ids.slice
 // yields a unique solution, so a fixed level seed never lands on the non-unique fallback)
 const _pzCache={}; // a level's unique base puzzle is deterministic; cache it so big-N levels only generate once
 function fixedPuzzle(N,seed){const key=N+':'+seed;if(_pzCache[key])return _pzCache[key];let res=null;for(let k=0;k<48;k++){const pz=generatePuzzle(N,(seed+k*0x9e3779b9)>>>0);if(countSolutions(N,pz.region,2)===1){res=pz;break;}}if(!res)res=generatePuzzle(N,seed);_pzCache[key]=res;return res;}
-function randomizedLevel(idx){const N=levelSize(idx);let pz=fixedPuzzle(N,levelSeed(idx));pz=transformPuzzle(pz,DIHEDRAL[(Math.random()*DIHEDRAL.length)|0]);pz=recolorPuzzle(pz);pz.colors=levelPalette(idx,N,(Math.random()*1e9)>>>0);return pz;}
+// L1-10: an EASIER board GUARANTEED to have a lone single-cell region (its one duck is forced), so the
+// very first duck is always trivial to spot even as the grid grows to 5x5/6x6. Deterministic per level
+// (seed-searched). Works for any N.
+function easyPuzzle(idx){const N=levelSize(idx),seed=levelSeed(idx);
+  for(let k=0;k<600;k++){const pz=generatePuzzle(N,(seed+k*0x9e3779b9)>>>0);if(countSolutions(N,pz.region,2)!==1)continue;
+    const cnt={};pz.region.flat().forEach(id=>{cnt[id]=(cnt[id]||0)+1;});if(Object.values(cnt).some(v=>v===1))return pz;}
+  return fixedPuzzle(N,seed);}
+function randomizedLevel(idx){const N=levelSize(idx);
+  let pz=(idx<10)?easyPuzzle(idx):fixedPuzzle(N,levelSeed(idx));
+  pz=transformPuzzle(pz,DIHEDRAL[(Math.random()*DIHEDRAL.length)|0]);pz=recolorPuzzle(pz);pz.colors=levelPalette(idx,N,(Math.random()*1e9)>>>0);
+  // L1-10: give the lone single-cell region a DISTINCT bright colour (differs from its neighbours) so the first duck pops
+  if(idx<10){const cnt={};pz.region.flat().forEach(id=>{cnt[id]=(cnt[id]||0)+1;});const sk=Object.keys(cnt).find(id=>cnt[id]===1);
+    if(sk!=null){const sid=+sk;const nb=new Set();for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(pz.region[r][c]!==sid)continue;[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([a,b])=>{if(a>=0&&b>=0&&a<N&&b<N)nb.add(pz.colors[pz.region[a][b]]);});}
+      pz.colors[sid]=['#EA3B2E','#F5A623','#8E44E8','#17B978','#2E86FF'].find(x=>!nb.has(x))||'#EA3B2E';}}
+  // 12x12 campaign levels are DRAWING GRIDS: board shows a picture, regions shown by borders, solve on it.
+  // ADMIN-ONLY for now (test in Telegram); regular players still get the normal 12x12 level.
+  if(N===12&&typeof isAdmin==='function'&&isAdmin()&&window.DD_ICONS&&DD_ICONS.length){const pic=DD_ICONS[(levelSeed(idx)>>>0)%DD_ICONS.length];if(pic&&pic.g){pz.cellColors=pic.g;pz.regionBorders=true;pz.picTitle=pic.t;}}
+  return pz;}
 const TOTAL_LEVELS=40;
 
 /* ---------- icons ---------- */
@@ -1317,6 +1363,7 @@ let ftue=null; // {active, step, target:[r,c], allowOnly:set}
 
 let gameLive=false; // a live (unfinished) normal level is resumable: Back -> home keeps it, Play returns to it
 function startLevel(m,idx){
+  LAB.active=false;{const _a=document.getElementById('app');if(_a)_a.classList.remove('labon','lab-giant');}
   mode=m;levelIdx=idx||0;save.rulesHidden=(levelIdx>=10);ended=false;boostersUsed=0;heartsLost=0;history=[];ftue=null;faceFx.clear();_boosterClock=Date.now();clearTimeout(_modalTimer);_progUntil=0;   // rules shown through level 10, collapsed from level 11
   document.getElementById('app').classList.remove('tutdim','hintmode','tut');document.getElementById('qboard').classList.remove('dim');
   hintActive=false;_hint=null;$('hintPill').classList.remove('on');$('hintApply').classList.remove('on');
@@ -1331,6 +1378,84 @@ function startLevel(m,idx){
   // warm the NEXT level's base puzzle in the background so big grids never hitch on first entry
   const _ni=levelIdx+1;setTimeout(()=>{try{fixedPuzzle(levelSize(_ni),levelSeed(_ni));}catch(e){}},1400);
 }
+
+/* ====================== MODES LAB (owner-only test bench) ======================
+   Reuses the REAL board renderer + tap mechanics + animated duck art + hearts.
+   Single 12x12 = one true unique board. 2-player + Giant = TILED real sub-puzzles
+   (a single unique board above ~13x13 is not generatable). solSet/nDucks generalize
+   the win/correct check to multi-duck boards; the giant adds picture art + scroll. */
+let LAB={active:false,kind:null,turn:0,moves:null,owner:null,pcount:null,staticDucks:false,title:''};
+const LAB_U=[{name:'You',col:'#2b9fe0'},{name:'Pip',col:'#B773E8'},{name:'Yolko',col:'#F2A02E'},{name:'Coco',col:'#EF6FA0'},{name:'Dax',col:'#3FB46E'},{name:'Mochi',col:'#9E8BE6'},{name:'Boba',col:'#2bb7ab'}];
+const LABPAL=['#E58A77','#B773E8','#4BB6A7','#E8B24C','#6FA9E4','#8BCB6E','#EF94B6','#E0925A','#9E8BE6','#56C7BD','#F2A65A','#7FB2E8','#C0D36E','#D98AC0'];
+function labCurPlayer(){return LAB.kind==='duel'?LAB.turn:0;}
+function labCanMove(){if(!LAB.moves)return true;return LAB.moves[labCurPlayer()]>0;}
+function labOutOfMoves(){if(LAB.kind==='duel'){if(LAB.moves[0]<=0&&LAB.moves[1]<=0){toast('No moves left for either player');}else{LAB.turn^=1;toast('No moves, '+(LAB.turn===0?'your':LAB_U[LAB.turn].name+"'s")+' turn');labHud();}}else{toast('Out of moves. Tap Friends jump in.');}try{haptic('err');}catch(e){}}
+function labAfterGuess(r,c,correct){const p=labCurPlayer();if(LAB.owner)LAB.owner[r][c]=p;if(LAB.moves)LAB.moves[p]=Math.max(0,LAB.moves[p]-1);if(correct&&LAB.pcount)LAB.pcount[p]++;if(LAB.kind==='duel')LAB.turn^=1;labHud();}
+function labWho(r,c){const o=(LAB.owner&&LAB.owner[r][c])||0;const v=gstate[r][c];toast(LAB_U[o].name+(v===DUCK?' placed this duck':' marked here'));try{haptic('light');}catch(e){}}
+function labGenUnique(n){let pz=generatePuzzle(n,(Math.random()*1e9)>>>0);let t=0;while(countSolutions(n,pz.region,2)!==1&&t++<6)pz=generatePuzzle(n,(Math.random()*1e9)>>>0);return pz;}
+function labRegionColors(pz){const ids=[...new Set(pz.region.flat())];const max=Math.max.apply(null,ids)+1;const cols=[];for(let i=0;i<max;i++)cols[i]=LABPAL[i%LABPAL.length];return cols;}
+function duckPicGrid(n){const g=Array.from({length:n},()=>new Array(n));const E=(x0,y0,rx,ry)=>(x,y)=>((x-x0)/rx)**2+((y-y0)/ry)**2<=1;const body=E(.46,.57,.30,.22),head=E(.64,.34,.165,.17);
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){const x=(c+.5)/n,y=(r+.5)/n;let col;
+    if(y>.81)col='#6FA9E4'; else if(head(x,y))col='#FFD23F'; else if(body(x,y))col='#FBC531'; else col='#CDEBD6';
+    if(x>.78&&x<.97&&Math.abs(y-.34)<(x-.78)*.55)col='#F2882E';
+    if(((x-.665)/.024)**2+((y-.305)/.024)**2<=1)col='#3A2A20';
+    g[r][c]=col;}
+  return g;}
+function labBuildTiled(t,gw,gh,picture){const pool=[];for(let i=0;i<Math.min(8,gw*gh);i++)pool.push(labGenUnique(t));
+  const M=t*gw;const region=Array.from({length:M},()=>new Array(M));const solSet=new Set();let rid=0,nD=0;
+  for(let ty=0;ty<gh;ty++)for(let tx=0;tx<gw;tx++){const pz=transformPuzzle(pool[(Math.random()*pool.length)|0],DIHEDRAL[(Math.random()*8)|0]);const base=rid;
+    for(let r=0;r<t;r++)for(let c=0;c<t;c++)region[ty*t+r][tx*t+c]=base+pz.region[r][c];
+    for(let r=0;r<t;r++){solSet.add((ty*t+r)*100+(tx*t+pz.solCols[r]));nD++;}rid+=t;}
+  const out={N:M,region,solSet,nDucks:nD,tile:t,regionBorders:!!picture};
+  if(picture)out.cellColors=duckPicGrid(M);
+  else{const cols=[];for(let i=0;i<rid;i++)cols[i]=LABPAL[i%LABPAL.length];out.colors=cols;}
+  return out;}
+function labBuildGrid(){const g=$('grid');g.innerHTML='';cellEls=[];const giant=LAB.kind==='giant';const CELL=26;
+  if(giant){g.style.gridTemplateColumns='repeat('+N+','+CELL+'px)';g.style.gridTemplateRows='repeat('+N+','+CELL+'px)';g.style.gap='0';}
+  else{g.style.gridTemplateColumns='repeat('+N+',1fr)';g.style.gridTemplateRows='repeat('+N+',1fr)';g.style.gap=(N>=11?'3px':'5px');g.style.width='';g.style.height='';}
+  const _rad=giant?3:(N>=11?9:13);
+  for(let r=0;r<N;r++){const row=[];for(let c=0;c<N;c++){const d=document.createElement('div');d.className='qcell';
+    d.style.background=puzzle.cellColors?puzzle.cellColors[r][c]:((puzzle.colors&&puzzle.colors[puzzle.region[r][c]])||regionVar(puzzle.region[r][c]));
+    d.style.borderRadius=_rad+'px';d.dataset.r=r;d.dataset.c=c;
+    if(!giant)d.style.animation='cellReveal .34s cubic-bezier(.34,1.56,.64,1) both '+((r+c)*0.02).toFixed(3)+'s';
+    if(puzzle.regionBorders){if(c+1<N&&puzzle.region[r][c]!==puzzle.region[r][c+1])d.style.borderRight='1.5px solid rgba(40,28,18,.5)';if(r+1<N&&puzzle.region[r][c]!==puzzle.region[r+1][c])d.style.borderBottom='1.5px solid rgba(40,28,18,.5)';}
+    if(puzzle.tile){const t=puzzle.tile;if((c+1)%t===0&&c+1<N)d.style.borderRight='3px solid #4a3318';if((r+1)%t===0&&r+1<N)d.style.borderBottom='3px solid #4a3318';}
+    d.addEventListener('click',()=>onCellTap(r,c));g.appendChild(d);row.push(d);}cellEls.push(row);}}
+function startLab(kind){closeScrim('scrimLab');closeScrim('scrimSet');closeScrim('scrimAdmin');
+  let pz;
+  if(kind==='single'){pz=recolorPuzzle(transformPuzzle(labGenUnique(12),DIHEDRAL[(Math.random()*8)|0]));pz.colors=labRegionColors(pz);pz.nDucks=12;LAB.title='Single  12x12';}
+  else if(kind==='duel'){pz=labBuildTiled(7,2,2,false);LAB.title='2 players  14x14';}
+  else{pz=labBuildTiled(8,4,4,true);LAB.title='Giant community';}
+  puzzle=pz;N=pz.N;mode='lab';levelIdx=0;
+  LAB.active=true;LAB.kind=kind;LAB.turn=0;LAB.staticDucks=(kind==='giant');LAB.pcount=LAB_U.map(()=>0);
+  LAB.moves=(kind==='duel')?[20,20]:(kind==='giant')?[8]:null;
+  LAB.owner=Array.from({length:N},()=>new Array(N).fill(0));
+  ended=false;boostersUsed=0;heartsLost=0;history=[];ftue=null;faceFx.clear();clearTimeout(_modalTimer);_progUntil=0;hintActive=false;_hint=null;
+  // clear any FTUE / hint overlays so the lab board is clean (mirror startLevel)
+  {const a=document.getElementById('app');a.classList.remove('tutdim','hintmode','tut');const qb=document.getElementById('qboard');if(qb)qb.classList.remove('dim');
+   try{$('hintPill').classList.remove('on');$('hintApply').classList.remove('on');$('coachTop').classList.remove('on');$('coachBot').classList.remove('on');$('handhint').style.display='none';hideGotit();}catch(e){}}
+  heartsEnabled=(kind!=='giant');
+  gstate=Array.from({length:N},()=>new Array(N).fill(EMPTY));hearts=3;duckCount=0;
+  const app=document.getElementById('app');app.classList.add('labon');app.classList.toggle('lab-giant',kind==='giant');
+  labBuildGrid();renderAll();show('game');playSfx('reveal');gameLive=false;labHud();
+  if(kind==='giant'){const w=$('qboard');if(w){w.scrollTop=0;w.scrollLeft=0;}}
+}
+function labExit(){LAB.active=false;const app=document.getElementById('app');app.classList.remove('labon','lab-giant');const w=$('qboard');if(w){w.scrollTop=0;w.scrollLeft=0;w.style.overflow='';}show('home');refreshHome();}
+function labFriends(){if(!LAB.active||LAB.kind!=='giant')return;const todo=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(puzzle.solSet.has(r*100+c)&&gstate[r][c]!==DUCK)todo.push([r,c]);
+  shuffle(todo,Math.random);const tgt=Math.min(todo.length,Math.ceil(todo.length*0.8));let k=0;const need=puzzle.nDucks||N;
+  const step=()=>{for(let b=0;b<14&&k<tgt;b++){const u=1+((Math.random()*(LAB_U.length-1))|0);const cc=todo[k++];gstate[cc[0]][cc[1]]=DUCK;duckCount++;LAB.owner[cc[0]][cc[1]]=u;LAB.pcount[u]++;renderCell(cc[0],cc[1]);}
+    updateCount();labHud();if(k<tgt&&duckCount<need)requestAnimationFrame(step);else{toast('Friends jumped in!');if(duckCount>=need)onLabWin();}};
+  if(todo.length){toast('Friends solving...');step();}else toast('Already solved');}
+function onLabWin(){ended=true;gameLive=false;try{allDucksReact('happy',2400);}catch(e){}try{haptic('win');}catch(e){}try{soundWin();}catch(e){}confettiRain();
+  let msg='Solved!';if(LAB.kind==='giant'){const top=LAB.pcount.map((n,i)=>({n,i})).sort((a,b)=>b.n-a.n).filter(o=>o.n).slice(0,3).map(o=>LAB_U[o.i].name+' '+o.n).join(', ');msg='Community solved it! Top: '+top;}toast(msg);labHud();}
+function onLabLose(){ended=true;gameLive=false;try{haptic('lose');}catch(e){}try{soundLose();}catch(e){}shakeBoard();toast('Out of hearts. Tap New board.');labHud();}
+function labHud(){const bar=$('labBar');if(!bar)return;bar.style.display=LAB.active?'':'none';if(!LAB.active)return;let html='';
+  if(LAB.kind==='duel'){const p=LAB.turn;html+='<div class="labrow"><span class="labturn" style="background:'+LAB_U[p].col+'">'+(p===0?'Your':LAB_U[p].name+"'s")+' turn</span><span class="labmv">'+LAB_U[0].name+' '+LAB.moves[0]+' &middot; '+LAB_U[1].name+' '+LAB.moves[1]+'</span></div>';}
+  else if(LAB.kind==='giant'){html+='<div class="labrow"><span class="labmv">Your moves <b>'+LAB.moves[0]+'</b></span><span class="labcontrib">'+LAB.pcount.map((n,i)=>n?('<span><i style="background:'+LAB_U[i].col+'"></i>'+n+'</span>'):'').filter(Boolean).slice(0,6).join('')+'</span></div>';}
+  else html+='<div class="labrow"><span class="labmv">Double-tap = place a duck &middot; single-tap = mark X</span></div>';
+  let btns=(LAB.kind==='giant'?'<button class="labbtn primary" id="labFriends">Friends jump in</button>':'')+'<button class="labbtn" id="labNew">New board</button><button class="labbtn" id="labExitB">Exit</button>';
+  bar.innerHTML=html+'<div class="labrow">'+btns+'</div>';
+  const a=$('labNew');if(a)a.onclick=()=>startLab(LAB.kind);const b=$('labExitB');if(b)b.onclick=labExit;const f=$('labFriends');if(f)f.onclick=labFriends;}
 
 /* ---------- conflict logic ---------- */
 function conflictAt(r,c){for(let i=0;i<N;i++){if(i!==c&&gstate[r][i]===DUCK)return true;if(i!==r&&gstate[i][c]===DUCK)return true;}
@@ -1366,6 +1491,7 @@ function onCellTap(r,c){
   if(ended||hintActive)return;
   if(suppressClick){suppressClick=false;return;}
   if(ftue&&ftue.active&&ftue.allowOnly&&!ftue.allowOnly.has(r*100+c))return;
+  if(LAB.active&&LAB.kind==='giant'){const _v=gstate[r][c];if(_v===DUCK||_v===RED){labWho(r,c);return;}} // giant: tap a placed cell to see who did it
   const cur=gstate[r][c];
   if(cur===DUCK||cur===RED)return; // found ducks and wrong-guess red X are locked forever
   const now=Date.now();const dblWin=(ftue&&ftue.active)?600:320;let isDouble=(lastTapCell===r*100+c)&&(now-lastTapTime<dblWin);
@@ -1374,26 +1500,32 @@ function onCellTap(r,c){
   if(isDouble){ tryGuess(r,c); lastTapCell=null; }
   else { // single tap toggles the player's own X note
     if(ftue&&ftue.active&&(ftue.step===0||ftue.step===3||ftue.step===5)){/* place-duck beat: a single tap just primes the double-tap, no confusing X */}
-    else if(cur===EMPTY){snapshot();gstate[r][c]=MARK;renderCell(r,c);pressTile(r,c);haptic('light');soundTick();onFtueAction('mark',r,c);}
+    else if(cur===EMPTY){snapshot();gstate[r][c]=MARK;renderCell(r,c);pressTile(r,c);haptic('light');soundTick();onFtueAction('mark',r,c);if(LAB.active&&LAB.owner)LAB.owner[r][c]=labCurPlayer();}
     else if(cur===MARK){snapshot();gstate[r][c]=EMPTY;renderCell(r,c);haptic('light');playSfx('xremove');}
   }
   updateCount();
 }
 function tryGuess(r,c){
-  // The duck hides in ONE specific cell per region (the unique solution).
-  if(puzzle.solCols[r]===c){
+  if(LAB.active&&!labCanMove()){labOutOfMoves();return;}
+  // The duck hides in ONE specific cell per region (the unique solution). solSet generalizes to tiled/multi-duck boards.
+  const _correct=puzzle.solSet?puzzle.solSet.has(r*100+c):(puzzle.solCols[r]===c);
+  const _need=(puzzle.nDucks)||N;
+  if(_correct){
     // correct: the duck is found and LOCKED forever (cannot be removed)
     gstate[r][c]=DUCK;duckCount++;haptic('duck');playSfx('duckfound');onFtueAction('duck',r,c);
-    if(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof wcGoalShot==='function'){ updateCount(); wcGoalShot(r,c,(duckCount===N&&!ftue)); }
-    else { renderCell(r,c);onDuckFound(); if(duckCount===N&&!ftue){ if(typeof TOURNEY!=='undefined'&&TOURNEY.active){onTourneyWin();} else {onWin();} } else if(duckCount===N&&ftue&&ftue.active)onFtueWin(); }
+    if(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof wcGoalShot==='function'){ updateCount(); wcGoalShot(r,c,(duckCount===_need&&!ftue)); }
+    else { renderCell(r,c);onDuckFound(); if(duckCount===_need&&!ftue){ if(LAB.active){onLabWin();} else if(typeof TOURNEY!=='undefined'&&TOURNEY.active){onTourneyWin();} else {onWin();} } else if(duckCount===_need&&ftue&&ftue.active)onFtueWin(); }
+    if(LAB.active)labAfterGuess(r,c,true);
   } else {
     // wrong: leave a PERMANENT red X (locked) and lose a heart
     gstate[r][c]=RED;const _wc=(typeof TOURNEY!=='undefined'&&TOURNEY.active);
-    if(_wc){renderCell(r,c);pressTile(r,c);}else{heartBreakAt(r,c,function(){renderCell(r,c);});}   // WC shows a red card on the tile (no broken heart)
+    if(LAB.active&&!heartsEnabled){renderCell(r,c);pressTile(r,c);} // giant: no hearts, just a locked red X
+    else if(_wc){renderCell(r,c);pressTile(r,c);}else{heartBreakAt(r,c,function(){renderCell(r,c);});}   // WC shows a red card on the tile (no broken heart)
     allDucksReact('sad',CRY_MS);shakeBoard();haptic('wrong');playSfx('loseheart');MX.track('Mistake Made',{level:levelIdx+1});
     heartsLost++;if(heartsEnabled){hearts--;renderHearts();
       if(_wc){slamCardIcon(2-hearts);}else{breakHeartIcon(hearts);}   // WC: slam the new red card into the lives row
-      if(hearts<=0){if(_wc&&typeof endWcRun==='function'){gameLive=false;setTimeout(function(){try{endWcRun();}catch(e){}},750);}else{onLose();}}}
+      if(hearts<=0){if(LAB.active){onLabLose();} else if(_wc&&typeof endWcRun==='function'){gameLive=false;setTimeout(function(){try{endWcRun();}catch(e){}},750);}else{onLose();}}}
+    if(LAB.active)labAfterGuess(r,c,false);
   }
 }
 function flashBad(cells){cells.forEach(([r,c])=>{const el=cellEl(r,c);if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),460);}if(gstate[r]&&gstate[r][c]===DUCK)duckReact(r,c,'oops',1000);});shakeBoard();}
@@ -1414,7 +1546,7 @@ function onWin(){ended=true;gameLive=false;nextWinVariant();allDucksReact('happy
   $('winGold').innerHTML=COIN_SVG+'<span>+'+goldGain+'</span>';
   {const ws=pickSub(WIN_SUBS);$('winSub').textContent=L(ws[0],ws[1]);}
   $('btnNext').textContent=t('next');
-  showModalSoon('scrimWin',WIN_MODAL_DELAY);} // let the board ducks celebrate first, then the victory screen
+  showModalSoon('scrimWin',WIN_MODAL_DELAY);nextFinger();} // let the board ducks celebrate first, then the victory screen
 function starsForWin(){let s=3;if(heartsLost>=1)s--;if(boostersUsed>=1)s--;return Math.max(1,s);}
 function starsHtml(n){let h='';for(let i=0;i<3;i++)h+=starSvg(i<n);return h;}
 function onLose(){ended=true;gameLive=false;nextLoseVariant();allDucksReact('sad',LOSE_MODAL_DELAY+800);MX.track('Level Failed',{level:levelIdx+1,hearts_lost:heartsLost});try{DuckAdjust.fire('levelFailed');}catch(e){}haptic('lose');soundLose();$('loseTitle').textContent=L("Out of hearts","Сердца закончились");
@@ -1531,14 +1663,18 @@ function showTip(anchor,text,below){if(!anchor)return;let tip=$('floatTip');if(!
   tip.classList.add('on');haptic('err');clearTimeout(_tipT);_tipT=setTimeout(()=>{tip.classList.remove('on');},2000);}
 let cellEls=[];
 function buildGrid(){const g=$('grid');g.style.gridTemplateColumns='repeat('+N+',1fr)';g.style.gridTemplateRows='repeat('+N+',1fr)';
-  g.style.gap=(N>=11?'3px':N>=8?'4px':N>=7?'5px':'6px');g.innerHTML='';cellEls=[];
-  const _rad=(N>=11?9:N>=9?11:13);
-  for(let r=0;r<N;r++){const row=[];for(let c=0;c<N;c++){const d=document.createElement('div');d.className='qcell';d.style.background=(puzzle.colors&&puzzle.colors[puzzle.region[r][c]])||regionVar(puzzle.region[r][c]);d.style.borderRadius=_rad+'px';d.dataset.r=r;d.dataset.c=c;
+  g.style.gap=puzzle.cellColors?'0':(N>=11?'3px':N>=8?'4px':N>=7?'5px':'6px');g.innerHTML='';cellEls=[]; // drawing grids = continuous picture (no gap)
+  const _rad=puzzle.cellColors?4:(N>=11?9:N>=9?11:13);
+  for(let r=0;r<N;r++){const row=[];for(let c=0;c<N;c++){const d=document.createElement('div');d.className='qcell';
+    // cellColors = a per-cell PICTURE (drawing-grid levels); else normal region colours
+    d.style.background=puzzle.cellColors?puzzle.cellColors[r][c]:((puzzle.colors&&puzzle.colors[puzzle.region[r][c]])||regionVar(puzzle.region[r][c]));
+    d.style.borderRadius=_rad+'px';d.dataset.r=r;d.dataset.c=c;
+    if(puzzle.regionBorders){const BRD='3px solid #2c2016';if(c+1<N&&puzzle.region[r][c]!==puzzle.region[r][c+1])d.style.borderRight=BRD;if(r+1<N&&puzzle.region[r][c]!==puzzle.region[r+1][c])d.style.borderBottom=BRD;} // clear opaque region outlines over the picture
     d.style.animation='cellReveal .34s cubic-bezier(.34,1.56,.64,1) both '+((r+c)*0.028).toFixed(3)+'s'; // quick staggered reveal on level start
     d.addEventListener('click',()=>onCellTap(r,c));g.appendChild(d);row.push(d);}cellEls.push(row);}}
 function cellEl(r,c){return cellEls[r]&&cellEls[r][c];}
 function renderCell(r,c){const el=cellEl(r,c);if(!el)return;const v=gstate[r][c];
-  if(v===DUCK)el.innerHTML=faceVideosReady?'<canvas class="duckface" width="256" height="256"></canvas>':DUCK_SVG;
+  if(v===DUCK)el.innerHTML=(LAB.active&&LAB.staticDucks)?DUCK_SVG:(faceVideosReady?'<canvas class="duckface" width="256" height="256"></canvas>':DUCK_SVG);
   else if(v===RED)el.innerHTML=(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof RED_CARD_SVG!=='undefined')?RED_CARD_SVG:REDX_SVG;
   else el.innerHTML=v===MARK?X_SVG:'';}
 function renderBoard(){for(let r=0;r<N;r++)for(let c=0;c<N;c++)renderCell(r,c);}
@@ -1554,8 +1690,9 @@ const HEART_R='M16 7 C18.5 3.5 21 2 23.5 2 C27.5 2 30 5 30 9 C30 14 26 20 16 28 
 function pressTile(r,c){const el=cellEl(r,c);if(!el)return;el.style.animation='none';void el.offsetWidth;el.style.animation='qpress .19s ease';setTimeout(()=>{if(el)el.style.animation='';},230);}
 function heartBreakAt(r,c,onReveal){const el=cellEl(r,c);if(!el)return;const d=document.createElement('div');d.className='hbreak';d.innerHTML='<svg viewBox="0 0 32 32"><path class="hbl" fill="#F0544C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" d="'+HEART_L+'"/><path class="hbr" fill="#F0544C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" d="'+HEART_R+'"/></svg>';el.appendChild(d);if(onReveal)setTimeout(()=>{try{onReveal();}catch(e){}},950);setTimeout(()=>{try{d.remove();}catch(e){}},1300);}
 function breakHeartIcon(idx){const h=$('hearts');if(!h||idx<0)return;const svg=h.children[idx];if(svg){svg.classList.add('hbrk');setTimeout(()=>{try{svg.classList.remove('hbrk');}catch(e){}},560);}}
-function updateCount(){$('countVal').textContent=duckCount+'/'+N;const f=$('pfill');if(f)f.style.width=(N?Math.round(duckCount/N*100):0)+'%';}
-function renderHud(){$('toptitle').textContent=(typeof TOURNEY!=='undefined'&&TOURNEY.active)?(L("World Cup","Кубок")+"  "+((typeof TOURNEY!=='undefined'&&TOURNEY.goals)||0)+L(" goals"," голов")):(L("Level ","Уровень ")+(levelIdx+1));updateCount();renderHearts();renderChips();applyRulesHidden();}
+function updateCount(){const _need=(puzzle&&puzzle.nDucks)||N;$('countVal').textContent=duckCount+'/'+_need;const f=$('pfill');if(f)f.style.width=(_need?Math.round(duckCount/_need*100):0)+'%';}
+function renderHud(){if(LAB.active){$('toptitle').textContent=LAB.title||'Modes Lab';updateCount();renderHearts();return;}
+  $('toptitle').textContent=(typeof TOURNEY!=='undefined'&&TOURNEY.active)?(L("World Cup","Кубок")+"  "+((typeof TOURNEY!=='undefined'&&TOURNEY.goals)||0)+L(" goals"," голов")):(L("Level ","Уровень ")+(levelIdx+1));updateCount();renderHearts();renderChips();applyRulesHidden();}
 function miniGrid(g){const cell=11,gap=2.5,pad=1,sz=3*cell+2*gap+2*pad;let s='<svg class="chipvis" viewBox="0 0 '+sz+' '+sz+'">';
   for(let r=0;r<3;r++)for(let c=0;c<3;c++){const x=pad+c*(cell+gap),y=pad+r*(cell+gap),v=g[r][c],cx=x+cell/2,cy=y+cell/2;
     s+='<rect x="'+x+'" y="'+y+'" width="'+cell+'" height="'+cell+'" rx="3" fill="#E7D5B5"/>';
@@ -1831,7 +1968,7 @@ function renderAlbum(){renderAlbumPacks();renderAlbumGrand();updateGoldHud();con
   wrap.innerHTML=STICKER_SETS.map(set=>{
     const items=STICKERS.filter(s=>s.set===set.id);
     const slots=items.map(s=>{const n=ownedCount(s.id);
-      if(n<=0)return '<div class="stslot locked"><div class="stfallback">'+DUCK_MINI+'</div><span class="qmark">?</span></div>';
+      if(n<=0)return '<div class="stslot locked"><span class="qmark">?</span></div>';
       const dn=n>1?'<span class="dupn">x'+n+'</span>':'';
       return '<div class="stslot owned r-'+s.rarity+'"><div class="stfallback">'+DUCK_MINI+'</div>'+stickerImg(s.id)+dn+'</div>';}).join('');
     const done=setOwnedN(set.id),total=setTotalN(set.id),claimed=!!(save.setsClaimed&&save.setsClaimed[set.id]);
@@ -1876,38 +2013,44 @@ function ftueAllowOnly(cells){ftueAnchorDucks();ftue.allowOnly=new Set();cells.f
 function showCoachHTML(which,html,withLamp){const el=which==='top'?$('coachTopB'):$('coachBotB');el.innerHTML=html+(withLamp?' '+LAMP_SVG:'');el.style.removeProperty('--tail');el.style.removeProperty('font-size');const c=which==='top'?$('coachTop'):$('coachBot');c.classList.remove('tipbub','tip-up');c.removeAttribute('style');c.classList.add('on');}
 function showCoach(which,spec,withLamp){showCoachHTML(which,bub(spec),withLamp);}
 function hideCoach(which){(which==='top'?$('coachTop'):$('coachBot')).classList.remove('on');}
-function handAt(b,dy){const h=$('handhint');h.classList.remove('gotit','dbl');h.style.display='block';h.style.left=(b.left+b.width*0.5-13)+'px';h.style.top=(b.top+b.height*0.5-26+(dy||0))+'px';}
-function handOver(r,c,dbl){const el=cellEl(r,c);if(el){handAt(el.getBoundingClientRect());if(dbl)$('handhint').classList.add('dbl');}}
+function handAt(b,dy,dx){const h=$('handhint');h.classList.remove('gotit','dbl');h.style.display='block';h.style.left=(b.left+b.width*0.5-13+(dx||0))+'px';h.style.top=(b.top+b.height*0.5-46+(dy||0))+'px';} /* raised so the finger TIP (top of the hand) lands on the cell, not covering it */
+function handOver(r,c,dbl,dy){const el=cellEl(r,c);if(el){handAt(el.getBoundingClientRect(),dy);if(dbl)$('handhint').classList.add('dbl');}}
 function handOverEl(el,dy){if(el)handAt(el.getBoundingClientRect(),dy);} // point the finger at an arbitrary element (dy nudges it lower, e.g. below the Got it button so the label stays readable)
-function handHide(){const h=$('handhint');h.classList.remove('gotit','dbl');h.style.display='none';}
+function handHide(){const h=$('handhint');h.classList.remove('gotit','dbl');h.style.display='none';h.style.zIndex='';}
+// Point the tap finger at the Next-level button on the win modal, levels 1-5 only, so new players keep going.
+function nextFinger(){if(levelIdx>4)return;setTimeout(()=>{if(!(ended&&$('scrimWin').classList.contains('on')))return;
+  const bn=$('btnNext').getBoundingClientRect();const h=$('handhint');h.classList.remove('gotit','dbl');h.style.zIndex='95';h.style.display='block';
+  h.style.left=(bn.left+bn.width*0.80-13)+'px';   // RIGHT side of the button so it never covers the "Next level" text
+  h.style.top=(bn.top+bn.height*0.5-40)+'px';      // raised so the tip points at the button from above-right
+},WIN_MODAL_DELAY+280);}
 function showGotit(){const w=$('ftueGotitWrap');if(!w)return;$('ftueGotit').textContent=L('Got it!','Понятно!');w.classList.add('on');}
 function hideGotit(){const w=$('ftueGotitWrap');if(w)w.classList.remove('on');}
 function ftueAllMarked(){return (ftue.markTargets||[]).every(([r,c])=>gstate[r][c]!==EMPTY);}
 function ftueNextHand(){const n=(ftue.markTargets||[]).find(([r,c])=>gstate[r][c]===EMPTY);if(n)handOver(n[0],n[1]);else handHide();}
 // Beat A: place the first duck (guided).
-function ftueStep0(){ftue.step=0;ftueDim(true);ftue.target=ftue.duck1.slice();ftueSpot([ftue.target]);showCoach('top',FT.place);hideCoach('bot');hideGotit();handOver(ftue.target[0],ftue.target[1],true);}
+function ftueStep0(){MX.track('tutorialStep1InstructionPlaceFirstDuck');ftue.step=0;ftueDim(true);ftue.target=ftue.duck1.slice();ftueSpot([ftue.target]);showCoach('top',FT.place);hideCoach('bot');hideGotit();handOver(ftue.target[0],ftue.target[1],true,-12);}
 // Beat B: praise + a "Got it!" button the player taps (no dim, full board visible).
-function ftueStepWellDone(){ftue.step=1;ftueDim(false);handHide();ftueAllowOnly([]); /* block board taps */ showCoach('top',FT.wellDone);hideCoach('bot');showGotit();setTimeout(()=>{if(ftue&&ftue.step===1){const h=$('handhint');h.style.left='';h.style.top='';h.style.display='block';h.classList.add('gotit');}},380);} /* finger points up at Got it from BELOW the button so the label stays clear */
+function ftueStepWellDone(){MX.track('tutorialStep2InstructionWellDoneGotIt');ftue.step=1;ftueDim(false);handHide();ftueAllowOnly([]); /* block board taps */ showCoach('top',FT.wellDone);hideCoach('bot');showGotit();setTimeout(()=>{if(ftue&&ftue.step===1){const h=$('handhint');h.style.left='';h.style.top='';h.style.display='block';h.classList.add('gotit');}},380);} /* finger points up at Got it from BELOW the button so the label stays clear */
 // Beat C: exclude the first duck's whole row + column (the cross / T).
-function ftueStepRowCol(){ftue.step=2;ftueDim(true);handHide();hideGotit();
+function ftueStepRowCol(){MX.track('tutorialStep3InstructionMarkRowAndColumn');ftue.step=2;ftueDim(true);handHide();hideGotit();
   const [dr,dc]=ftue.duck1;const cells=[];
   for(let c=0;c<N;c++)if(c!==dc&&gstate[dr][c]===EMPTY)cells.push([dr,c]);
   for(let r=0;r<N;r++)if(r!==dr&&gstate[r][dc]===EMPTY)cells.push([r,dc]);
   ftue.markTargets=cells.slice();if(!cells.length){ftueLock();setTimeout(ftueStepSecondDuck,300);return;} // nothing to exclude -> advance (never spotlight a locked duck)
   ftueSpot(cells);showCoach('top',FT.rowcol);showCoach('bot',FT.rowcolBot);handOver(cells[0][0],cells[0][1]);}
 // Beat D: only the last cell of one color is left -> place the second duck.
-function ftueStepSecondDuck(){ftue.step=3;ftueDim(true);handHide();hideCoach('bot');
+function ftueStepSecondDuck(){MX.track('tutorialStep4InstructionPlaceSecondDuck');ftue.step=3;ftueDim(true);handHide();hideCoach('bot');
   const [r2,c2]=ftue.duck2;const g=puzzle.region[r2][c2];ftue.target=ftue.duck2.slice();ftueSpot([ftue.target]);
   showCoachHTML('top',L('Only the last ','Остался только последний ')+colorPill(g)+L(' remains. ','. ')+'<span class="hl">'+L('Double-tap','Дважды нажми')+'</span>'+L(' to place a duck.',', чтобы поставить утку.'));
   handOver(r2,c2,true);}
 // Beat E: exclude the cells touching the second duck (swipe across them).
-function ftueStepAdjacent(){ftue.step=4;ftueDim(true);handHide();hideCoach('top');
+function ftueStepAdjacent(){MX.track('tutorialStep5InstructionMarkAdjacent');ftue.step=4;ftueDim(true);handHide();hideCoach('top');
   const [dr,dc]=ftue.duck2;const cells=[];
   for(let rr=dr-1;rr<=dr+1;rr++)for(let cc=dc-1;cc<=dc+1;cc++){if((rr!==dr||cc!==dc)&&rr>=0&&cc>=0&&rr<N&&cc<N&&gstate[rr][cc]===EMPTY)cells.push([rr,cc]);}
   ftue.markTargets=cells.slice();if(!cells.length){ftueLock();setTimeout(ftueStepFinish,300);return;} // nothing adjacent to exclude -> advance (never spotlight a locked duck)
   ftueSpot(cells);showCoach('top',FT.adjacent);showCoach('bot',FT.adjacentBot);handOver(cells[0][0],cells[0][1]);}
 // Beat F: auto-clear the now-obvious cells, then "find the last duck" with a tappable hint card.
-function ftueStepFinish(){ftue.step=5;ftueDim(false);handHide();hideCoach('top');
+function ftueStepFinish(){MX.track('tutorialStep6InstructionFindLastDucks');ftue.step=5;ftueDim(false);handHide();hideCoach('top');
   const rem=[];for(let r=0;r<N;r++){const c=puzzle.solCols[r];if(gstate[r][c]!==DUCK)rem.push([r,c]);}
   const remSet=new Set(rem.map(([r,c])=>r*100+c));
   for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(gstate[r][c]===EMPTY&&!remSet.has(r*100+c)){gstate[r][c]=MARK;renderCell(r,c);}}
@@ -1928,7 +2071,7 @@ function onFtueWin(){const replay=!!(ftue&&ftue.replay);ftue.active=false;ftueDi
   if(replay){gameLive=false;setTimeout(()=>{$('app').classList.remove('tut');show('home');refreshHome();},WIN_MODAL_DELAY+700);return;} // replay from Settings: celebrate, then back home (progress untouched, no level-2 detour)
   save.tutorialDone=true;save.levelsDone=Math.max(save.levelsDone,1);persist();
   $('winTitle').textContent=L("Awesome!","Отлично!");$('winSub').textContent=L("You learned to play. Now the real puzzles begin.","Ты научился играть. Теперь начинаются настоящие головоломки.");
-  $('btnNext').textContent=t('next');showModalSoon('scrimWin',WIN_MODAL_DELAY);}
+  $('btnNext').textContent=t('next');showModalSoon('scrimWin',WIN_MODAL_DELAY);nextFinger();}
 
 /* ---------- home + misc ---------- */
 function refreshHome(){const s=$('streakLine');s.textContent=save.streak>1?L("Day streak: ","Серия дней: ")+save.streak:'';$('btnPlay').textContent=save.tutorialDone?(L("Level ","Уровень ")+(save.levelsDone+1)):t('play');updateGoldHud();renderAlbumBtn();updDailyDot();updLbBtn();try{updCupBtn();}catch(e){}}
@@ -1984,7 +2127,7 @@ function touchStreak(){const today=ymd();if(save.lastPlayYMD===today)return;cons
 function startPlay(){if(gameLive&&!ended){show('game');return;} /* resume the in-progress level exactly as it was left */ touchStreak();if(!save.tutorialDone){startFTUE();}else{startLevel('levels',save.levelsDone);}}
 /* ---------- OWNER / ADMIN (settings) ---------- */
 const ADMIN_IDS=[23040617];   // Pickle's Telegram user id -> auto owner
-const ADMIN_CODE='duckboss';  // secret unlock on native/web: tap the Settings title 7x, enter this
+const ADMIN_CODE='dk9-owner-2607';  // rotated from the guessable 'duckboss'. NOTE: still in client source, so this is defence-in-depth only; the real anti-cheat is server-side (leaderboard level is clamped by account age). Owner also auto-unlocks via ADMIN_IDS on Telegram.
 const ADMIN_DEV=(function(){try{if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())return false;}catch(e){}return /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(location.hostname);})();  /* local WEB dev only; the native app (Capacitor) is NEVER auto-admin (prod Android leak fix) */
 function admUid(){return (TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.id)||0;}
 function isAdmin(){return ADMIN_DEV||save.admin===1||ADMIN_IDS.indexOf(admUid())>=0;}
@@ -2003,7 +2146,7 @@ function openSettings(inGame,fromHome){setSoundIcon();setHapticIcon();const v=$(
   {const tb=$('setTutorial');if(tb)tb.style.display=fromHome?'':'none';} // "Tutorial" replay button: HOME settings only (not in-game, not shop)
   $('setRestore').style.display=inGame?'none':'';
   const sl=document.querySelector('#scrimSet .setlinks');if(sl)sl.style.display=inGame?'none':'';
-  try{$('setAdmin').style.display=isAdmin()?'':'none';}catch(e){}openScrim('scrimSet');}
+  try{$('setAdmin').style.display=isAdmin()?'':'none';}catch(e){}try{$('setModes').style.display=isAdmin()?'':'none';}catch(e){}openScrim('scrimSet');}
 function fillHow(){const en=["Place one duck in every colored area.","No two ducks can share a row or a column.","Ducks cannot touch each other, not even diagonally.","Single-tap a cell for an X note. Double-tap to place a duck.","You have 3 hearts. A duck that breaks a rule costs one heart.","Stuck? Use Hint, Undo, or Place a Duck. No ads, boosters are Telegram Stars only."];
   const ru=["Поставь по одной утке в каждой цветной зоне.","Две утки не могут быть в одном ряду или столбце.","Утки не должны соприкасаться, даже по диагонали.","Одно нажатие на клетку ставит метку X. Двойное ставит утку.","У тебя 3 сердца. Утка, нарушившая правило, стоит одно сердце.","Застрял? Подсказка, Назад или Утка. Без рекламы, бустеры только за Telegram Stars."];
   $('howBody').innerHTML=(LANG==='ru'?ru:en).map(x=>"<p style='margin:8px 0'>"+x+"</p>").join('');}
@@ -2020,14 +2163,14 @@ function bind(){
   $('lbClose').onclick=()=>closeScrim('scrimLB');
   // Back -> home, but a live (unfinished) level stays resumable: tapping Play returns to the exact state.
   // Leaving the tutorial abandons it (its scripted step state is not resumable).
-  $('btnBack').onclick=()=>{if(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof wcConfirmQuit==='function'){wcConfirmQuit();return;}if(ftue){ftue=null;gameLive=false;}ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;$('app').classList.remove('tut');show('home');refreshHome();};
+  $('btnBack').onclick=()=>{if(LAB.active){labExit();return;}if(typeof TOURNEY!=='undefined'&&TOURNEY.active&&typeof wcConfirmQuit==='function'){wcConfirmQuit();return;}if(ftue){ftue=null;gameLive=false;}ftueDim(false);hideCoach('top');hideCoach('bot');handHide();hideGotit();$('coachBotB').onclick=null;$('app').classList.remove('tut');show('home');refreshHome();};
   $('ftueGotit').onclick=()=>{hideGotit();if(ftue&&ftue.active&&ftue.step===1)ftueStepRowCol();};
   $('btnGear').onclick=()=>openSettings(true,false);
   $('chipsToggle').onclick=toggleRules;{const _rl=$('chipsToggle').querySelector('.rtlbl');if(_rl)_rl.textContent=L('RULES','ПРАВИЛА');}
   $('bsHint').onclick=useHint;$('bsDuck').onclick=usePlaceDuck;
   $('hintApply').onclick=applyHint;
   $('bbBuy').onclick=confirmBoosterBuy;$('bbClose').onclick=()=>closeScrim('scrimBuy');
-  $('btnNext').onclick=()=>{closeScrim('scrimWin');startLevel('levels',levelIdx+1);try{maybeNameModal();}catch(e){}};
+  $('btnNext').onclick=()=>{handHide();closeScrim('scrimWin');startLevel('levels',levelIdx+1);try{maybeNameModal();}catch(e){}};
   $('btnRetry').onclick=()=>{closeScrim('scrimLose');if(!save.tutorialDone){startFTUE();}else{startLevel('levels',levelIdx);}};
   $('btnLoseHome').onclick=()=>{closeScrim('scrimLose');show('home');refreshHome();};
   $('btnLuOk').onclick=()=>closeScrim('scrimLevelUp');
@@ -2036,6 +2179,13 @@ function bind(){
   $('setClose').onclick=()=>closeScrim('scrimSet');
   // ----- owner / admin panel -----
   $('setAdmin').onclick=()=>{closeScrim('scrimSet');openAdmin();};
+  // ----- owner Modes Lab (test bench) -----
+  $('setModes').onclick=()=>{closeScrim('scrimSet');openScrim('scrimLab');};
+  $('labClose').onclick=()=>closeScrim('scrimLab');
+  $('labCommunity').onclick=()=>{try{location.href='lab.html';}catch(e){}};
+  $('labSingle').onclick=()=>startLab('single');
+  $('labDuel').onclick=()=>startLab('duel');
+  $('labGiant').onclick=()=>startLab('giant');
   (function(){let n=0,t=0;$('setTitle').addEventListener('click',()=>{const now=Date.now();n=(now-t<3000)?n+1:1;t=now;if(n>=7){n=0;closeScrim('scrimSet');openAdmin();}});})(); // tap title 7x to unlock on native
   $('admClose').onclick=()=>closeScrim('scrimAdmin');
   $('admUnlock').onclick=admUnlock;
@@ -2098,8 +2248,9 @@ function boot(){applyI18n();document.querySelectorAll('.cicon').forEach(e=>{e.in
   loadSkus();pollPurchases();cloudLoad();
   if(initData){try{fetch(API_BASE+'/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,lang:LANG,levelsDone:(save&&save.levelsDone)||0,tz:-(new Date().getTimezoneOffset()/60),allowsWrite:!!(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user&&TG.initDataUnsafe.user.allows_write_to_pm)})}).catch(()=>{});}catch(e){}}
   try{setTimeout(verifyAllowedMessaging,1500);}catch(e){}
-  // first launch ever on this device: skip the home screen, drop straight into the tutorial level
-  try{if(!localStorage.getItem('dd.launched')&&!save.tutorialDone){startPlay();}localStorage.setItem('dd.launched','1');}catch(e){}
+  // until the tutorial is DONE, every load drops straight into the tutorial level (never the menu),
+  // so a player who closed mid-tutorial is pulled right back in instead of landing on home.
+  try{if(!save.tutorialDone){startPlay();}localStorage.setItem('dd.launched','1');}catch(e){}
   updateNav(curScreen()); // show the bottom nav on whatever screen we boot into (home, or game during the first-run tutorial)
 }
 /* ===== Duckdoku home hero: the THREE RULES on a real valid board =====

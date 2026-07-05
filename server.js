@@ -87,6 +87,19 @@ const SKUS = {
     id: 'collector_bundle', kind: 'bundle', title: 'Collector Bundle', description: '1800 gold plus 12 Hint and 6 Place a Duck.',
     price: 499, priceUsd: '$6.49', grant: { gold: 1800, boosters: { hint: 12, placeduck: 6 } },
   },
+  // ----- lives economy SKUs (grant schema extended: lives?, unlimHours?, piggyCrack?) -----
+  life_pack: {
+    id: 'life_pack', kind: 'lives', title: 'Full Lives plus Gold', description: 'Refill all your lives instantly, plus 150 gold.',
+    price: 60, priceUsd: '$0.79', grant: { lives: 3, gold: 150 },
+  },
+  unlim_1h: {
+    id: 'unlim_1h', kind: 'lives', title: 'Unlimited Lives, 1 hour', description: 'Play with no life limit for 1 hour.',
+    price: 60, priceUsd: '$0.79', grant: { unlimHours: 1 },
+  },
+  unlim_1d: {
+    id: 'unlim_1d', kind: 'lives', title: 'Unlimited Lives, 1 day', description: 'Play with no life limit for 24 hours.',
+    price: 159, priceUsd: '$1.99', grant: { unlimHours: 24 },
+  },
   test_purchase: {
     id: 'test_purchase', title: 'Test Purchase (admin)', description: 'Admin-only 1-star smoke test. Grants 50 gold.',
     price: 1, priceUsd: '$0.01', grant: { gold: 50 }, adminOnly: true,

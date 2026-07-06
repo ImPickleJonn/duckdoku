@@ -974,6 +974,20 @@ app.post('/api/ship-notify', async (req, res) => {
   res.json({ ok: true, sent });
 });
 
+// Secret-guarded IAP ledger snapshot (diagnostic): are real Stars payments actually landing server-side?
+app.get('/api/_iapstat', async (req, res) => {
+  const secret = process.env.SHIP_SECRET || '';
+  if (!secret || req.headers['x-ship-key'] !== secret) return res.status(403).json({ error: 'forbidden' });
+  if (!dbReady || !dbPool) return res.json({ dbReady: false });
+  try {
+    const tot = await dbPool.query('SELECT count(*)::int n, max(created_at) last_at FROM iap_grants');
+    const d7 = await dbPool.query("SELECT count(*)::int n FROM iap_grants WHERE created_at > now() - interval '7 days'");
+    const bySku = await dbPool.query('SELECT sku, count(*)::int n, coalesce(sum(stars),0)::int stars FROM iap_grants GROUP BY sku ORDER BY n DESC');
+    const recent = await dbPool.query('SELECT sku, stars, created_at, (applied_at IS NOT NULL) applied FROM iap_grants ORDER BY created_at DESC LIMIT 12');
+    res.json({ dbReady: true, total: tot.rows[0], last7d: d7.rows[0].n, bySku: bySku.rows, recent: recent.rows });
+  } catch (e) { res.json({ error: e.message }); }
+});
+
 // Secret-guarded: DM the owner a preview of push notifications. Body { only } filters by
 // 'play' (gameplay clips), 'photo', 'animation', or a trigger name; empty = all. Same as /preview in chat.
 app.post('/api/preview', async (req, res) => {
